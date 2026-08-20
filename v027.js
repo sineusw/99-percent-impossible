@@ -119,7 +119,9 @@
   const baseShow=show;
   show=function(score,roast,meta,share,t,isPB,fail,delta=''){
     roast=memoryRoast(roast,isPB,fail);
-    const visualFail=st.g==='reaction' ? score==='TOO EARLY' : fail;
+    // Red result visuals are reserved only for a Reaction Test false start.
+    // Timer/Stop misses still fail and roast normally without turning the whole modal red.
+    const visualFail=st.g==='reaction' && score==='TOO EARLY';
     baseShow(score,roast,meta,share,t,isPB,visualFail,delta);
     if(lastStreakDeath){
       const tag='<div class="streak-dead">STREAK DEAD 💀</div>';
