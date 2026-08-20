@@ -1,30 +1,33 @@
-/* v0.6.2 — simple one-tap Petty voice toggle */
+/* v0.6.3 — one button, one tap, one Petty voice state */
 (()=>{
   const KEY='n99_petty_voice';
   const old=document.querySelector('.petty-voice');
   if(!old)return;
-  old.style.display='none';
 
-  const btn=document.createElement('button');
+  // Replace the original control entirely so none of its old click/double-tap
+  // listeners can interfere with the simple ON/OFF behavior.
+  const btn=old.cloneNode(false);
   btn.className='petty-voice petty-voice-simple';
-  btn.style.display='block';
+  btn.removeAttribute('style');
   btn.setAttribute('aria-label','Toggle Petty voice');
-  document.body.appendChild(btn);
+  old.replaceWith(btn);
 
   const on=()=>localStorage.getItem(KEY)!=='0';
   const sync=()=>{
-    btn.textContent=on()?'🔊':'🔇';
-    btn.classList.toggle('off',!on());
-    btn.title=on()?'Petty Voice: ON':'Petty Voice: OFF';
-    btn.setAttribute('aria-pressed',on()?'true':'false');
+    const enabled=on();
+    btn.textContent=enabled?'🔊':'🔇';
+    btn.classList.toggle('off',!enabled);
+    btn.title=enabled?'Petty Voice: ON':'Petty Voice: OFF';
+    btn.setAttribute('aria-pressed',enabled?'true':'false');
   };
 
   btn.addEventListener('click',e=>{
     e.preventDefault();
     e.stopPropagation();
-    const next=!on();
-    localStorage.setItem(KEY,next?'1':'0');
-    if(!next)try{window.speechSynthesis?.cancel?.()}catch{}
+    const enabled=!on();
+    localStorage.setItem(KEY,enabled?'1':'0');
+    if(enabled){try{window.unlockPettyVoice?.()}catch{}}
+    else{try{window.speechSynthesis?.cancel?.()}catch{}}
     sync();
   });
   sync();
