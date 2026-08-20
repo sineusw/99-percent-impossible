@@ -1,33 +1,15 @@
-/* Petty voice transport — Older Joe via ElevenLabs.
-   v0.6.3: use an unlocked Web Audio context so delayed lines (especially
-   post-ad outros on iPhone) can play even though they happen seconds after
-   the user's original tap. */
+/* Petty voice transport: routes existing Petty speech through server-side ElevenLabs Older Joe. */
 (()=>{
   const synth=window.speechSynthesis;
   if(!synth||synth.__olderJoePatched)return;
 
   const nativeSpeak=synth.speak.bind(synth);
   const nativeCancel=synth.cancel.bind(synth);
-  const AC=window.AudioContext||window.webkitAudioContext;
-  let ctx=null,source=null,seq=0;
-
-  function getCtx(){
-    if(!AC)return null;
-    if(!ctx)ctx=new AC();
-    return ctx;
-  }
-  async function unlock(){
-    const c=getCtx();
-    if(c&&c.state==='suspended'){try{await c.resume()}catch{}}
-  }
-  // Unlock once from real user interaction. After this, Web Audio can play
-  // Petty's delayed ad outro without Safari treating it as autoplay.
-  const unlockOnce=()=>{unlock();removeEventListener('pointerdown',unlockOnce,true);removeEventListener('touchstart',unlockOnce,true)};
-  addEventListener('pointerdown',unlockOnce,true);
-  addEventListener('touchstart',unlockOnce,true);
+  let activeAudio=null,activeUrl=null,seq=0;
 
   function cleanup(){
-    if(source){try{source.stop()}catch{}source=null}
+    if(activeAudio){try{activeAudio.pause()}catch{} activeAudio=null}
+    if(activeUrl){try{URL.revokeObjectURL(activeUrl)}catch{} activeUrl=null}
   }
 
   async function joeSpeak(utterance,mySeq){
@@ -39,24 +21,16 @@
         body:JSON.stringify({text:utterance.text||''})
       });
       if(!r.ok)throw new Error('voice '+r.status);
-      const bytes=await r.arrayBuffer();
+      const blob=await r.blob();
       if(mySeq!==seq)return;
-
-      const c=getCtx();
-      if(!c)throw new Error('Web Audio unavailable');
-      if(c.state==='suspended')await c.resume();
-      const buffer=await c.decodeAudioData(bytes.slice(0));
-      if(mySeq!==seq)return;
-
       cleanup();
-      source=c.createBufferSource();
-      const gain=c.createGain();
-      gain.gain.value=typeof utterance.volume==='number'?utterance.volume:1;
-      source.buffer=buffer;
-      source.connect(gain).connect(c.destination);
+      activeUrl=URL.createObjectURL(blob);
+      activeAudio=new Audio(activeUrl);
+      activeAudio.volume=typeof utterance.volume==='number'?utterance.volume:1;
+      await activeAudio.play();
       await new Promise((resolve,reject)=>{
-        source.onended=resolve;
-        try{source.start(0)}catch(e){reject(e)}
+        activeAudio.onended=resolve;
+        activeAudio.onerror=reject;
       });
       if(mySeq===seq)utterance.onend?.({type:'end'});
       cleanup();
@@ -72,8 +46,7 @@
     synth.speak=function(utterance){const mySeq=++seq;joeSpeak(utterance,mySeq)};
     synth.cancel=function(){seq++;cleanup();nativeCancel()};
     synth.__olderJoePatched=true;
-    window.PETTY_VOICE_ENGINE='older-joe-elevenlabs-webaudio';
-    window.unlockPettyVoice=unlock;
+    window.PETTY_VOICE_ENGINE='older-joe-elevenlabs';
   }catch(err){
     console.warn('Could not install Older Joe voice transport.',err);
   }
