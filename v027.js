@@ -26,6 +26,11 @@
     .streak-dead{display:inline-block;margin-top:9px;padding:5px 9px;border:1px solid rgba(255,42,95,.35);border-radius:7px;background:rgba(255,42,95,.1);color:#FF5A7D;font-size:11px;font-weight:1000;letter-spacing:1px;animation:deadPop .38s ease}
     .ghost{position:absolute;top:-18px;width:3px;height:68px;border-radius:3px;background:#fff;opacity:.48;box-shadow:0 0 8px rgba(255,255,255,.75),0 0 14px rgba(139,92,246,.55);transform:translateX(-50%);pointer-events:none;z-index:2}
     .ghost:after{content:'PB';position:absolute;top:70px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:1000;letter-spacing:.5px;color:#b8a5ff;white-space:nowrap}
+    body.red .modal{background:rgba(70,0,14,.86)}
+    body.red .modalbox{background:linear-gradient(180deg,#2b0711 0%,#13050a 100%);border:2px solid #FF2A5F;box-shadow:0 0 42px rgba(255,42,95,.55),0 14px 45px rgba(0,0,0,.78),inset 0 1px 1px rgba(255,255,255,.06)}
+    body.red .modalbox .score{color:#FF2A5F!important;text-shadow:0 0 26px rgba(255,42,95,.75)!important}
+    body.red .modalbox .roast{color:#ffd6df}
+    body.red .retry{border-color:#FF2A5F;box-shadow:0 0 20px rgba(255,42,95,.25),0 5px 0 #000}
     @keyframes streakPop{50%{transform:scale(1.12)}}
     @keyframes deadPop{35%{transform:scale(1.08)}}
   `;
