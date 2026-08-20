@@ -1,88 +1,65 @@
-/* 99% IMPOSSIBLE — v0.8.4 gameplay fixes
-   - Restore exact-center double white guide in Perfect Stop
-   - Keep palette color wording synced everywhere
-   - Force every faster Reaction Test time to become the saved PB (no floor/cap)
+/* 99% IMPOSSIBLE — v0.8.5 SAFE gameplay fixes
+   No MutationObservers and no control overrides.
+   - Perfect Stop: two exact-center white guide lines
+   - Palette wording: syncs after navigation/theme actions
+   - Reaction PB: accepts any legitimately faster recorded time, including <125ms
 */
 (()=>{
+  'use strict';
   const q=s=>document.querySelector(s);
-  const THEME_NAMES={default:'GREEN',cyberpunk:'PINK',goldonly:'GOLD',synthwave:'CYAN'};
-  const activeName=()=>THEME_NAMES[localStorage.getItem('n99_cos_active')||'default']||'GREEN';
+  const NAMES={default:'GREEN',cyberpunk:'PINK',goldonly:'GOLD',synthwave:'CYAN'};
+  const colorName=()=>NAMES[localStorage.getItem('n99_cos_active')||'default']||'GREEN';
 
+  // Visual-only guide overlay. pointer-events:none means it can never block taps.
   const style=document.createElement('style');
   style.textContent=`
-    .target::after{
-      content:'';
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      background:
-        linear-gradient(90deg,
-          transparent calc(50% - 6px),
-          rgba(255,255,255,.98) calc(50% - 6px),
-          rgba(255,255,255,.98) calc(50% - 4px),
-          transparent calc(50% - 4px),
-          transparent calc(50% + 4px),
-          rgba(255,255,255,.98) calc(50% + 4px),
-          rgba(255,255,255,.98) calc(50% + 6px),
-          transparent calc(50% + 6px)
-        );
-      filter:drop-shadow(0 0 4px rgba(255,255,255,.8));
-      border-radius:inherit;
-    }
-  `;
+    .stopstage .target{position:absolute}
+    .stopstage .target::after{
+      content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+      background:linear-gradient(90deg,
+        transparent calc(50% - 7px),
+        rgba(255,255,255,.98) calc(50% - 7px),rgba(255,255,255,.98) calc(50% - 5px),
+        transparent calc(50% - 5px),transparent calc(50% + 5px),
+        rgba(255,255,255,.98) calc(50% + 5px),rgba(255,255,255,.98) calc(50% + 7px),
+        transparent calc(50% + 7px));
+      filter:drop-shadow(0 0 4px rgba(255,255,255,.85));z-index:2
+    }`;
   document.head.appendChild(style);
 
-  function setText(el,text){if(el&&el.textContent!==text)el.textContent=text}
   function syncWords(){
-    const name=activeName(), low=name.toLowerCase();
-    const title=q('#title')?.textContent||'';
+    const name=colorName(),low=name.toLowerCase(),title=q('#title')?.textContent||'';
     if(title==='PERFECT STOP'){
-      setText(q('#prompt'),'Tap START, then stop the moving white marker inside the bright '+low+' target.');
-      setText(q('.stopstage .note'),'WHITE LINE → '+name+' TARGET');
-      const sl=q('.stopstage .sl');
-      if(sl&&/WHITE HITS/i.test(sl.textContent))setText(sl,'TAP STOP WHEN WHITE HITS '+name);
-    }
-    if(title==='REACTION TEST'){
-      setText(q('#prompt'),'Tap START, wait for the entire box to turn bright '+low+', then tap the '+low+' box.');
-      const rx=q('.rx');
-      if(rx){
-        const div=rx.querySelector('div');
-        if(div&&/GREEN/i.test(div.textContent))div.textContent=div.textContent.replace(/GREEN/gi,name);
-      }
-      const p=q('#primary');
-      if(p&&/GREEN/i.test(p.textContent))p.textContent=p.textContent.replace(/GREEN/gi,name);
+      const p=q('#prompt'),note=q('.stopstage .note'),sl=q('.stopstage .sl');
+      if(p)p.textContent=`Tap START, then stop the moving white marker inside the bright ${low} target.`;
+      if(note)note.textContent=`WHITE LINE → ${name} TARGET`;
+      if(sl&&/WHITE HITS/i.test(sl.textContent))sl.textContent=`TAP STOP WHEN WHITE HITS ${name}`;
+    }else if(title==='REACTION TEST'){
+      const p=q('#prompt');
+      if(p)p.textContent=`Tap START, wait for the entire box to turn bright ${low}, then tap the ${low} box.`;
+      const rx=q('.rx div');
+      if(rx&&/green|pink|gold|cyan/i.test(rx.textContent))rx.textContent=rx.textContent.replace(/green|pink|gold|cyan/gi,low);
     }
     const card=q('.card[data-g="reaction"] small');
-    setText(card,'Tap the instant it turns '+low);
+    if(card)card.textContent=`Tap the instant it turns ${low}`;
   }
 
-  // Re-sync after game redraws and palette changes without changing controls.
-  const root=q('#game');
-  if(root)new MutationObserver(()=>requestAnimationFrame(syncWords)).observe(root,{childList:true,subtree:true,attributes:true});
+  // Run only after real user actions; never capture, cancel, prevent, or replace a control event.
   document.addEventListener('click',e=>{
-    if(e.target?.closest?.('.cos-btn,.card,#retry,#primary'))setTimeout(syncWords,0);
-  },true);
+    const el=e.target?.closest?.('.card,.cos-btn,#primary,#retry,#back');
+    if(!el)return;
+    setTimeout(syncWords,30);
+    setTimeout(syncWords,180);
 
-  // PB safety net: any legitimately displayed faster reaction time becomes the saved best.
-  // There is intentionally NO 125ms floor and NO lower clamp.
-  let lastSeen='';
-  function syncReactionPB(){
-    if((q('#mg')?.textContent||'')!=='REACTION TEST')return;
-    const s=(q('#ms')?.textContent||'').trim();
-    if(!/^\d+ms$/i.test(s)||s===lastSeen)return;
-    lastSeen=s;
-    const ms=Number.parseInt(s,10);
-    if(!Number.isFinite(ms))return;
-    const key='n99_reaction_best',raw=localStorage.getItem(key),old=raw===null?Infinity:Number(raw);
-    if(ms<old){
-      localStorage.setItem(key,String(ms));
-      setText(q('#best'),ms+'ms');
-      const lvl=q('.head .lvl');
-      if(lvl)setText(lvl,'TARGET '+ms+'ms');
-    }
-  }
-  const modal=q('#modal');
-  if(modal)new MutationObserver(()=>queueMicrotask(syncReactionPB)).observe(modal,{attributes:true,childList:true,subtree:true,characterData:true});
+    // PB safety net after a Reaction Test result has had time to render.
+    if(el.matches('#primary'))setTimeout(()=>{
+      if((q('#mg')?.textContent||'').trim()!=='REACTION TEST')return;
+      const text=(q('#ms')?.textContent||'').trim();
+      const m=text.match(/^(\d+)ms$/i);if(!m)return;
+      const ms=Number(m[1]);if(!Number.isFinite(ms))return;
+      const key='n99_reaction_best',raw=localStorage.getItem(key),old=raw===null?Infinity:Number(raw);
+      if(ms<old){localStorage.setItem(key,String(ms));const b=q('#best');if(b)b.textContent=ms+'ms';}
+    },80);
+  });
 
   syncWords();
 })();
