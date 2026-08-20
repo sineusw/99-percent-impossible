@@ -1,7 +1,7 @@
-/* 99% IMPOSSIBLE — streak-aware ad timing + Petty ad banter
+/* 99% IMPOSSIBLE — streak-aware ad timing + reliable Petty ad banter
    Ads are queued, never dropped directly on top of a result.
    A hot streak delays the ad; it appears only at a natural retry break.
-   Petty gets a full line BEFORE the ad, then another AFTER it.
+   Every ad gets exactly one Petty line BEFORE and one AFTER.
    Placeholder remains until a real mobile ad network is connected. */
 (()=>{
 const AK=n=>'n99_ads_'+n;
@@ -9,38 +9,54 @@ const CK=n=>'n99_cos_'+n;
 const hasPass=()=>localStorage.getItem(CK('ragepass'))==='1';
 let adOpen=false,pending=false,lastAdAttempt=+(localStorage.getItem(AK('lastAttempt'))||0);
 
-const PRE_AD_PAUSE=4200;      // let Older Joe finish the setup line
-const SIM_AD_SECONDS=5;       // longer test break; real ad network will own this later
-const POST_AD_PAUSE=180;      // tiny beat before the punchline
+const PRE_AD_PAUSE=4700;
+const SIM_AD_SECONDS=5;
+const POST_AD_PAUSE=450;
 
-function pettyLine(poolName){
+const BEFORE_LINES=[
+  'And now, a brief message from the people funding your suffering.',
+  'Do not go anywhere. Capitalism has requested a moment.',
+  'Please enjoy this advertisement while I review your performance.',
+  'We will return shortly to your regularly scheduled disappointment.',
+  'A commercial break. Apparently humiliation alone does not pay the bills.',
+  'Hold that thought. Someone has paid to interrupt your suffering.'
+];
+const AFTER_LINES=[
+  'Welcome back to your suffering.',
+  'And we return to the experiment.',
+  'Commercial break complete. Your problems remain.',
+  'Welcome back. Unfortunately, your score is still here.',
+  'Right. Where were we? Ah yes. Struggling.',
+  'And we are back. I hope the advertisement gave you time to reflect.'
+];
+let beforeIndex=+(sessionStorage.getItem('n99_ad_before_i')||0);
+let afterIndex=+(sessionStorage.getItem('n99_ad_after_i')||0);
+
+function nextLine(lines,type){
+  let i=type==='before'?beforeIndex:afterIndex;
+  const text=lines[i%lines.length];
+  i++;
+  if(type==='before'){beforeIndex=i;sessionStorage.setItem('n99_ad_before_i',String(i));}
+  else{afterIndex=i;sessionStorage.setItem('n99_ad_after_i',String(i));}
+  return text;
+}
+
+function forcePetty(text){
   const pp=window.PettyPersonality;
-  const pool=pp?.pools?.[poolName];
-  if(!pp||!pool?.length)return false;
-  const line=pp.choose?.(pool);
-  if(!line?.text)return false;
-  pp.speak?.(line.text);
-  return true;
+  if(!pp?.speak||!text)return false;
+  // Result/idle commentary can still be finishing when an ad is queued.
+  // Reset Petty's local speech lock, then force this ad line through Older Joe.
+  try{window.speechSynthesis?.cancel?.()}catch{}
+  try{return pp.speak(text,true)!==false}catch{return false}
 }
 
-function beforeAd(){
-  return pettyLine('adBefore');
-}
-
-function afterAd(){
-  // Always give Petty the last word after the break.
-  if(pettyLine('adAfter'))return;
-  window.PettyPersonality?.speak?.('Welcome back to your suffering.');
-}
+function beforeAd(){return forcePetty(nextLine(BEFORE_LINES,'before'));}
+function afterAd(){return forcePetty(nextLine(AFTER_LINES,'after'));}
 
 function playPlaceholderAd(onComplete=()=>{}){
   if(adOpen)return;
   adOpen=true;
-
-  // Petty speaks first. If voice is unavailable, don't make the player stare
-  // at dead air — shorten the lead-in automatically.
-  const spoke=beforeAd();
-  const leadIn=spoke?PRE_AD_PAUSE:350;
+  beforeAd();
 
   setTimeout(()=>{
     const overlay=document.createElement('div');
@@ -55,21 +71,21 @@ function playPlaceholderAd(onComplete=()=>{}){
       if(n<=0){
         clearInterval(t);
         overlay.remove();
-        adOpen=false;
+        // Keep the ad lock until Petty's post-ad line has been launched so a
+        // rapid tap cannot start another game/comment and steal the voice.
         setTimeout(()=>{
           afterAd();
+          adOpen=false;
           onComplete();
         },POST_AD_PAUSE);
       }
     },1000);
-  },leadIn);
+  },PRE_AD_PAUSE);
 }
 
 function currentAttempt(){return +(localStorage.getItem('n99_total')||document.querySelector('#tot')?.textContent||0)}
 function streak(){return +(localStorage.getItem('n99_currentStreak')||0)}
 
-// Base cadence: roughly every 5 completed attempts, but never while the player
-// is hot. Streak 2+ postpones; hard cap at 9 attempts since the previous ad.
 function updateDue(){
   if(hasPass())return;
   const now=currentAttempt(),gap=now-lastAdAttempt,hot=streak()>=2;
@@ -80,8 +96,6 @@ function updateDue(){
 const tot=document.querySelector('#tot');
 if(tot)new MutationObserver(updateDue).observe(tot,{childList:true,characterData:true,subtree:true});
 
-// Natural placement: player has seen the result and chooses to continue.
-// If the streak is still hot, keep delaying unless the hard cap was reached.
 document.addEventListener('click',e=>{
   if(!e.target?.matches?.('#retry,#close'))return;
   updateDue();
