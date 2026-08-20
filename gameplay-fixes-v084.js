@@ -7,7 +7,6 @@
   'use strict';
   const q=s=>document.querySelector(s);
 
-  // Visual-only center guides. pointer-events:none means they can never block taps.
   const style=document.createElement('style');
   style.textContent=`
     .stopstage .target{position:absolute}
@@ -23,22 +22,18 @@
     }`;
   document.head.appendChild(style);
 
-  // Reaction Test should measure the first contact. The old handler measured pointerup,
-  // which could add ~80-150ms while a finger was held down and could miss a real PB.
   const play=q('#play');
   if(play){
     play.addEventListener('pointerdown',e=>{
       try{
-        if(window.st?.g==='reaction'&&window.st?.run){
+        if(typeof st!=='undefined'&&st.g==='reaction'&&st.run){
           e.preventDefault();
-          if(typeof window.rxHit==='function')window.rxHit();
-          else if(typeof rxHit==='function')rxHit();
+          if(typeof rxHit==='function')rxHit();
         }
       }catch{}
     },{passive:false});
   }
 
-  // Ask the palette layer to refresh text after gameplay redraws.
   document.addEventListener('click',e=>{
     if(!e.target?.closest?.('.card,#primary,#retry,#back,.cos-btn'))return;
     setTimeout(()=>window.N99Cosmetics?.syncColorWords?.(),30);
