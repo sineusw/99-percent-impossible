@@ -34,11 +34,11 @@ module.exports = async function handler(req, res) {
         text,
         model_id: 'eleven_multilingual_v2',
         voice_settings: {
-          stability: 0.62,
-          similarity_boost: 0.82,
-          style: 0.12,
+          stability: 0.50,
+          similarity_boost: 0.84,
+          style: 0.34,
           use_speaker_boost: true,
-          speed: 0.94
+          speed: 0.91
         }
       })
     });
