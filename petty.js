@@ -1,4 +1,4 @@
-/* 99% IMPOSSIBLE — Petty Personality v1
+/* 99% IMPOSSIBLE — Petty Personality v1.1
    Standalone personality layer. No gameplay function patches.
    Adds contextual callbacks, petty achievements, return jokes,
    milestone jokes, and an optional device voice announcer. */
@@ -9,7 +9,7 @@
   const q=s=>document.querySelector(s);
   const pick=a=>a[Math.floor(Math.random()*a.length)];
   const now=Date.now();
-  let speaking=false,lastResultKey='',lastTotal=+(q('#tot')?.textContent||0),toastTimer=0;
+  let speaking=false,lastResultKey='',lastTotal=+(q('#tot')?.textContent||0),toastTimer=0,audioUnlocked=false;
 
   const style=document.createElement('style');
   style.textContent=`
@@ -31,29 +31,55 @@
 
   const voiceBtn=document.createElement('button');
   voiceBtn.className='petty-voice';
-  voiceBtn.setAttribute('aria-label','Toggle Petty voice');
+  voiceBtn.setAttribute('aria-label','Toggle or test Petty voice');
   document.body.appendChild(voiceBtn);
 
   function voiceOn(){return get('voice','1')==='1'}
-  function syncVoiceBtn(){voiceBtn.textContent=voiceOn()?'🔊':'🔇';voiceBtn.classList.toggle('off',!voiceOn());voiceBtn.title=voiceOn()?'Petty Voice: ON':'Petty Voice: OFF'}
-  voiceBtn.onclick=()=>{set('voice',voiceOn()?'0':'1');if(!voiceOn())window.speechSynthesis?.cancel();syncVoiceBtn();showToast('VOICE '+(voiceOn()?'ON':'OFF'),voiceOn()?'Classic Petty is listening.':'Fine. Suffer in silence.','PETTY SETTINGS',2200)};
-  syncVoiceBtn();
+  function syncVoiceBtn(){voiceBtn.textContent=voiceOn()?'🔊':'🔇';voiceBtn.classList.toggle('off',!voiceOn());voiceBtn.title=voiceOn()?'Petty Voice: ON — tap to test':'Petty Voice: OFF — tap to turn on'}
 
   function chooseVoice(){
     const voices=window.speechSynthesis?.getVoices?.()||[];
     return voices.find(v=>/^en-GB/i.test(v.lang))||voices.find(v=>/^en-/i.test(v.lang))||null;
   }
-  function speak(text){
-    if(!voiceOn()||!('speechSynthesis' in window)||!text||speaking)return;
+  function speak(text,force=false){
+    if((!voiceOn()&&!force)||!('speechSynthesis' in window)||!text||speaking)return false;
     try{
       window.speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(text);
       const v=chooseVoice(); if(v)u.voice=v;
-      u.lang=v?.lang||'en-GB';u.rate=.93;u.pitch=.88;u.volume=.9;
-      speaking=true;u.onend=u.onerror=()=>{speaking=false};
+      u.lang=v?.lang||'en-GB';u.rate=.93;u.pitch=.88;u.volume=1;
+      speaking=true;
+      u.onstart=()=>{audioUnlocked=true};
+      u.onend=u.onerror=()=>{speaking=false};
       window.speechSynthesis.speak(u);
-    }catch(e){speaking=false}
+      return true;
+    }catch(e){speaking=false;return false}
   }
+
+  voiceBtn.onclick=()=>{
+    // iPhone Safari/WebView generally needs speech to begin directly inside
+    // a user gesture. If voice is OFF, turn it on and immediately test it.
+    // If it is already ON, tapping the speaker simply re-tests/unlocks audio.
+    if(!voiceOn())set('voice','1');
+    syncVoiceBtn();
+    showToast('VOICE TEST','If you hear this, Petty can talk.','PETTY SETTINGS',2600);
+    speaking=false;
+    const ok=speak('Oh good. You can hear me now.',true);
+    if(!ok)showToast('VOICE BLOCKED','Your browser blocked device speech. We’ll use recorded audio later.','PETTY SETTINGS',3600);
+  };
+  syncVoiceBtn();
+
+  // Long-press/right-click style fallback is not reliable on mobile, so expose
+  // a simple double-tap behavior to turn voice back OFF without adding UI.
+  let lastVoiceTap=0;
+  voiceBtn.addEventListener('pointerup',()=>{
+    const t=Date.now();
+    if(t-lastVoiceTap<420){
+      set('voice','0');window.speechSynthesis?.cancel();speaking=false;syncVoiceBtn();
+      showToast('VOICE OFF','Fine. Suffer in silence.','PETTY SETTINGS',2200);
+      lastVoiceTap=0;
+    }else lastVoiceTap=t;
+  });
 
   function showToast(title,sub='',kicker='PETTY ACHIEVEMENT',ms=3400,voice=''){
     clearTimeout(toastTimer);
@@ -69,7 +95,6 @@
     set('ach_'+id,'1');showToast(title,sub,'PETTY ACHIEVEMENT',3800,voice);return true;
   }
 
-  // Return / comeback callbacks. We only show these after a meaningful absence.
   const previousSeen=+(get('lastSeen','0')||0);
   set('lastSeen',now);
   if(previousSeen){
@@ -108,7 +133,7 @@
 
   const PB_LINES=['NEW PERSONAL BEST. Took you long enough.','Wait… you actually got better?','Progress detected. Annoying, but noted.'];
   const STREAK_LINES=['Streak dead. We’ll pretend that never happened.','That streak had a family.','And just like that… character development.'];
-  const PERFECT_LINES=['Congratulations. We were starting to think you couldn’t read the instructions.','Oh. You actually did it. That’s inconvenient.','HE DID IT. EVERYBODY ACT SURPRISED.'];
+  const PERFECT_LINES=['Congratulations. We were starting to think you couldn’t read the instructions.','Oh. You actually did it. That’s inconvenient.','Everybody act surprised. You actually did it.'];
   const EARLY_LINES=['The button wasn’t even ready for you.','You lost to a color that hadn’t appeared yet.','Patience lasted exactly zero business days.'];
   const SLOW_LINES=['The signal arrived eventually.','That reaction needed a connecting flight.','Good news: the button is still there.'];
 
@@ -143,13 +168,12 @@
   const modal=q('#modal');
   if(modal)new MutationObserver(handleResult).observe(modal,{attributes:true,attributeFilter:['class'],childList:true,characterData:true,subtree:true});
 
-  // Public event hook for future recorded voice packs. Later packs can listen
-  // to this instead of touching gameplay code.
   window.PettyPersonality={
-    version:'1.0',
+    version:'1.1',
     speak,
     showToast,
     achievement,
+    get audioUnlocked(){return audioUnlocked},
     emit(type,detail={}){document.dispatchEvent(new CustomEvent('petty:event',{detail:{type,...detail}}))}
   };
 })();
