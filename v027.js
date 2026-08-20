@@ -150,5 +150,11 @@
     if(old===null||sc>old)S('stop_bestD',d);
   };
 
+  // Closing the score modal should not leave the duplicate inline result behind.
+  const closeResult=()=>{q('#modal')?.classList.add('hide');q('#res')?.classList.add('hide')};
+  const close=q('#close'),scoreModal=q('#modal');
+  if(close)close.onclick=closeResult;
+  if(scoreModal)scoreModal.onclick=e=>{if(e.target===scoreModal)closeResult()};
+
   updateStreakBadge();
 })();
