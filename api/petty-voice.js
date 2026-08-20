@@ -23,9 +23,9 @@ module.exports = async function handler(req, res) {
   if (!text || text.length > 420) return res.status(400).json({ error: 'Invalid text' });
 
   try {
-    // Flash is ElevenLabs' low-latency model. Petty's lines are short reactions,
-    // so prioritize response speed while keeping Older Joe's character settings.
-    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_128&optimize_streaming_latency=4`, {
+    // Flash + maximum streaming optimization + a smaller MP3 payload.
+    // This keeps Older Joe while cutting transfer/decode time for short reactions.
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_22050_32&optimize_streaming_latency=4`, {
       method: 'POST',
       headers: {
         'xi-api-key': apiKey,
@@ -36,11 +36,11 @@ module.exports = async function handler(req, res) {
         text,
         model_id: 'eleven_flash_v2_5',
         voice_settings: {
-          stability: 0.46,
+          stability: 0.43,
           similarity_boost: 0.84,
-          style: 0.38,
+          style: 0.42,
           use_speaker_boost: true,
-          speed: 0.94
+          speed: 0.96
         }
       })
     });
