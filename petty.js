@@ -1,4 +1,4 @@
-/* 99% IMPOSSIBLE — Petty Personality v2.0
+/* 99% IMPOSSIBLE — Petty Personality v2.1
    Standalone dialogue engine. No gameplay function patches.
    Adds time/day/holiday awareness, first-launch + return greetings,
    contextual memory, rarity/cooldowns, unique-line tracking and achievements. */
@@ -19,8 +19,10 @@
     .petty-toast b{display:block;font-family:'Teko','Arial Black',sans-serif;font-size:24px;line-height:1.02;letter-spacing:.6px;text-transform:uppercase}
     .petty-toast small{display:block;margin-top:3px;color:#aaa6b2;font-size:10px;font-weight:700}
     .petty-aside{margin:11px auto 2px;padding:8px 10px;max-width:340px;border:1px dashed rgba(255,255,255,.12);border-radius:8px;color:#b8b4c0;font-size:11px;font-weight:800;line-height:1.35}
-    .petty-voice{position:fixed;left:14px;bottom:max(14px,env(safe-area-inset-bottom));z-index:40;width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,.18);background:linear-gradient(180deg,#25202c,#121016);box-shadow:0 4px 14px rgba(0,0,0,.45);color:#fff;font-size:18px;touch-action:manipulation}
+    .petty-aside::before{content:'PETTY: ';color:var(--neon-pink,#FF2E95);letter-spacing:.7px}
+    .petty-voice{position:fixed;left:14px;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 66px);z-index:40;width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,.18);background:linear-gradient(180deg,#25202c,#121016);box-shadow:0 4px 14px rgba(0,0,0,.45);color:#fff;font-size:18px;touch-action:manipulation}
     .petty-voice.off{opacity:.55;filter:grayscale(.65)}
+    body:has(#modal:not(.hide)) .petty-voice{opacity:.28;pointer-events:none}
   `;
   document.head.appendChild(style);
 
@@ -32,7 +34,7 @@
   function chooseVoice(){const vs=window.speechSynthesis?.getVoices?.()||[];return vs.find(v=>/^en-GB/i.test(v.lang))||vs.find(v=>/^en-/i.test(v.lang))||null}
   function speak(text,force=false){
     if((!voiceOn()&&!force)||!('speechSynthesis' in window)||!text||speaking)return false;
-    try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=chooseVoice();if(v)u.voice=v;u.lang=v?.lang||'en-GB';u.rate=.93;u.pitch=.88;u.volume=1;speaking=true;u.onstart=()=>{audioUnlocked=true};u.onend=u.onerror=()=>{speaking=false};window.speechSynthesis.speak(u);return true}catch(e){speaking=false;return false}
+    try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=chooseVoice();if(v)u.voice=v;u.lang=v?.lang||'en-GB';u.rate=.91;u.pitch=.86;u.volume=1;speaking=true;u.onstart=()=>{audioUnlocked=true};u.onend=u.onerror=()=>{speaking=false};window.speechSynthesis.speak(u);return true}catch(e){speaking=false;return false}
   }
   function showToast(title,sub='',kicker='PETTY ACHIEVEMENT',ms=3400,voice=''){clearTimeout(toastTimer);toast.querySelector('.kicker').textContent=kicker;toast.querySelector('b').textContent=title;toast.querySelector('small').textContent=sub;toast.classList.add('on');if(voice)speak(voice);toastTimer=setTimeout(()=>toast.classList.remove('on'),ms)}
   function achievement(id,title,sub,voice=''){if(get('ach_'+id)==='1')return false;set('ach_'+id,'1');showToast(title,sub,'PETTY ACHIEVEMENT',3900,voice);return true}
@@ -40,7 +42,6 @@
   voiceBtn.onclick=()=>{if(!voiceOn())set('voice','1');syncVoiceBtn();showToast('VOICE TEST','If you hear this, Petty can talk.','PETTY SETTINGS',2600);speaking=false;speak('Oh good. You can hear me now.',true)};
   let lastVoiceTap=0;voiceBtn.addEventListener('pointerup',()=>{const t=Date.now();if(t-lastVoiceTap<420){set('voice','0');window.speechSynthesis?.cancel();speaking=false;syncVoiceBtn();showToast('VOICE OFF','Fine. Suffer in silence.','PETTY SETTINGS',2200);lastVoiceTap=0}else lastVoiceTap=t});syncVoiceBtn();
 
-  // ----- Dialogue memory -----
   const heard=()=>{try{return JSON.parse(get('heard','{}'))||{}}catch{return {}}};
   const markHeard=id=>{const h=heard();h[id]={count:(h[id]?.count||0)+1,session,at:Date.now()};set('heard',JSON.stringify(h));set('unique',Object.keys(h).length)};
   function eligible(line){const h=heard()[line.id];if(!h)return true;const cd=line.cooldown??3;return session-(h.session||0)>=cd}
@@ -95,23 +96,22 @@
   function addAside(text){const mr=q('#mr');if(!mr||!text)return;mr.querySelector('.petty-aside')?.remove();const d=document.createElement('div');d.className='petty-aside';d.textContent=text;mr.appendChild(d)}
   function handleResult(){
     const modal=q('#modal');if(!modal||modal.classList.contains('hide'))return;
-    const score=(q('#ms')?.textContent||'').trim(),game=(q('#mg')?.textContent||'').trim(),meta=(q('#mm')?.textContent||'').trim(),roast=(q('#mr')?.textContent||'').trim();
-    const key=[game,score,meta,roast].join('|');if(!score||key===lastResultKey)return;lastResultKey=key;
+    const score=(q('#ms')?.textContent||'').trim(),game=(q('#mg')?.textContent||'').trim(),meta=(q('#mm')?.textContent||'').trim(),roast=(q('#mr')?.childNodes?.[0]?.textContent||q('#mr')?.textContent||'').trim();
+    const key=[game,score,meta].join('|');if(!score||key===lastResultKey)return;lastResultKey=key;
     const isPB=/NEW PERSONAL BEST/i.test(meta),streakDead=/STREAK DEAD/i.test(roast),perfect=(game==='PERFECT TIMER'&&/^1\.000s$/.test(score))||(game==='PERFECT STOP'&&parseFloat(score)>=99.95)||(game==='REACTION TEST'&&parseFloat(score)<=170);
     let pool=null;
-    if(perfect){pool=pools.perfect;achievement('first_perfect','FINALLY.','You did the impossible. Please remain humble.','You actually did it. That is inconvenient.')}
+    if(perfect){pool=pools.perfect;achievement('first_perfect','FINALLY.','You did the impossible. Please remain humble.','')}
     else if(streakDead)pool=pools.streak;
     else if(isPB)pool=pools.pb;
     else if(score==='TOO EARLY')pool=pools.early;
     else if(game==='REACTION TEST'&&parseFloat(score)>=350)pool=pools.slow;
     else if(Math.random()<.24)pool=pools.generic;
-    if(pool){const line=choose(pool);if(line){setTimeout(()=>addAside(line.text),80);if(Math.random()<.72)setTimeout(()=>speak(line.text),180)}}
+    if(pool){const line=choose(pool);if(line){setTimeout(()=>addAside(line.text),80);setTimeout(()=>speak(line.text),180)}}
   }
   const modal=q('#modal');if(modal)new MutationObserver(handleResult).observe(modal,{attributes:true,attributeFilter:['class'],childList:true,characterData:true,subtree:true});
 
-  // Hooks for the standalone ad layer and future voice packs.
   document.addEventListener('petty:ad-before',()=>{if(Math.random()<.35){const x=choose(pools.adBefore);if(x)speak(x.text)}});
   document.addEventListener('petty:ad-after',()=>{if(Math.random()<.45){const x=choose(pools.adAfter);if(x)speak(x.text)}});
 
-  window.PettyPersonality={version:'2.0',speak,showToast,achievement,choose,pools,get audioUnlocked(){return audioUnlocked},get uniqueLines(){return +(get('unique','0')||0)},emit(type,detail={}){document.dispatchEvent(new CustomEvent('petty:event',{detail:{type,...detail}}))}};
+  window.PettyPersonality={version:'2.1',speak,showToast,achievement,choose,pools,get audioUnlocked(){return audioUnlocked},get uniqueLines(){return +(get('unique','0')||0)},emit(type,detail={}){document.dispatchEvent(new CustomEvent('petty:event',{detail:{type,...detail}}))}};
 })();
