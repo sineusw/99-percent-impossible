@@ -40,16 +40,17 @@
     if(!st.tgt)return;
     cancelAnimationFrame(st.raf);untick();st.run=0;
     let c=st.tgt.x+st.tgt.w/2,d=Math.abs(st.pos-c),sc=Math.max(0,100-d/50*100),
+        visibleSc=Math.round((sc+Number.EPSILON)*10)/10,
         raw=localStorage.getItem(K('stop_best')),old=raw===null?null:+raw,isPB=old===null||sc>old,
         hit=st.pos>=st.tgt.x&&st.pos<=st.tgt.x+st.tgt.w,
         edgeDist=hit?0:Math.min(Math.abs(st.pos-st.tgt.x),Math.abs(st.pos-(st.tgt.x+st.tgt.w)));
 
     bump();if(isPB)S('stop_best',sc);
 
-    // Difficulty quality uses the existing visible Perfect Stop score.
+    // Difficulty quality uses the same one-decimal score shown to the player.
     const outcome=D.evaluatePerfectStopAttempt({
       hit,
-      accuracy:sc/100,
+      accuracy:visibleSc/100,
       currentTier:stopTier,
       streakSaveTriggered:false
     });
@@ -63,8 +64,8 @@
     let ro=hit?(sc>98?pick(ROAST.stop.great):pick(ROAST.stop.hit)):(edgeDist<=3?pick(ROAST.stop.near):pick(ROAST.stop.bad)),
         ti=tier(sc),delta=deltaMark('stop_lastD',d,'%',1),
         done=()=>{
-          show(sc.toFixed(1)+'%',ro,hit?'TARGET HIT':'TARGET MISSED',
-            `I got ${sc.toFixed(1)}% on Perfect Stop in 99% IMPOSSIBLE and my phone almost blew up 💀 bet you can't beat this.`,
+          show(visibleSc.toFixed(1)+'%',ro,hit?'TARGET HIT':'TARGET MISSED',
+            `I got ${visibleSc.toFixed(1)}% on Perfect Stop in 99% IMPOSSIBLE and my phone almost blew up 💀 bet you can't beat this.`,
             ti,isPB,!hit||ti==='fail',delta);
           primary.textContent='TRY AGAIN'
         };
