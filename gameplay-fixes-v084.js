@@ -1,6 +1,6 @@
-/* 99% IMPOSSIBLE — SAFE gameplay fixes v0.9.2
+/* 99% IMPOSSIBLE — SAFE gameplay fixes v0.9.3
    - Perfect Stop: two exact-center white guide lines
-   - Reaction Test: score from the actual finger-touch timestamp
+   - Reaction Test: score from earliest physical touch on mobile
    - Palette wording/color sync delegated to cosmetics.js
 */
 (()=>{
@@ -23,26 +23,48 @@
   document.head.appendChild(style);
 
   const play=q('#play');
+  let touchHandled=false;
+
+  function scoreReactionFromEvent(e){
+    try{
+      if(typeof st==='undefined'||st.g!=='reaction'||!st.run)return false;
+
+      e.preventDefault?.();
+
+      // Use the browser event timestamp itself. On iOS, touchstart fires
+      // earlier than the compatibility pointer event and is the closest
+      // timestamp we can get to the player's actual finger contact.
+      if(st.ready&&st.start>0){
+        const now=performance.now();
+        const rawTs=Number(e.timeStamp);
+        const eventNow=Number.isFinite(rawTs)&&Math.abs(rawTs-now)<60000?rawTs:now;
+        const exactElapsed=Math.max(0,eventNow-st.start);
+
+        // rxHit() is still the ONE function that displays and saves the score.
+        // Shift its start reference so its performance.now() calculation equals
+        // the captured physical-touch elapsed time.
+        st.start=performance.now()-exactElapsed;
+      }
+
+      if(typeof rxHit==='function')rxHit();
+      return true;
+    }catch{return false}
+  }
+
   if(play){
+    // iPhone/iPad: earliest reliable physical contact event.
+    play.addEventListener('touchstart',e=>{
+      if(scoreReactionFromEvent(e)){
+        touchHandled=true;
+        setTimeout(()=>{touchHandled=false},120);
+      }
+    },{passive:false,capture:true});
+
+    // Mouse / stylus / browsers without touchstart. Ignore the compatibility
+    // pointer event that follows an already-handled mobile touch.
     play.addEventListener('pointerdown',e=>{
-      try{
-        if(typeof st!=='undefined'&&st.g==='reaction'&&st.run){
-          e.preventDefault();
-
-          // Safari can deliver the handler a few dozen ms after the physical touch.
-          // Use the pointer event's own timestamp so the modal, saved PB and the
-          // player's actual tap all use the exact same moment.
-          if(st.ready&&st.start>0){
-            const now=performance.now();
-            const rawTs=Number(e.timeStamp);
-            const eventNow=Number.isFinite(rawTs)&&Math.abs(rawTs-now)<60000?rawTs:now;
-            const exactElapsed=Math.max(0,eventNow-st.start);
-            st.start=performance.now()-exactElapsed;
-          }
-
-          if(typeof rxHit==='function')rxHit();
-        }
-      }catch{}
+      if(touchHandled||e.pointerType==='touch')return;
+      scoreReactionFromEvent(e);
     },{passive:false,capture:true});
   }
 
