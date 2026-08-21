@@ -1,6 +1,6 @@
-/* 99% IMPOSSIBLE — v0.8.6 SAFE gameplay fixes
+/* 99% IMPOSSIBLE — SAFE gameplay fixes v0.9.2
    - Perfect Stop: two exact-center white guide lines
-   - Reaction Test: record the instant the finger touches, not when it lifts
+   - Reaction Test: score from the actual finger-touch timestamp
    - Palette wording/color sync delegated to cosmetics.js
 */
 (()=>{
@@ -28,10 +28,22 @@
       try{
         if(typeof st!=='undefined'&&st.g==='reaction'&&st.run){
           e.preventDefault();
+
+          // Safari can deliver the handler a few dozen ms after the physical touch.
+          // Use the pointer event's own timestamp so the modal, saved PB and the
+          // player's actual tap all use the exact same moment.
+          if(st.ready&&st.start>0){
+            const now=performance.now();
+            const rawTs=Number(e.timeStamp);
+            const eventNow=Number.isFinite(rawTs)&&Math.abs(rawTs-now)<60000?rawTs:now;
+            const exactElapsed=Math.max(0,eventNow-st.start);
+            st.start=performance.now()-exactElapsed;
+          }
+
           if(typeof rxHit==='function')rxHit();
         }
       }catch{}
-    },{passive:false});
+    },{passive:false,capture:true});
   }
 
   document.addEventListener('click',e=>{
