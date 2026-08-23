@@ -3,6 +3,7 @@
    - Perfect Stop STOP scores on physical press, not finger release.
    - START / TRY AGAIN keep normal release behavior.
    - Mobile touch uses touchstart; mouse/stylus use pointerdown.
+   - Backgrounding cancels an active attempt without counting a miss.
 */
 (()=>{
   'use strict';
@@ -39,6 +40,15 @@
     return true;
   }
 
+  function cancelInterruptedAttempt(){
+    if(typeof st==='undefined'||!st.run)return;
+    stopGestureActive=false;
+    touchHandled=false;
+    // reset() already owns RAF/timeout/tick cleanup and does not bump attempts
+    // or mutate streak state, so an OS/browser interruption is neutral.
+    if(typeof reset==='function')reset();
+  }
+
   primary.addEventListener('touchstart',e=>{
     if(scoreStopFromPress(e)){
       touchHandled=true;
@@ -66,4 +76,9 @@
 
   primary.addEventListener('pointercancel',()=>{stopGestureActive=false},{capture:true});
   primary.addEventListener('touchcancel',()=>{stopGestureActive=false;touchHandled=false},{capture:true});
+
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)cancelInterruptedAttempt();
+  });
+  window.addEventListener('pagehide',cancelInterruptedAttempt);
 })();
