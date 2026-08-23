@@ -41,8 +41,9 @@
     cancelAnimationFrame(st.raf);untick();st.run=0;
     let c=st.tgt.x+st.tgt.w/2,d=Math.abs(st.pos-c),sc=Math.max(0,100-d/50*100),
         visibleSc=Math.round((sc+Number.EPSILON)*10)/10,
-        raw=localStorage.getItem(K('stop_best')),old=raw===null?null:+raw,isPB=old===null||sc>old,
+        raw=localStorage.getItem(K('stop_best')),old=raw===null?null:+raw,
         hit=st.pos>=st.tgt.x&&st.pos<=st.tgt.x+st.tgt.w,
+        isPB=hit&&(old===null||sc>old),
         edgeDist=hit?0:Math.min(Math.abs(st.pos-st.tgt.x),Math.abs(st.pos-(st.tgt.x+st.tgt.w)));
 
     bump();if(isPB)S('stop_best',sc);
@@ -59,8 +60,8 @@
     // Retire the old persisted difficulty value so returning players always start fresh.
     S('stop_streak',0);
 
-    // Existing game-wide streak/PB/scoring behavior remains untouched.
-    streak(sc>=97);
+    // A miss can never advance the game-wide streak.
+    streak(hit&&sc>=97);
     let ro=hit?(sc>98?pick(ROAST.stop.great):pick(ROAST.stop.hit)):(edgeDist<=3?pick(ROAST.stop.near):pick(ROAST.stop.bad)),
         ti=tier(sc),delta=deltaMark('stop_lastD',d,'%',1),
         done=()=>{
@@ -70,6 +71,9 @@
           primary.textContent='TRY AGAIN'
         };
     if(!hit&&edgeDist<=3)nearReveal('stop',d.toFixed(1)+'% FROM CENTER','MISSED BY '+edgeDist.toFixed(1)+'% OF TRACK',done);
-    else done()
+    else done();
+
+    // Single source of truth for downstream wrappers/cosmetics.
+    return {hit,isPB,score:sc,visibleScore:visibleSc,distance:d};
   };
 })();
