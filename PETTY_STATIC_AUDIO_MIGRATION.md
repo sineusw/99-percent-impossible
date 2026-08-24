@@ -11,6 +11,8 @@ Active Petty speech currently comes from:
 
 Legacy `petty-v3.js`, `petty-v4.js`, `petty-v5.js`, and `petty-slang-v1.js` remain in the repository but are not loaded by the current `index.html`, so they are intentionally excluded from the production audio inventory.
 
+Draft PR #5 (`reaction-next`) also contains 16 new Reaction-specific Petty lines. The generator now detects `reaction-next.js` when present and automatically includes its suspicious/elite/fast Petty pools, so the static batch remains complete if PR #5 lands first.
+
 ## Voice issue found
 
 The existing `/api/petty-voice` runtime path depends on ElevenLabs on every uncached phrase. Vercel runtime error history contains ElevenLabs HTTP 400 failures for the selected Older Joe voice with `free_users_not_allowed` / Creator-tier-required messaging. This makes runtime generation a reliability and latency risk in addition to a cost risk.
@@ -29,7 +31,8 @@ The transport preserves `speechSynthesis.speak/cancel` semantics, `onstart/onend
 
 Created `scripts/generate-petty-audio.mjs`, a one-time source-of-truth generator that:
 
-- extracts active spoken lines from the four production sources above;
+- extracts active spoken lines from the four current production sources;
+- optionally includes the 16 pending Reaction-specific Petty lines if `reaction-next.js` exists;
 - deduplicates identical phrases;
 - uses the same Older Joe voice ID and ElevenLabs settings as the current API route;
 - skips MP3s that already exist, so reruns do not regenerate completed clips;
@@ -45,6 +48,16 @@ Core `app.js` still scores Reaction Test through `play.onpointerup`, meaning rea
 
 Created and wired `reaction-press-input-v1.js` so Reaction now scores on `touchstart` for touch and `pointerdown` for mouse/stylus, with duplicate-event/release suppression and the existing TOO EARLY behavior preserved.
 
+Important integration note: PR #5 redefines Reaction scoring/content but does not replace the core release-driven `play.onpointerup` trigger. If PR #5 merges, retain the physical-press input patch or fold equivalent logic into that branch before production merge.
+
+## Verification
+
+- Migration branch deploys successfully on Vercel.
+- Final preview HTML is HTTP 200 and references the new static transport and Reaction press patch.
+- Both new JavaScript assets are served successfully from the preview.
+- Final Vercel build completed with no build errors.
+- Production `main` remains unchanged.
+
 ## Safety / rollout
 
-All work is isolated on branch `petty-static-audio-migration`; `main` was not changed directly. Static audio playback is backward-compatible while the MP3 directory is empty because it falls through to the existing voice route and then device voice.
+All work is isolated on branch `petty-static-audio-migration` and draft PR #6. Static audio playback is backward-compatible while the MP3 directory is empty because it falls through to the existing voice route and then device voice. Do not merge PR #6 until the MP3 batch is materialized and iPhone/Android audio + interruption behavior is device-tested.
