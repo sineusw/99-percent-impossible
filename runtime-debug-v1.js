@@ -1,13 +1,19 @@
-/* 99% IMPOSSIBLE — temporary runtime diagnostics v1
-   Enabled only with ?debug=1. Observes state; does not change gameplay/ad logic. */
+/* 99% IMPOSSIBLE — temporary runtime diagnostics v1.1
+   Enabled only with ?debug=1. Observes state; does not change gameplay/ad logic.
+   Collapsed by default so device testing is not obstructed. */
 (()=>{
 'use strict';
 const qs=new URLSearchParams(location.search);if(qs.get('debug')!=='1')return;
-const lines=[];let panel=null,pre=null;
+const lines=[];let shell=null,panel=null,pre=null,badge=null,expanded=false;
 function stamp(){return performance.now().toFixed(1)}
 function safe(v){try{return typeof v==='string'?v:JSON.stringify(v)}catch{return String(v)}}
-function log(tag,msg,data){const text=`${stamp()} [${tag}] ${msg}${data===undefined?'':' '+safe(data)}`;lines.push(text);if(lines.length>120)lines.shift();console.log(text,data===undefined?'':data);if(pre){pre.textContent=lines.join('\n');pre.scrollTop=pre.scrollHeight}}
-function ensurePanel(){if(panel)return;panel=document.createElement('div');panel.id='n99-runtime-debug';panel.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(0,0,0,.92);color:#9fffcf;border-top:1px solid #00ffa3;font:10px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;max-height:42vh;padding:26px 8px 8px;box-sizing:border-box';panel.innerHTML='<div style="position:absolute;top:5px;left:8px;font-weight:800;color:#fff">DEBUG MODE · screenshot this panel</div><button id="n99-debug-copy" style="position:absolute;top:3px;right:8px;font:10px system-ui;padding:3px 7px">COPY</button><pre style="margin:0;max-height:35vh;overflow:auto;white-space:pre-wrap;word-break:break-word"></pre>';document.body.appendChild(panel);pre=panel.querySelector('pre');panel.querySelector('#n99-debug-copy').onclick=()=>navigator.clipboard?.writeText(lines.join('\n')).catch(()=>{});log('DBG','enabled',{adtest:qs.get('adtest'),noads:qs.get('noads')})}
+function refreshBadge(){if(badge)badge.textContent='DBG '+lines.length}
+function log(tag,msg,data){const text=`${stamp()} [${tag}] ${msg}${data===undefined?'':' '+safe(data)}`;lines.push(text);if(lines.length>160)lines.shift();console.log(text,data===undefined?'':data);refreshBadge();if(pre){pre.textContent=lines.join('\n');pre.scrollTop=pre.scrollHeight}}
+function setExpanded(next){expanded=!!next;if(!shell)return;panel.style.display=expanded?'block':'none';badge.style.display=expanded?'none':'block';shell.style.pointerEvents='none'}
+function ensurePanel(){if(shell)return;shell=document.createElement('div');shell.id='n99-runtime-debug-shell';shell.style.cssText='position:fixed;inset:0;z-index:2147483647;pointer-events:none;font-family:ui-monospace,SFMono-Regular,Menlo,monospace';
+ badge=document.createElement('button');badge.id='n99-debug-badge';badge.type='button';badge.textContent='DBG 0';badge.style.cssText='position:absolute;right:10px;bottom:10px;pointer-events:auto;border:1px solid #00ffa3;background:rgba(0,0,0,.82);color:#9fffcf;border-radius:999px;padding:8px 10px;font:700 11px/1 system-ui;box-shadow:0 4px 18px rgba(0,0,0,.35)';badge.onclick=e=>{e.preventDefault();e.stopPropagation();setExpanded(true)};
+ panel=document.createElement('div');panel.id='n99-runtime-debug';panel.style.cssText='display:none;position:absolute;left:8px;right:8px;bottom:8px;max-height:46vh;pointer-events:auto;background:rgba(0,0,0,.96);color:#9fffcf;border:1px solid #00ffa3;border-radius:12px;font:10px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;padding:34px 8px 8px;box-sizing:border-box;box-shadow:0 10px 30px rgba(0,0,0,.6)';panel.innerHTML='<div style="position:absolute;top:8px;left:10px;font-weight:800;color:#fff">DEBUG MODE</div><button id="n99-debug-collapse" style="position:absolute;top:5px;right:64px;font:10px system-ui;padding:4px 7px">HIDE</button><button id="n99-debug-copy" style="position:absolute;top:5px;right:8px;font:10px system-ui;padding:4px 7px">COPY</button><pre style="margin:0;max-height:38vh;overflow:auto;-webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-word"></pre>';
+ shell.appendChild(badge);shell.appendChild(panel);document.body.appendChild(shell);pre=panel.querySelector('pre');panel.querySelector('#n99-debug-collapse').onclick=e=>{e.preventDefault();e.stopPropagation();setExpanded(false)};panel.querySelector('#n99-debug-copy').onclick=e=>{e.preventDefault();e.stopPropagation();navigator.clipboard?.writeText(lines.join('\n')).catch(()=>{}};log('DBG','enabled',{adtest:qs.get('adtest'),noads:qs.get('noads')});setExpanded(false)}
 function gameState(){const s=typeof st!=='undefined'?st:null,a=window.N99Ads;return{g:s?.g,run:s?.run,ready:s?.ready,locked:s?.locked,total:+(localStorage.getItem('n99_total')||0),streak:+(localStorage.getItem('n99_currentStreak')||0),pending:a?.pending,adOpen:a?.adOpen,claimed:a?.adBoundaryClaimed,adOpened:a?.adOpened,claiming:a?.claimInProgress,visible:document.visibilityState,modalHidden:document.querySelector('#modal')?.classList.contains('hide')}}
 function audioState(){const c=typeof st!=='undefined'?st.ctx:null;return{exists:!!c,state:c?.state||'none',currentTime:c?.currentTime}}
 function changed(a,b){return JSON.stringify(a)!==JSON.stringify(b)}
@@ -23,5 +29,5 @@ function install(){ensurePanel();log('STATE','initial',gameState());log('AUDIO',
  const origResume=typeof st!=='undefined'&&st.ctx?.resume?st.ctx.resume:null;log('DBG','hooks installed',{toneWrapped:typeof window.tone==='function',rxStartWrapped:typeof window.rxStart==='function',rxHitWrapped:typeof window.rxHit==='function',resumePresent:!!origResume});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.N99RuntimeDebug={log,lines,state:gameState,audio:audioState};
+window.N99RuntimeDebug={log,lines,state:gameState,audio:audioState,expand:()=>setExpanded(true),collapse:()=>setExpanded(false)};
 })();
