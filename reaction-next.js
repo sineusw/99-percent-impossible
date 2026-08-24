@@ -50,6 +50,18 @@
     {id:'rxbot07',text:'Bro tapped before his brain got the notification.'},
     {id:'rxbot08',text:'Absolutely not. Do it again.'}
   ];
+  const elitePetty=[
+    {id:'rxelite01',text:'That percentage is disgusting. Do it again.'},
+    {id:'rxelite02',text:'Okay, those reflexes are actually suspicious.'},
+    {id:'rxelite03',text:'One hundred percent? Calm down, robot.'},
+    {id:'rxelite04',text:'Nah. That was elite elite.'}
+  ];
+  const fastPetty=[
+    {id:'rxpct01',text:'Look at that percentage. Your thumb finally woke up.'},
+    {id:'rxpct02',text:'That percentage is getting dangerous.'},
+    {id:'rxpct03',text:'Okay. The milliseconds and the percentage both say you cooked.'},
+    {id:'rxpct04',text:'Now THAT percentage actually looks respectable.'}
+  ];
 
   function publish(result){
     window.N99ReactionResult=result;
@@ -57,16 +69,26 @@
     return result;
   }
 
-  // Temporarily feed Petty's existing perfect-result consumer the dedicated
-  // suspicious pool. The authoritative tier comes from N99ReactionResult;
-  // no reaction timing or percentage is recalculated here.
-  function armSuspiciousPetty(){
+  // Petty consumes the authoritative result tier. We temporarily swap only the
+  // pool his legacy modal observer is about to read, then restore it next task.
+  // No timing, percentage, PB, or tier is independently recalculated here.
+  function armReactionPetty(result){
     const pp=window.PettyPersonality;
-    if(!pp?.pools?.perfect)return ()=>{};
-    const old=pp.pools.perfect;
-    pp.pools.suspicious=suspiciousPetty;
-    pp.pools.perfect=suspiciousPetty;
-    return ()=>setTimeout(()=>{if(pp.pools.perfect===suspiciousPetty)pp.pools.perfect=old},0);
+    if(!pp?.pools||!result)return ()=>{};
+    let key=null,pool=null;
+    if(result.tier==='suspicious'){
+      key='perfect';pool=suspiciousPetty;pp.pools.suspicious=suspiciousPetty;
+    }else if(result.tier==='extreme'||result.tier==='elite'||result.tier==='perfect'){
+      key='perfect';pool=elitePetty;
+    }else if(result.tier==='epic'){
+      key='veryClose';pool=fastPetty;
+    }else if(result.tier==='strong'){
+      key='good';pool=fastPetty;
+    }
+    if(!key||!Array.isArray(pp.pools[key]))return ()=>{};
+    const old=pp.pools[key];
+    pp.pools[key]=pool;
+    return ()=>setTimeout(()=>{if(pp.pools[key]===pool)pp.pools[key]=old},0);
   }
 
   window.N99ReactionScoring={reactionPercent,reactionTier};
@@ -131,7 +153,7 @@
     const ro=reactionMs<180?pick(ROAST.reaction.elite):reactionMs<=250?pick(ROAST.reaction.good):pick(ROAST.reaction.slow);
     const delta=deltaMark('reaction_lastMs',reactionMs,'ms',0);
     const suspicious=result.tier==='suspicious';
-    const restorePetty=suspicious?armSuspiciousPetty():()=>{};
+    const restorePetty=armReactionPetty(result);
     const visualTier=suspicious?'subtle':result.tier==='extreme'||result.tier==='elite'?'epic':rtier(reactionMs);
     const label=suspicious?'🤖 SUSPICIOUSLY FAST':result.tier==='extreme'?'EXTREMELY FAST':result.tier==='elite'?'ELITE REACTION':'REACTION TIME';
     const done=()=>{
