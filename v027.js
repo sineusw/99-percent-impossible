@@ -142,14 +142,9 @@
 
   const baseStopStop=stopStop;
   stopStop=function(){
-    if(!st.tgt)return baseStopStop();
-    const oldRaw=localStorage.getItem(K('stop_best'));
-    const old=oldRaw===null?null:+oldRaw;
-    const c=st.tgt.x+st.tgt.w/2;
-    const d=Math.abs(st.pos-c);
-    const sc=Math.max(0,100-d/50*100);
-    baseStopStop();
-    if(old===null||sc>old)S('stop_bestD',d);
+    const result=baseStopStop();
+    if(result?.hit&&result.isPB)S('stop_bestD',result.distance);
+    return result;
   };
 
   // Closing the score modal should not leave the duplicate inline result behind.
