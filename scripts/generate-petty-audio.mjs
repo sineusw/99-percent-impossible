@@ -17,9 +17,8 @@ function hashText(text){
   return (h>>>0).toString(16).padStart(8,'0');
 }
 
-const unescapeJs=s=>vm.runInNewContext(`'${s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}'`);
-
 async function read(name){return fs.readFile(path.join(ROOT,name),'utf8')}
+async function readOptional(name){try{return await read(name)}catch{return ''}}
 
 function extractLCalls(src){
   const out=[];
@@ -35,6 +34,19 @@ function extractConstArray(src,name){
   return m?evalArrayLiteral(m[1]):[];
 }
 
+function extractNamedObjectArrays(src,names){
+  const out=[];
+  for(const name of names){
+    const m=src.match(new RegExp(`const\\s+${name}=([\\s\\S]*?]);`));
+    if(!m)continue;
+    try{
+      const rows=evalArrayLiteral(m[1]);
+      rows.forEach((x,i)=>{if(x?.text)out.push({id:x.id||`${name}-${i+1}`,text:x.text})});
+    }catch{}
+  }
+  return out;
+}
+
 function extractGreetingLines(src){
   const lines=[];
   for(const m of src.matchAll(/p\.push\(([^;]+)\);/g)){
@@ -47,15 +59,20 @@ function extractGreetingLines(src){
 }
 
 async function inventory(){
-  const [petty,interrupt,ads,greetings]=await Promise.all([
-    read('petty.js'),read('petty-interrupt-lines-v091.js'),read('ads.js'),read('petty-v6.js')
+  const [petty,interrupt,ads,greetings,reactionNext]=await Promise.all([
+    read('petty.js'),
+    read('petty-interrupt-lines-v091.js'),
+    read('ads.js'),
+    read('petty-v6.js'),
+    readOptional('reaction-next.js')
   ]);
   const rows=[
     ...extractLCalls(petty).map(x=>({...x,source:'petty.js'})),
     ...extractLCalls(interrupt).map(x=>({...x,source:'petty-interrupt-lines-v091.js'})),
     ...extractConstArray(ads,'BEFORE_LINES').map((text,i)=>({id:`ad-before-${i+1}`,text,source:'ads.js'})),
     ...extractConstArray(ads,'AFTER_LINES').map((text,i)=>({id:`ad-after-${i+1}`,text,source:'ads.js'})),
-    ...extractGreetingLines(greetings).map((text,i)=>({id:`greeting-${i+1}`,text,source:'petty-v6.js'}))
+    ...extractGreetingLines(greetings).map((text,i)=>({id:`greeting-${i+1}`,text,source:'petty-v6.js'})),
+    ...extractNamedObjectArrays(reactionNext,['suspiciousPetty','elitePetty','fastPetty']).map(x=>({...x,source:'reaction-next.js'}))
   ];
   const seen=new Set();
   return rows.filter(r=>{
