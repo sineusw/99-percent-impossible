@@ -69,23 +69,21 @@
     return result;
   }
 
-  // Petty consumes the authoritative result tier. We temporarily swap only the
-  // pool his legacy modal observer is about to read, then restore it next task.
-  // No timing, percentage, PB, or tier is independently recalculated here.
+  // Petty consumes the authoritative result object. The pool key only bridges
+  // his legacy modal observer; result.tier chooses the content and result.reactionMs
+  // chooses which legacy slot that observer will read. No score is recomputed.
   function armReactionPetty(result){
     const pp=window.PettyPersonality;
-    if(!pp?.pools||!result)return ()=>{};
-    let key=null,pool=null;
+    if(!pp?.pools||!result||!Number.isFinite(result.reactionMs))return ()=>{};
+    let pool=null;
     if(result.tier==='suspicious'){
-      key='perfect';pool=suspiciousPetty;pp.pools.suspicious=suspiciousPetty;
-    }else if(result.tier==='extreme'||result.tier==='elite'||result.tier==='perfect'){
-      key='perfect';pool=elitePetty;
-    }else if(result.tier==='epic'){
-      key='veryClose';pool=fastPetty;
-    }else if(result.tier==='strong'){
-      key='good';pool=fastPetty;
-    }
-    if(!key||!Array.isArray(pp.pools[key]))return ()=>{};
+      pool=suspiciousPetty;pp.pools.suspicious=suspiciousPetty;
+    }else if(['extreme','elite','perfect'].includes(result.tier))pool=elitePetty;
+    else if(['epic','strong'].includes(result.tier))pool=fastPetty;
+    if(!pool)return ()=>{};
+    const m=result.reactionMs;
+    const key=m<=170?'perfect':m<=210?'veryClose':m<=280?'good':m>=350?'slow':'reaction';
+    if(!Array.isArray(pp.pools[key]))return ()=>{};
     const old=pp.pools[key];
     pp.pools[key]=pool;
     return ()=>setTimeout(()=>{if(pp.pools[key]===pool)pp.pools[key]=old},0);
