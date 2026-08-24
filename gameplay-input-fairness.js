@@ -33,34 +33,43 @@
   `;
   document.head.appendChild(feedbackStyle);
 
-  // Safari can resume an AudioContext asynchronously. Also keep false-start
-  // tones in the midrange: the old 85/150 Hz hit is weak on phone speakers.
-  if(typeof failSound==='function'){
-    const fallbackFailSound=failSound;
-    failSound=function(){
-      try{
-        untick();
-        const c=typeof audio==='function'?audio():null;
-        const playFail=()=>{
-          tone(440,.11,'sawtooth',.075);
-          tone(220,.18,'square',.055,.045);
-        };
-        if(c?.state==='running')return playFail();
-        if(c?.resume)return c.resume().then(()=>{if(c.state==='running')playFail()}).catch(()=>fallbackFailSound());
-        return playFail();
-      }catch{
-        return fallbackFailSound();
-      }
-    };
+  // Safari can resume an AudioContext asynchronously. Keep the Reaction
+  // false-start hit in phone-friendly midrange without changing global fail audio.
+  function reactionFalseStartSound(fallback){
+    try{
+      untick();
+      const c=typeof audio==='function'?audio():null;
+      const playFail=()=>{
+        tone(440,.11,'sawtooth',.075);
+        tone(220,.18,'square',.055,.045);
+      };
+      if(c?.state==='running')return playFail();
+      if(c?.resume)return c.resume().then(()=>{if(c.state==='running')playFail()}).catch(()=>fallback?.());
+      return playFail();
+    }catch{
+      return fallback?.();
+    }
   }
 
-  // Wrap the final loaded show() so the visible score modal gets the false-start
-  // punch after all earlier result/Petty wrappers have done their work.
+  // Wrap the final loaded show() so TOO EARLY gets the mobile-safe fail sound
+  // only for this synchronous result path, then restore the original failSound.
+  // The visible score modal also gets the false-start punch after result wrappers run.
   if(typeof show==='function'){
     const baseShow=show;
     show=function(score,...rest){
-      const result=baseShow(score,...rest);
-      if(typeof st!=='undefined'&&st.g==='reaction'&&score==='TOO EARLY'){
+      const falseStart=typeof st!=='undefined'&&st.g==='reaction'&&score==='TOO EARLY';
+      let originalFailSound=null;
+      if(falseStart&&typeof failSound==='function'){
+        originalFailSound=failSound;
+        failSound=()=>reactionFalseStartSound(originalFailSound);
+      }
+      let result;
+      try{
+        result=baseShow(score,...rest);
+      }finally{
+        if(originalFailSound)failSound=originalFailSound;
+      }
+      if(falseStart){
         const box=document.querySelector('.modalbox');
         if(box){
           box.classList.remove('false-start-punch');
