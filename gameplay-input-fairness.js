@@ -1,4 +1,4 @@
-/* 99% IMPOSSIBLE — gameplay input fairness v0.9.6
+/* 99% IMPOSSIBLE — gameplay input fairness v0.9.7
    - Timer STOP scores on physical press, not finger release.
    - Perfect Stop STOP scores on physical press, not finger release.
    - START / TRY AGAIN keep normal release behavior.
@@ -33,8 +33,8 @@
   `;
   document.head.appendChild(feedbackStyle);
 
-  // Safari can resume an AudioContext asynchronously. Make the existing fail
-  // sound wait until the context is actually running instead of racing resume().
+  // Safari can resume an AudioContext asynchronously. Also keep false-start
+  // tones in the midrange: the old 85/150 Hz hit is weak on phone speakers.
   if(typeof failSound==='function'){
     const fallbackFailSound=failSound;
     failSound=function(){
@@ -42,12 +42,12 @@
         untick();
         const c=typeof audio==='function'?audio():null;
         const playFail=()=>{
-          tone(150,.12,'sawtooth',.08);
-          tone(85,.18,'square',.05,.05);
+          tone(440,.11,'sawtooth',.075);
+          tone(220,.18,'square',.055,.045);
         };
         if(c?.state==='running')return playFail();
-        if(c?.resume)return c.resume().then(playFail).catch(()=>fallbackFailSound());
-        return fallbackFailSound();
+        if(c?.resume)return c.resume().then(()=>{if(c.state==='running')playFail()}).catch(()=>fallbackFailSound());
+        return playFail();
       }catch{
         return fallbackFailSound();
       }
