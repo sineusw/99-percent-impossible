@@ -1,4 +1,4 @@
-/* 99% IMPOSSIBLE — Petty static-first audio transport v1
+/* 99% IMPOSSIBLE — Petty static-first audio transport v1.1
    Prefers checked-in /assets/petty-audio/*.mp3 clips, falls back to the
    existing server voice route while migration is incomplete, then finally
    falls back to the device voice. Preserves speechSynthesis lifecycle so
@@ -9,8 +9,9 @@
 
   const fallbackSpeak=synth.speak.bind(synth);
   const fallbackCancel=synth.cancel.bind(synth);
-  let activeAudio=null,activeUtterance=null,activeController=null,seq=0;
-  const blobCache=new Map();
+  let activeAudio=null,activeUrl=null,activeUtterance=null,activeController=null,seq=0;
+  const staticCache=new Map();
+  const runtimeCache=new Map();
   const existenceCache=new Map();
 
   function hashText(text){
@@ -28,33 +29,35 @@
     if(activeController){try{activeController.abort()}catch{} activeController=null}
     if(activeAudio){
       try{activeAudio.pause()}catch{}
-      activeAudio.onended=activeAudio.onerror=null;
+      activeAudio.onended=activeAudio.onerror=activeAudio.onplay=null;
       activeAudio=null;
     }
+    if(activeUrl){try{URL.revokeObjectURL(activeUrl)}catch{} activeUrl=null}
   }
 
   async function fetchStatic(text,signal){
-    const path=pathFor(text);
-    if(existenceCache.get(path)===false)throw new Error('static-miss');
-    if(blobCache.has(path))return blobCache.get(path);
-    const p=fetch(path,{cache:'force-cache',signal}).then(async r=>{
-      if(!r.ok){existenceCache.set(path,false);throw new Error('static '+r.status)}
-      existenceCache.set(path,true);
+    const filePath=pathFor(text);
+    if(existenceCache.get(filePath)===false)throw new Error('static-miss');
+    if(staticCache.has(filePath))return staticCache.get(filePath);
+    const p=fetch(filePath,{cache:'force-cache',signal}).then(async r=>{
+      if(!r.ok){existenceCache.set(filePath,false);throw new Error('static '+r.status)}
+      existenceCache.set(filePath,true);
       return r.blob();
     });
-    blobCache.set(path,p);
-    try{return await p}catch(e){blobCache.delete(path);throw e}
+    staticCache.set(filePath,p);
+    try{return await p}catch(e){staticCache.delete(filePath);throw e}
   }
 
   async function fetchRuntimeFallback(text,signal){
-    const r=await fetch('/api/petty-voice',{
+    if(runtimeCache.has(text))return runtimeCache.get(text);
+    const p=fetch('/api/petty-voice',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({text}),
       signal
-    });
-    if(!r.ok)throw new Error('voice '+r.status);
-    return r.blob();
+    }).then(async r=>{if(!r.ok)throw new Error('voice '+r.status);return r.blob()});
+    runtimeCache.set(text,p);
+    try{return await p}catch(e){runtimeCache.delete(text);throw e}
   }
 
   async function loadVoice(text,signal){
@@ -81,18 +84,17 @@
       const loaded=await loadVoice(text,controller.signal);
       if(mySeq!==seq)return;
       if(activeController===controller)activeController=null;
-      const url=URL.createObjectURL(loaded.blob);
-      const a=new Audio(url);
+      activeUrl=URL.createObjectURL(loaded.blob);
+      const a=new Audio(activeUrl);
       activeAudio=a;
       a.volume=typeof utterance.volume==='number'?utterance.volume:1;
       a.preload='auto';
       a.onplay=()=>{try{utterance.onstart?.({type:'start',engine:loaded.engine})}catch{}};
       await a.play();
       await new Promise((resolve,reject)=>{a.onended=resolve;a.onerror=reject});
-      URL.revokeObjectURL(url);
       if(mySeq===seq)utterance.onend?.({type:'end',engine:loaded.engine});
       if(activeUtterance===utterance)activeUtterance=null;
-      if(activeAudio===a)activeAudio=null;
+      cleanup();
     }catch(err){
       if(mySeq!==seq||err?.name==='AbortError')return;
       cleanup();
