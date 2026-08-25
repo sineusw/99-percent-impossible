@@ -1,5 +1,5 @@
 /* Petty voice transport: routes Petty speech through server-side ElevenLabs Older Joe.
-   v0.7.3: cached preloads + proper cancel lifecycle so mute/unmute cannot strand Petty. */
+   v0.7.4: cached preloads + gesture-safe playback for first Android welcome. */
 (()=>{
   const synth=window.speechSynthesis;
   if(!synth||synth.__olderJoePatched)return;
@@ -8,6 +8,7 @@
   const nativeCancel=synth.cancel.bind(synth);
   let activeAudio=null,activeUrl=null,activeUtterance=null,seq=0;
   const cache=new Map();
+  const readyBlobs=new Map();
 
   function cleanup(){
     if(activeAudio){try{activeAudio.pause()}catch{} activeAudio=null}
@@ -15,18 +16,56 @@
   }
 
   async function fetchVoice(text){
+    text=String(text||'');
+    if(readyBlobs.has(text))return readyBlobs.get(text);
     if(cache.has(text))return cache.get(text);
     const p=fetch('/api/petty-voice',{
       method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})
-    }).then(async r=>{if(!r.ok)throw new Error('voice '+r.status);return r.blob()});
+    }).then(async r=>{
+      if(!r.ok)throw new Error('voice '+r.status);
+      const blob=await r.blob();
+      readyBlobs.set(text,blob);
+      return blob;
+    });
     cache.set(text,p);
-    try{return await p}catch(e){cache.delete(text);throw e}
+    try{return await p}catch(e){cache.delete(text);readyBlobs.delete(text);throw e}
   }
 
   window.preloadPettyVoice=text=>{
     if(!text)return Promise.resolve(false);
     return fetchVoice(String(text)).then(()=>true).catch(()=>false);
   };
+
+  // Must be called from a real user gesture on Android. Unlike joeSpeak(), this
+  // does not await a fetch before Audio.play(), so Chrome keeps the media unlock.
+  // Returns false when the requested line has not finished preloading yet.
+  window.playPreloadedPettyVoice=text=>{
+    text=String(text||'');
+    const blob=readyBlobs.get(text);
+    if(!blob)return false;
+    try{
+      seq++;
+      activeUtterance=null;
+      cleanup();
+      activeUrl=URL.createObjectURL(blob);
+      activeAudio=new Audio(activeUrl);
+      activeAudio.volume=1;
+      const a=activeAudio;
+      a.onended=a.onerror=()=>{if(activeAudio===a)cleanup()};
+      const p=a.play();
+      p?.catch?.(err=>{
+        console.warn('Preloaded Petty playback blocked.',err);
+        if(activeAudio===a)cleanup();
+      });
+      return true;
+    }catch(err){
+      console.warn('Preloaded Petty playback failed.',err);
+      cleanup();
+      return false;
+    }
+  };
+
+  window.isPettyVoicePreloaded=text=>readyBlobs.has(String(text||''));
 
   async function joeSpeak(utterance,mySeq){
     activeUtterance=utterance;
