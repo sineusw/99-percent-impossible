@@ -1,0 +1,35 @@
+name: Disable reaction SFX
+
+on:
+  push:
+    branches:
+      - fix/remove-nearmiss-beeps-v2
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Disable all Reaction non-Petty SFX
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('reaction-next.js')
+          s = p.read_text()
+          old = "function cue(name,notes){try{if(window.N99SFX?.play?.(name))return;const c=safeResumeAudio();if(!c)return;const playNotes=()=>notes.forEach((n,i)=>tone(n[0],n[1]||.05,n[2]||'sine',n[3]||.035,n[4]??i*.045));if(c.state==='running')playNotes();else c.resume?.().then(()=>{if(c.state==='running')playNotes()}).catch(()=>{})}catch{}}"
+          new = "function cue(){return}"
+          if old not in s:
+              raise SystemExit('reaction cue block not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit Reaction SFX removal
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reaction-next.js
+          git commit -m "Disable all non-Petty Reaction SFX"
+          git push
