@@ -1,0 +1,1425 @@
+{
+  "batch": "all-literal-petty-lines",
+  "count": 177,
+  "generatedAt": "2026-08-25T05:46:33.112Z",
+  "generated": 117,
+  "reused": 60,
+  "lines": [
+    {
+      "id": "t1",
+      "text": "Bro. Can you count?",
+      "hash": "ed265e4f",
+      "file": "ed265e4f.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "t2",
+      "text": "One second. ONE.",
+      "hash": "b84f8bad",
+      "file": "b84f8bad.mp3",
+      "bytes": 5869,
+      "existing": false
+    },
+    {
+      "id": "t3",
+      "text": "Fam, what was that?",
+      "hash": "8cc71176",
+      "file": "8cc71176.mp3",
+      "bytes": 5347,
+      "existing": false
+    },
+    {
+      "id": "t4",
+      "text": "Not even close, mate.",
+      "hash": "77bc869f",
+      "file": "77bc869f.mp3",
+      "bytes": 6078,
+      "existing": false
+    },
+    {
+      "id": "t5",
+      "text": "The timer just cooked you.",
+      "hash": "29259961",
+      "file": "29259961.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "t6",
+      "text": "You guessed, didn’t you?",
+      "hash": "c6ee94a0",
+      "file": "c6ee94a0.mp3",
+      "bytes": 6078,
+      "existing": false
+    },
+    {
+      "id": "t7",
+      "text": "That was rough, bro.",
+      "hash": "c00e5c85",
+      "file": "c00e5c85.mp3",
+      "bytes": 5660,
+      "existing": false
+    },
+    {
+      "id": "t8",
+      "text": "My grandma counts better.",
+      "hash": "6b01c385",
+      "file": "6b01c385.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "t9",
+      "text": "Bro got beef with one second.",
+      "hash": "0a403660",
+      "file": "0a403660.mp3",
+      "bytes": 7541,
+      "existing": false
+    },
+    {
+      "id": "t10",
+      "text": "You had one job.",
+      "hash": "57dc82fc",
+      "file": "57dc82fc.mp3",
+      "bytes": 4929,
+      "existing": false
+    },
+    {
+      "id": "t11",
+      "text": "Mate. Slower.",
+      "hash": "de79ea0e",
+      "file": "de79ea0e.mp3",
+      "bytes": 6078,
+      "existing": false
+    },
+    {
+      "id": "t12",
+      "text": "Mate. Faster.",
+      "hash": "82d53aaf",
+      "file": "82d53aaf.mp3",
+      "bytes": 5869,
+      "existing": false
+    },
+    {
+      "id": "t13",
+      "text": "That was your guess?",
+      "hash": "61692dce",
+      "file": "61692dce.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "t14",
+      "text": "The clock said nope.",
+      "hash": "00eef38d",
+      "file": "00eef38d.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "t15",
+      "text": "Yeah... run that back.",
+      "hash": "fd57aded",
+      "file": "fd57aded.mp3",
+      "bytes": 7123,
+      "existing": false
+    },
+    {
+      "id": "t16",
+      "text": "Bro, lock in.",
+      "hash": "87335d86",
+      "file": "87335d86.mp3",
+      "bytes": 4407,
+      "existing": false
+    },
+    {
+      "id": "t17",
+      "text": "That second dodged you.",
+      "hash": "93ab3b54",
+      "file": "93ab3b54.mp3",
+      "bytes": 7541,
+      "existing": false
+    },
+    {
+      "id": "t18",
+      "text": "You missed by vibes.",
+      "hash": "7e178197",
+      "file": "7e178197.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "t19",
+      "text": "Fam, count with confidence.",
+      "hash": "fd433140",
+      "file": "fd433140.mp3",
+      "bytes": 7123,
+      "existing": false
+    },
+    {
+      "id": "t20",
+      "text": "The timer is bullying you now.",
+      "hash": "a96bfab8",
+      "file": "a96bfab8.mp3",
+      "bytes": 7959,
+      "existing": false
+    },
+    {
+      "id": "s1",
+      "text": "Bro. The box was RIGHT there.",
+      "hash": "54ac744f",
+      "file": "54ac744f.mp3",
+      "bytes": 7332,
+      "existing": false
+    },
+    {
+      "id": "s2",
+      "text": "Did you close your eyes?",
+      "hash": "259f72fb",
+      "file": "259f72fb.mp3",
+      "bytes": 6078,
+      "existing": false
+    },
+    {
+      "id": "s3",
+      "text": "Fam, aim at the box.",
+      "hash": "d5b5b087",
+      "file": "d5b5b087.mp3",
+      "bytes": 6078,
+      "existing": false
+    },
+    {
+      "id": "s4",
+      "text": "You missed THAT?",
+      "hash": "b9ab6ff3",
+      "file": "b9ab6ff3.mp3",
+      "bytes": 4720,
+      "existing": false
+    },
+    {
+      "id": "s5",
+      "text": "The target is literally sitting still.",
+      "hash": "33e82c2d",
+      "file": "33e82c2d.mp3",
+      "bytes": 9736,
+      "existing": false
+    },
+    {
+      "id": "s6",
+      "text": "Mate. It does not move.",
+      "hash": "595ec390",
+      "file": "595ec390.mp3",
+      "bytes": 7959,
+      "existing": false
+    },
+    {
+      "id": "s7",
+      "text": "Where were you aiming?",
+      "hash": "7d654b76",
+      "file": "7d654b76.mp3",
+      "bytes": 5138,
+      "existing": false
+    },
+    {
+      "id": "s8",
+      "text": "Bro aimed at another game.",
+      "hash": "a8326560",
+      "file": "a8326560.mp3",
+      "bytes": 7332,
+      "existing": false
+    },
+    {
+      "id": "s9",
+      "text": "That was nasty. Not the good kind.",
+      "hash": "4fbfedcd",
+      "file": "4fbfedcd.mp3",
+      "bytes": 8482,
+      "existing": false
+    },
+    {
+      "id": "s10",
+      "text": "The box is laughing at you.",
+      "hash": "6f035216",
+      "file": "6f035216.mp3",
+      "bytes": 7541,
+      "existing": false
+    },
+    {
+      "id": "s11",
+      "text": "Almost! Just kidding.",
+      "hash": "5c4fb356",
+      "file": "5c4fb356.mp3",
+      "bytes": 6810,
+      "existing": false
+    },
+    {
+      "id": "s12",
+      "text": "Nah, you’re trolling me.",
+      "hash": "4288c7cc",
+      "file": "4288c7cc.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "s13",
+      "text": "Your thumb said nope.",
+      "hash": "7641c3b9",
+      "file": "7641c3b9.mp3",
+      "bytes": 6078,
+      "existing": false
+    },
+    {
+      "id": "s14",
+      "text": "Fam. Open your eyes.",
+      "hash": "4c9e85c8",
+      "file": "4c9e85c8.mp3",
+      "bytes": 6287,
+      "existing": false
+    },
+    {
+      "id": "s15",
+      "text": "HOW did you miss that?",
+      "hash": "4a409d6f",
+      "file": "4a409d6f.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "s16",
+      "text": "Bro missed the whole neighborhood.",
+      "hash": "bef11f01",
+      "file": "bef11f01.mp3",
+      "bytes": 7750,
+      "existing": false
+    },
+    {
+      "id": "s17",
+      "text": "That aim needs help.",
+      "hash": "7cf2792f",
+      "file": "7cf2792f.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "s18",
+      "text": "My guy went sightseeing.",
+      "hash": "fe6ccfd0",
+      "file": "fe6ccfd0.mp3",
+      "bytes": 8795,
+      "existing": false
+    },
+    {
+      "id": "s19",
+      "text": "The box was not hiding.",
+      "hash": "d6c9741e",
+      "file": "d6c9741e.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "s20",
+      "text": "Mate, that was wild.",
+      "hash": "acf321de",
+      "file": "acf321de.mp3",
+      "bytes": 5869,
+      "existing": false
+    },
+    {
+      "id": "r1",
+      "text": "Bro fell asleep.",
+      "hash": "2327e3bf",
+      "file": "2327e3bf.mp3",
+      "bytes": 5347,
+      "existing": true
+    },
+    {
+      "id": "r2",
+      "text": "Hello? Anybody home?",
+      "hash": "b5a8a0b2",
+      "file": "b5a8a0b2.mp3",
+      "bytes": 5660,
+      "existing": true
+    },
+    {
+      "id": "r3",
+      "text": "Green means GO, mate.",
+      "hash": "8c5f4ba1",
+      "file": "8c5f4ba1.mp3",
+      "bytes": 6287,
+      "existing": true
+    },
+    {
+      "id": "r4",
+      "text": "Were you texting?",
+      "hash": "255c1287",
+      "file": "255c1287.mp3",
+      "bytes": 4720,
+      "existing": true
+    },
+    {
+      "id": "r5",
+      "text": "My grandma tapped first.",
+      "hash": "4753c285",
+      "file": "4753c285.mp3",
+      "bytes": 7332,
+      "existing": true
+    },
+    {
+      "id": "r6",
+      "text": "Bro needed a warm-up.",
+      "hash": "86b30e91",
+      "file": "86b30e91.mp3",
+      "bytes": 6392,
+      "existing": true
+    },
+    {
+      "id": "r7",
+      "text": "That thumb is on vacation.",
+      "hash": "078dd2a6",
+      "file": "078dd2a6.mp3",
+      "bytes": 7123,
+      "existing": true
+    },
+    {
+      "id": "r8",
+      "text": "Wake up, fam.",
+      "hash": "c3004754",
+      "file": "c3004754.mp3",
+      "bytes": 5138,
+      "existing": true
+    },
+    {
+      "id": "r9",
+      "text": "The green light got bored.",
+      "hash": "d3f59e2b",
+      "file": "d3f59e2b.mp3",
+      "bytes": 7019,
+      "existing": true
+    },
+    {
+      "id": "r10",
+      "text": "Mate, we are waiting.",
+      "hash": "179ef2a5",
+      "file": "179ef2a5.mp3",
+      "bytes": 5451,
+      "existing": true
+    },
+    {
+      "id": "r11",
+      "text": "You good over there?",
+      "hash": "83d0b534",
+      "file": "83d0b534.mp3",
+      "bytes": 4929,
+      "existing": true
+    },
+    {
+      "id": "r12",
+      "text": "Bro lagged in real life.",
+      "hash": "2fefa24f",
+      "file": "2fefa24f.mp3",
+      "bytes": 7123,
+      "existing": true
+    },
+    {
+      "id": "r13",
+      "text": "Your thumb said five more minutes.",
+      "hash": "60c9de83",
+      "file": "60c9de83.mp3",
+      "bytes": 8273,
+      "existing": true
+    },
+    {
+      "id": "r14",
+      "text": "That was SLOW slow.",
+      "hash": "34fbb853",
+      "file": "34fbb853.mp3",
+      "bytes": 6392,
+      "existing": true
+    },
+    {
+      "id": "r15",
+      "text": "I almost took a nap.",
+      "hash": "fbbc31b1",
+      "file": "fbbc31b1.mp3",
+      "bytes": 6078,
+      "existing": true
+    },
+    {
+      "id": "r16",
+      "text": "Fam, the light had a birthday.",
+      "hash": "77347a45",
+      "file": "77347a45.mp3",
+      "bytes": 7750,
+      "existing": true
+    },
+    {
+      "id": "r17",
+      "text": "Bro reacted next week.",
+      "hash": "5fe64d53",
+      "file": "5fe64d53.mp3",
+      "bytes": 7959,
+      "existing": true
+    },
+    {
+      "id": "r18",
+      "text": "That tap came by mail.",
+      "hash": "0d55f299",
+      "file": "0d55f299.mp3",
+      "bytes": 7019,
+      "existing": true
+    },
+    {
+      "id": "r19",
+      "text": "My guy buffered.",
+      "hash": "aba9c6b3",
+      "file": "aba9c6b3.mp3",
+      "bytes": 4929,
+      "existing": true
+    },
+    {
+      "id": "r20",
+      "text": "You saw green eventually, yeah?",
+      "hash": "5a2d3425",
+      "file": "5a2d3425.mp3",
+      "bytes": 7332,
+      "existing": true
+    },
+    {
+      "id": "e1",
+      "text": "BRO. IT WASN’T EVEN READY.",
+      "hash": "9823e40c",
+      "file": "9823e40c.mp3",
+      "bytes": 7959,
+      "existing": true
+    },
+    {
+      "id": "e2",
+      "text": "What are you tapping?!",
+      "hash": "d4b06e83",
+      "file": "d4b06e83.mp3",
+      "bytes": 5347,
+      "existing": true
+    },
+    {
+      "id": "e3",
+      "text": "Fam, wait for the color!",
+      "hash": "ea40bd08",
+      "file": "ea40bd08.mp3",
+      "bytes": 6287,
+      "existing": true
+    },
+    {
+      "id": "e4",
+      "text": "Bro fought an invisible signal.",
+      "hash": "658409d5",
+      "file": "658409d5.mp3",
+      "bytes": 8064,
+      "existing": true
+    },
+    {
+      "id": "e5",
+      "text": "You panicked. I saw it.",
+      "hash": "969ca196",
+      "file": "969ca196.mp3",
+      "bytes": 6601,
+      "existing": true
+    },
+    {
+      "id": "e6",
+      "text": "Mate, calm DOWN.",
+      "hash": "040ad751",
+      "file": "040ad751.mp3",
+      "bytes": 6810,
+      "existing": true
+    },
+    {
+      "id": "e7",
+      "text": "You just tapped air.",
+      "hash": "1139adfa",
+      "file": "1139adfa.mp3",
+      "bytes": 5660,
+      "existing": true
+    },
+    {
+      "id": "e8",
+      "text": "Bro said close enough.",
+      "hash": "d69688e5",
+      "file": "d69688e5.mp3",
+      "bytes": 7332,
+      "existing": true
+    },
+    {
+      "id": "e9",
+      "text": "The signal left the chat.",
+      "hash": "81e46ba6",
+      "file": "81e46ba6.mp3",
+      "bytes": 7332,
+      "existing": true
+    },
+    {
+      "id": "e10",
+      "text": "Too early, speedy.",
+      "hash": "2c42229a",
+      "file": "2c42229a.mp3",
+      "bytes": 6078,
+      "existing": true
+    },
+    {
+      "id": "e11",
+      "text": "Fam, patience exists.",
+      "hash": "75f9f176",
+      "file": "75f9f176.mp3",
+      "bytes": 8064,
+      "existing": true
+    },
+    {
+      "id": "e12",
+      "text": "Bro jumped the whole game.",
+      "hash": "668dcb17",
+      "file": "668dcb17.mp3",
+      "bytes": 6810,
+      "existing": true
+    },
+    {
+      "id": "e13",
+      "text": "My guy tried to predict the future.",
+      "hash": "77442194",
+      "file": "77442194.mp3",
+      "bytes": 9213,
+      "existing": true
+    },
+    {
+      "id": "e14",
+      "text": "Nahhh, you pressed on a feeling.",
+      "hash": "5194fd39",
+      "file": "5194fd39.mp3",
+      "bytes": 8064,
+      "existing": true
+    },
+    {
+      "id": "e15",
+      "text": "Bro, WAIT means wait.",
+      "hash": "d5312658",
+      "file": "d5312658.mp3",
+      "bytes": 8273,
+      "existing": true
+    },
+    {
+      "id": "e16",
+      "text": "You saw nothing and still committed.",
+      "hash": "8f9dc979",
+      "file": "8f9dc979.mp3",
+      "bytes": 8273,
+      "existing": true
+    },
+    {
+      "id": "sl1",
+      "text": "Bro, wake UP.",
+      "hash": "f4975c5f",
+      "file": "f4975c5f.mp3",
+      "bytes": 4720,
+      "existing": false
+    },
+    {
+      "id": "sl2",
+      "text": "Were you making a sandwich?",
+      "hash": "01f32585",
+      "file": "01f32585.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "sl3",
+      "text": "Fam, it’s been ready.",
+      "hash": "1abc05df",
+      "file": "1abc05df.mp3",
+      "bytes": 5660,
+      "existing": false
+    },
+    {
+      "id": "sl4",
+      "text": "You can tap now, mate.",
+      "hash": "cd5d687c",
+      "file": "cd5d687c.mp3",
+      "bytes": 6287,
+      "existing": false
+    },
+    {
+      "id": "sl5",
+      "text": "That took forever.",
+      "hash": "66fd8bf2",
+      "file": "66fd8bf2.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "sl6",
+      "text": "My guy went AFK.",
+      "hash": "746a99dc",
+      "file": "746a99dc.mp3",
+      "bytes": 7332,
+      "existing": false
+    },
+    {
+      "id": "sl7",
+      "text": "Bro needed directions.",
+      "hash": "07923c63",
+      "file": "07923c63.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "sl8",
+      "text": "You missed the whole moment.",
+      "hash": "ae5d6f8b",
+      "file": "ae5d6f8b.mp3",
+      "bytes": 6810,
+      "existing": false
+    },
+    {
+      "id": "sl9",
+      "text": "Mate. Faster than THAT.",
+      "hash": "8775c91f",
+      "file": "8775c91f.mp3",
+      "bytes": 7750,
+      "existing": false
+    },
+    {
+      "id": "sl10",
+      "text": "The signal gave up on you.",
+      "hash": "ffb9316a",
+      "file": "ffb9316a.mp3",
+      "bytes": 6810,
+      "existing": false
+    },
+    {
+      "id": "sl11",
+      "text": "Bro, even I got bored.",
+      "hash": "f8a4e9b9",
+      "file": "f8a4e9b9.mp3",
+      "bytes": 7332,
+      "existing": false
+    },
+    {
+      "id": "sl12",
+      "text": "Fam, that reaction was ancient.",
+      "hash": "1b8acf32",
+      "file": "1b8acf32.mp3",
+      "bytes": 7959,
+      "existing": false
+    },
+    {
+      "id": "g01",
+      "text": "Okayyy, that was clean.",
+      "hash": "fcafb4e4",
+      "file": "fcafb4e4.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "g02",
+      "text": "Not bad, fam.",
+      "hash": "d690bcc3",
+      "file": "d690bcc3.mp3",
+      "bytes": 4929,
+      "existing": false
+    },
+    {
+      "id": "g03",
+      "text": "Bro actually locked in.",
+      "hash": "1586cf58",
+      "file": "1586cf58.mp3",
+      "bytes": 6601,
+      "existing": true
+    },
+    {
+      "id": "g04",
+      "text": "Okay, I see you.",
+      "hash": "3f3b3dde",
+      "file": "3f3b3dde.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "g05",
+      "text": "That was kinda nice.",
+      "hash": "e814f695",
+      "file": "e814f695.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "g06",
+      "text": "Mate, that was solid.",
+      "hash": "0485bbfb",
+      "file": "0485bbfb.mp3",
+      "bytes": 5660,
+      "existing": false
+    },
+    {
+      "id": "g07",
+      "text": "Low-key clean.",
+      "hash": "96681e94",
+      "file": "96681e94.mp3",
+      "bytes": 5347,
+      "existing": false
+    },
+    {
+      "id": "g08",
+      "text": "Alright, you got something.",
+      "hash": "6bbfb5af",
+      "file": "6bbfb5af.mp3",
+      "bytes": 7123,
+      "existing": false
+    },
+    {
+      "id": "g09",
+      "text": "Okay bro, respect.",
+      "hash": "ff1c3d0c",
+      "file": "ff1c3d0c.mp3",
+      "bytes": 7750,
+      "existing": false
+    },
+    {
+      "id": "g10",
+      "text": "That was way better.",
+      "hash": "9f81970a",
+      "file": "9f81970a.mp3",
+      "bytes": 5138,
+      "existing": false
+    },
+    {
+      "id": "g11",
+      "text": "You’re cooking a little.",
+      "hash": "e3fe97df",
+      "file": "e3fe97df.mp3",
+      "bytes": 5347,
+      "existing": false
+    },
+    {
+      "id": "g12",
+      "text": "Fine. That was good.",
+      "hash": "c9f12d62",
+      "file": "c9f12d62.mp3",
+      "bytes": 5451,
+      "existing": true
+    },
+    {
+      "id": "vc1",
+      "text": "OOOH! That was close.",
+      "hash": "fb2ba28d",
+      "file": "fb2ba28d.mp3",
+      "bytes": 5347,
+      "existing": false
+    },
+    {
+      "id": "vc2",
+      "text": "Nahhh, you almost had it!",
+      "hash": "cabd7836",
+      "file": "cabd7836.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "vc3",
+      "text": "Bro! That was RIGHT there.",
+      "hash": "066b6b37",
+      "file": "066b6b37.mp3",
+      "bytes": 5869,
+      "existing": false
+    },
+    {
+      "id": "vc4",
+      "text": "Okay, that one hurt.",
+      "hash": "9f7beedd",
+      "file": "9f7beedd.mp3",
+      "bytes": 6287,
+      "existing": false
+    },
+    {
+      "id": "vc5",
+      "text": "Fam, you were so close.",
+      "hash": "fdf68897",
+      "file": "fdf68897.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "vc6",
+      "text": "I can’t even roast that. Almost.",
+      "hash": "4bd21081",
+      "file": "4bd21081.mp3",
+      "bytes": 7541,
+      "existing": false
+    },
+    {
+      "id": "vc7",
+      "text": "Mate, that was nearly perfect.",
+      "hash": "1788c7c6",
+      "file": "1788c7c6.mp3",
+      "bytes": 7750,
+      "existing": false
+    },
+    {
+      "id": "vc8",
+      "text": "Okayyy! One more like that.",
+      "hash": "1cf49eaf",
+      "file": "1cf49eaf.mp3",
+      "bytes": 9213,
+      "existing": false
+    },
+    {
+      "id": "vc9",
+      "text": "Bro, you’re actually cooking.",
+      "hash": "69250c5c",
+      "file": "69250c5c.mp3",
+      "bytes": 6601,
+      "existing": false
+    },
+    {
+      "id": "vc10",
+      "text": "That was clean. Painfully close.",
+      "hash": "f7bee748",
+      "file": "f7bee748.mp3",
+      "bytes": 9213,
+      "existing": false
+    },
+    {
+      "id": "vc11",
+      "text": "Respect. That was close-close.",
+      "hash": "c7a9d1a8",
+      "file": "c7a9d1a8.mp3",
+      "bytes": 7959,
+      "existing": false
+    },
+    {
+      "id": "vc12",
+      "text": "Nah, that deserved better.",
+      "hash": "94a8d001",
+      "file": "94a8d001.mp3",
+      "bytes": 7019,
+      "existing": false
+    },
+    {
+      "id": "p1",
+      "text": "Okayyy! I see you.",
+      "hash": "b4ef82b9",
+      "file": "b4ef82b9.mp3",
+      "bytes": 7019,
+      "existing": true
+    },
+    {
+      "id": "p2",
+      "text": "Wait... you got better?",
+      "hash": "1681a1cc",
+      "file": "1681a1cc.mp3",
+      "bytes": 6392,
+      "existing": true
+    },
+    {
+      "id": "p3",
+      "text": "Nah, who helped you?",
+      "hash": "5f62295e",
+      "file": "5f62295e.mp3",
+      "bytes": 6287,
+      "existing": true
+    },
+    {
+      "id": "p4",
+      "text": "Okay, that was kinda clean.",
+      "hash": "23fcbd35",
+      "file": "23fcbd35.mp3",
+      "bytes": 6392,
+      "existing": true
+    },
+    {
+      "id": "p6",
+      "text": "Look at you go!",
+      "hash": "edec1df9",
+      "file": "edec1df9.mp3",
+      "bytes": 4616,
+      "existing": true
+    },
+    {
+      "id": "p8",
+      "text": "Who gave you skills?",
+      "hash": "b412e600",
+      "file": "b412e600.mp3",
+      "bytes": 5869,
+      "existing": true
+    },
+    {
+      "id": "p9",
+      "text": "Oh no. You’re learning.",
+      "hash": "4a6daa50",
+      "file": "4a6daa50.mp3",
+      "bytes": 5869,
+      "existing": true
+    },
+    {
+      "id": "p10",
+      "text": "Don’t get cocky now.",
+      "hash": "c1519b02",
+      "file": "c1519b02.mp3",
+      "bytes": 5660,
+      "existing": true
+    },
+    {
+      "id": "p11",
+      "text": "New best? Okay, respect.",
+      "hash": "14c5efe2",
+      "file": "14c5efe2.mp3",
+      "bytes": 8795,
+      "existing": true
+    },
+    {
+      "id": "p12",
+      "text": "My guy is improving!",
+      "hash": "c7c6a042",
+      "file": "c7c6a042.mp3",
+      "bytes": 6287,
+      "existing": true
+    },
+    {
+      "id": "st1",
+      "text": "Aaaand you ruined it.",
+      "hash": "a54a6936",
+      "file": "a54a6936.mp3",
+      "bytes": 5347,
+      "existing": false
+    },
+    {
+      "id": "st2",
+      "text": "Bro sold the streak.",
+      "hash": "219665a7",
+      "file": "219665a7.mp3",
+      "bytes": 6392,
+      "existing": false
+    },
+    {
+      "id": "st3",
+      "text": "NOOO! You had it!",
+      "hash": "6cca5e39",
+      "file": "6cca5e39.mp3",
+      "bytes": 5660,
+      "existing": false
+    },
+    {
+      "id": "st4",
+      "text": "Fam. Why would you do that?",
+      "hash": "d524254a",
+      "file": "d524254a.mp3",
+      "bytes": 7123,
+      "existing": false
+    },
+    {
+      "id": "st5",
+      "text": "There goes the streak.",
+      "hash": "432a5eb2",
+      "file": "432a5eb2.mp3",
+      "bytes": 5347,
+      "existing": false
+    },
+    {
+      "id": "st6",
+      "text": "You fumbled so hard.",
+      "hash": "f73b5882",
+      "file": "f73b5882.mp3",
+      "bytes": 6810,
+      "existing": false
+    },
+    {
+      "id": "st7",
+      "text": "Bro choked.",
+      "hash": "9b6b510c",
+      "file": "9b6b510c.mp3",
+      "bytes": 4407,
+      "existing": false
+    },
+    {
+      "id": "st8",
+      "text": "I knew it wouldn’t last.",
+      "hash": "d21f9030",
+      "file": "d21f9030.mp3",
+      "bytes": 5869,
+      "existing": false
+    },
+    {
+      "id": "st9",
+      "text": "That streak deserved better.",
+      "hash": "9742b2d4",
+      "file": "9742b2d4.mp3",
+      "bytes": 7123,
+      "existing": false
+    },
+    {
+      "id": "st10",
+      "text": "Welp. Back to zero.",
+      "hash": "5674ac3d",
+      "file": "5674ac3d.mp3",
+      "bytes": 6810,
+      "existing": false
+    },
+    {
+      "id": "st11",
+      "text": "Bro had momentum too.",
+      "hash": "2f8c1231",
+      "file": "2f8c1231.mp3",
+      "bytes": 6810,
+      "existing": false
+    },
+    {
+      "id": "st12",
+      "text": "That one hurt me too.",
+      "hash": "dd3a8d63",
+      "file": "dd3a8d63.mp3",
+      "bytes": 6078,
+      "existing": false
+    },
+    {
+      "id": "pf1",
+      "text": "BRO?! Okay, calm down.",
+      "hash": "1b59197f",
+      "file": "1b59197f.mp3",
+      "bytes": 6601,
+      "existing": true
+    },
+    {
+      "id": "pf2",
+      "text": "Nah. Do that again.",
+      "hash": "8fb1c4ee",
+      "file": "8fb1c4ee.mp3",
+      "bytes": 5660,
+      "existing": true
+    },
+    {
+      "id": "pf3",
+      "text": "WAIT. You actually did it?!",
+      "hash": "36791a68",
+      "file": "36791a68.mp3",
+      "bytes": 6601,
+      "existing": true
+    },
+    {
+      "id": "pf4",
+      "text": "Okay, show-off.",
+      "hash": "999af4f2",
+      "file": "999af4f2.mp3",
+      "bytes": 5869,
+      "existing": true
+    },
+    {
+      "id": "pf5",
+      "text": "I hate that that was perfect.",
+      "hash": "56252eec",
+      "file": "56252eec.mp3",
+      "bytes": 7332,
+      "existing": true
+    },
+    {
+      "id": "pf6",
+      "text": "Who are you right now?",
+      "hash": "990608f5",
+      "file": "990608f5.mp3",
+      "bytes": 5347,
+      "existing": true
+    },
+    {
+      "id": "pf7",
+      "text": "Fine! You win this one.",
+      "hash": "10f638cf",
+      "file": "10f638cf.mp3",
+      "bytes": 6810,
+      "existing": true
+    },
+    {
+      "id": "pf8",
+      "text": "Bro turned into a robot.",
+      "hash": "2babebf9",
+      "file": "2babebf9.mp3",
+      "bytes": 7959,
+      "existing": true
+    },
+    {
+      "id": "pf9",
+      "text": "Nah, I need a replay.",
+      "hash": "4aa967fd",
+      "file": "4aa967fd.mp3",
+      "bytes": 6392,
+      "existing": true
+    },
+    {
+      "id": "pf10",
+      "text": "Okay. That was filthy.",
+      "hash": "c9b4a2b3",
+      "file": "c9b4a2b3.mp3",
+      "bytes": 6392,
+      "existing": true
+    },
+    {
+      "id": "pf11",
+      "text": "That was PERFECT perfect.",
+      "hash": "ed2f5435",
+      "file": "ed2f5435.mp3",
+      "bytes": 7332,
+      "existing": true
+    },
+    {
+      "id": "pf12",
+      "text": "Alright bro, you cooked me.",
+      "hash": "382e77e7",
+      "file": "382e77e7.mp3",
+      "bytes": 7019,
+      "existing": true
+    },
+    {
+      "id": "x1",
+      "text": "Fam. Be serious.",
+      "hash": "c1876b30",
+      "file": "c1876b30.mp3",
+      "bytes": 5869,
+      "existing": false
+    },
+    {
+      "id": "x2",
+      "text": "Bro... no.",
+      "hash": "bf0b3457",
+      "file": "bf0b3457.mp3",
+      "bytes": 4929,
+      "existing": false
+    },
+    {
+      "id": "x3",
+      "text": "What was THAT?",
+      "hash": "cc1c8d28",
+      "file": "cc1c8d28.mp3",
+      "bytes": 4407,
+      "existing": false
+    },
+    {
+      "id": "x4",
+      "text": "Nah. Run it back.",
+      "hash": "0394af47",
+      "file": "0394af47.mp3",
+      "bytes": 5869,
+      "existing": false
+    },
+    {
+      "id": "x5",
+      "text": "My guy. Please.",
+      "hash": "9bae72ce",
+      "file": "9bae72ce.mp3",
+      "bytes": 6078,
+      "existing": false
+    },
+    {
+      "id": "x6",
+      "text": "You’re getting cooked.",
+      "hash": "ca6f2d97",
+      "file": "ca6f2d97.mp3",
+      "bytes": 5660,
+      "existing": false
+    },
+    {
+      "id": "x7",
+      "text": "That was rough.",
+      "hash": "9d9c9c26",
+      "file": "9d9c9c26.mp3",
+      "bytes": 4407,
+      "existing": false
+    },
+    {
+      "id": "x9",
+      "text": "You can do better than THAT.",
+      "hash": "012d1ce3",
+      "file": "012d1ce3.mp3",
+      "bytes": 7019,
+      "existing": false
+    },
+    {
+      "id": "x10",
+      "text": "Mate. Come on.",
+      "hash": "b603e24f",
+      "file": "b603e24f.mp3",
+      "bytes": 5347,
+      "existing": false
+    },
+    {
+      "id": "x11",
+      "text": "Ain’t no way, bro.",
+      "hash": "5cdb971b",
+      "file": "5cdb971b.mp3",
+      "bytes": 5451,
+      "existing": false
+    },
+    {
+      "id": "x12",
+      "text": "Fam, I’m trying to help you.",
+      "hash": "9b550f6e",
+      "file": "9b550f6e.mp3",
+      "bytes": 7019,
+      "existing": false
+    },
+    {
+      "id": "i1",
+      "text": "Oh. We’re just interrupting people now?",
+      "hash": "e74096b9",
+      "file": "e74096b9.mp3",
+      "bytes": 8691,
+      "existing": false
+    },
+    {
+      "id": "i2",
+      "text": "Fam, can I finish ONE sentence?",
+      "hash": "be387f45",
+      "file": "be387f45.mp3",
+      "bytes": 9736,
+      "existing": false
+    },
+    {
+      "id": "i3",
+      "text": "Bro keeps hitting retry like I’m not talking.",
+      "hash": "b4c6dc76",
+      "file": "b4c6dc76.mp3",
+      "bytes": 11303,
+      "existing": false
+    },
+    {
+      "id": "i4",
+      "text": "Nah. You definitely heard me talking.",
+      "hash": "322347ca",
+      "file": "322347ca.mp3",
+      "bytes": 8795,
+      "existing": false
+    },
+    {
+      "id": "i5",
+      "text": "DAMN. Can I finish?!",
+      "hash": "76494a4f",
+      "file": "76494a4f.mp3",
+      "bytes": 5869,
+      "existing": false
+    },
+    {
+      "id": "i6",
+      "text": "My guy, I have WORDS left.",
+      "hash": "e786451f",
+      "file": "e786451f.mp3",
+      "bytes": 10885,
+      "existing": false
+    },
+    {
+      "id": "i7",
+      "text": "You know what? Forget it. Go lose again.",
+      "hash": "b2b17c27",
+      "file": "b2b17c27.mp3",
+      "bytes": 10363,
+      "existing": false
+    },
+    {
+      "id": "i8",
+      "text": "Oh, don’t mind me. Clearly you’re busy.",
+      "hash": "ff119eba",
+      "file": "ff119eba.mp3",
+      "bytes": 10154,
+      "existing": false
+    },
+    {
+      "id": "i9",
+      "text": "I’m literally being bullied by a retry button.",
+      "hash": "50de751e",
+      "file": "50de751e.mp3",
+      "bytes": 13079,
+      "existing": false
+    },
+    {
+      "id": "i10",
+      "text": "Fine. Speedrun my disrespect too.",
+      "hash": "61ae73a1",
+      "file": "61ae73a1.mp3",
+      "bytes": 10154,
+      "existing": false
+    },
+    {
+      "id": "i11",
+      "text": "Nah nah, keep clicking. I wasn’t saying anything important.",
+      "hash": "ee423e00",
+      "file": "ee423e00.mp3",
+      "bytes": 14647,
+      "existing": false
+    },
+    {
+      "id": "i12",
+      "text": "This man has beef with complete sentences.",
+      "hash": "5f000bd2",
+      "file": "5f000bd2.mp3",
+      "bytes": 10676,
+      "existing": false
+    },
+    {
+      "id": "i13",
+      "text": "Bro, I was MID-SENTENCE.",
+      "hash": "604770ea",
+      "file": "604770ea.mp3",
+      "bytes": 8064,
+      "existing": false
+    },
+    {
+      "id": "i14",
+      "text": "Mate! Let me TALK.",
+      "hash": "5ae11078",
+      "file": "5ae11078.mp3",
+      "bytes": 5660,
+      "existing": false
+    },
+    {
+      "id": "i15",
+      "text": "Fam, you cut me off AGAIN.",
+      "hash": "7431a651",
+      "file": "7431a651.mp3",
+      "bytes": 7019,
+      "existing": false
+    },
+    {
+      "id": "i16",
+      "text": "You really said skip dialogue in real life.",
+      "hash": "1667bd6e",
+      "file": "1667bd6e.mp3",
+      "bytes": 9945,
+      "existing": false
+    },
+    {
+      "id": "rs1",
+      "text": "Oh wow. You let me finish. Growth.",
+      "hash": "0f789a1b",
+      "file": "0f789a1b.mp3",
+      "bytes": 8795,
+      "existing": false
+    },
+    {
+      "id": "rs2",
+      "text": "Look at that. A full sentence. Beautiful.",
+      "hash": "436bc45a",
+      "file": "436bc45a.mp3",
+      "bytes": 11094,
+      "existing": false
+    },
+    {
+      "id": "rs3",
+      "text": "Thank you. I finally got to finish one.",
+      "hash": "acad30f6",
+      "file": "acad30f6.mp3",
+      "bytes": 9422,
+      "existing": false
+    },
+    {
+      "id": "rs4",
+      "text": "See? Listening wasn’t that painful.",
+      "hash": "c98516b0",
+      "file": "c98516b0.mp3",
+      "bytes": 9631,
+      "existing": false
+    }
+  ]
+}
