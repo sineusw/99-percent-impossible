@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Generate priority Petty MP3 batch
+      - name: Generate full Petty MP3 library
         run: node scripts/generate-petty-static-priority.mjs
       - name: Commit generated static audio
         run: |
@@ -27,5 +27,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/petty-audio
           git diff --cached --quiet && exit 0
-          git commit -m '[static-audio] Generate priority Petty MP3 batch'
+          git commit -m '[static-audio] Generate full Petty MP3 library'
           git push origin HEAD:petty-static-batch
