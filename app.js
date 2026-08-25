@@ -33,7 +33,7 @@ function deltaMark(key,current,unit,decimals=0){let raw=localStorage.getItem(K(k
 
 function audio(){let A=window.AudioContext||window.webkitAudioContext;if(!A)return null;if(!st.ctx)st.ctx=new A;if(st.ctx.state==='suspended')st.ctx.resume();return st.ctx}
 function tone(f,d=.06,t='sine',v=.04,w=0){let c=audio();if(!c)return;let o=c.createOscillator(),g=c.createGain(),s=c.currentTime+w;o.type=t;o.frequency.value=f;g.gain.setValueAtTime(.0001,s);g.gain.exponentialRampToValueAtTime(v,s+.006);g.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(g).connect(c.destination);o.start(s);o.stop(s+d+.02)}
-function ticks(mode){untick();let b=mode==='timer'?250:mode==='stop'?190:150,i=0,ms=mode==='reaction'?360:190;st.tick=setInterval(()=>tone(b+Math.min(420,++i*11),.035,mode==='reaction'?'sine':'square',.018),ms)}
+function ticks(mode){untick();if(mode==='reaction')return;let b=mode==='timer'?250:190,i=0,ms=190;st.tick=setInterval(()=>tone(b+Math.min(420,++i*11),.035,'square',.018),ms)}
 function untick(){clearInterval(st.tick);st.tick=0}
 function failSound(){untick();tone(150,.12,'sawtooth',.08);tone(85,.18,'square',.05,.05)}
 function win(t){untick();let a=t==='perfect'?[392,523,659,784,1047,1319]:t==='epic'?[523,659,784,1047]:t==='strong'?[440,660,880]:[520,660];a.forEach((f,i)=>tone(f,.14,'triangle',t==='perfect'?.09:.06,i*.06));if(t==='perfect')tone(2093,.35,'sine',.08,.38)}
