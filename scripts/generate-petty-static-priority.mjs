@@ -16,38 +16,55 @@ function hashText(text){
   return (h>>>0).toString(16).padStart(8,'0');
 }
 
+// Inventory every literal Petty line declared through L(id, text). This keeps the
+// static library tied to the same source of truth the game uses at runtime.
 const rows=[];
 const re=/L\(\s*'([^']+)'\s*,\s*'((?:\\'|[^'])*)'\s*\)/g;
 for(const m of SOURCE.matchAll(re)){
   const id=m[1];
-  if(!/^(?:r\d+|e\d+|pf\d+|p\d+)$/.test(id))continue;
   const text=m[2].replace(/\\'/g,"'").trim();
   if(text)rows.push({id,text});
 }
 
 const unique=[];
 const seen=new Set();
-for(const row of rows){if(!seen.has(row.text)){seen.add(row.text);unique.push(row)}}
+for(const row of rows){
+  if(!seen.has(row.text)){seen.add(row.text);unique.push(row)}
+}
 await fs.mkdir(OUT,{recursive:true});
 
 const manifest=[];
 let made=0,skipped=0;
 for(const [i,row] of unique.entries()){
   const hash=hashText(row.text),file=`${hash}.mp3`,dest=path.join(OUT,file);
-  try{await fs.access(dest);skipped++;manifest.push({...row,hash,file});continue}catch{}
+  try{
+    const stat=await fs.stat(dest);
+    skipped++;
+    manifest.push({...row,hash,file,bytes:stat.size,existing:true});
+    continue;
+  }catch{}
+
   const r=await fetch(ENDPOINT,{
     method:'POST',
     headers:{Origin:ORIGIN,'Content-Type':'application/json'},
     body:JSON.stringify({text:row.text})
   });
-  if(!r.ok){throw new Error(`Petty voice ${r.status} for ${row.id}: ${(await r.text()).slice(0,300)}`)}
+  if(!r.ok)throw new Error(`Petty voice ${r.status} for ${row.id}: ${(await r.text()).slice(0,300)}`);
   const audio=Buffer.from(await r.arrayBuffer());
   if(audio.length<500)throw new Error(`Petty voice payload too small for ${row.id}`);
   await fs.writeFile(dest,audio);
   made++;
-  manifest.push({...row,hash,file,bytes:audio.length});
+  manifest.push({...row,hash,file,bytes:audio.length,existing:false});
   process.stdout.write(`\r${i+1}/${unique.length} generated=${made} existing=${skipped}`);
-  await new Promise(r=>setTimeout(r,120));
+  await new Promise(r=>setTimeout(r,150));
 }
-await fs.writeFile(path.join(OUT,'manifest-priority.json'),JSON.stringify({batch:'priority-reaction-early-perfect-pb',count:manifest.length,generatedAt:new Date().toISOString(),lines:manifest},null,2)+'\n');
-console.log(`\nDone. ${manifest.length} priority Petty lines; ${made} new clips; ${skipped} existing.`);
+
+await fs.writeFile(path.join(OUT,'manifest-all.json'),JSON.stringify({
+  batch:'all-literal-petty-lines',
+  count:manifest.length,
+  generatedAt:new Date().toISOString(),
+  generated:made,
+  reused:skipped,
+  lines:manifest
+},null,2)+'\n');
+console.log(`\nDone. ${manifest.length} total Petty lines; ${made} new clips; ${skipped} reused.`);
