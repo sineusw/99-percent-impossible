@@ -1,5 +1,5 @@
 /* Petty voice transport: routes Petty speech through server-side ElevenLabs Older Joe.
-   v0.7.4: cached preloads + gesture-safe playback for first Android welcome. */
+   v0.7.5: cached preloads + guaranteed gesture-unlocked first Android welcome. */
 (()=>{
   const synth=window.speechSynthesis;
   if(!synth||synth.__olderJoePatched)return;
@@ -9,6 +9,7 @@
   let activeAudio=null,activeUrl=null,activeUtterance=null,seq=0;
   const cache=new Map();
   const readyBlobs=new Map();
+  let welcomeCtx=null;
 
   function cleanup(){
     if(activeAudio){try{activeAudio.pause()}catch{} activeAudio=null}
@@ -36,9 +37,38 @@
     return fetchVoice(String(text)).then(()=>true).catch(()=>false);
   };
 
-  // Must be called from a real user gesture on Android. Unlike joeSpeak(), this
-  // does not await a fetch before Audio.play(), so Chrome keeps the media unlock.
-  // Returns false when the requested line has not finished preloading yet.
+  // Called from the first real user gesture. Unlock a dedicated AudioContext now,
+  // while browser user activation is definitely present. Once the already-started
+  // fetch completes, decode/play the MP3 through that unlocked context. This avoids
+  // both Android autoplay rejection and the robotic speechSynthesis fallback.
+  window.playPettyVoiceWhenReady=text=>{
+    text=String(text||'');
+    if(!text)return false;
+    try{
+      const C=window.AudioContext||window.webkitAudioContext;
+      if(!C)return false;
+      if(!welcomeCtx)welcomeCtx=new C();
+      try{welcomeCtx.resume?.()}catch{}
+      const ctx=welcomeCtx;
+      fetchVoice(text).then(async blob=>{
+        try{
+          if(ctx.state==='suspended')await ctx.resume();
+          const ab=await blob.arrayBuffer();
+          const buffer=await ctx.decodeAudioData(ab.slice(0));
+          const source=ctx.createBufferSource();
+          source.buffer=buffer;
+          source.connect(ctx.destination);
+          source.start(0);
+        }catch(err){console.warn('Petty welcome playback failed.',err)}
+      }).catch(err=>console.warn('Petty welcome preload failed.',err));
+      return true;
+    }catch(err){
+      console.warn('Could not unlock Petty welcome audio.',err);
+      return false;
+    }
+  };
+
+  // Retained for any already-buffered gesture-safe callers.
   window.playPreloadedPettyVoice=text=>{
     text=String(text||'');
     const blob=readyBlobs.get(text);
