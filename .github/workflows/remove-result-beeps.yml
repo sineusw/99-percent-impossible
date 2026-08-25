@@ -1,0 +1,35 @@
+name: Remove result beeps
+
+on:
+  push:
+    branches:
+      - fix/remove-nearmiss-beeps-v2
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove synthesized result tones
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app.js')
+          s = p.read_text()
+          old = "function fx(t,isPB,fail){play.className='play';document.body.className='';if(fail){play.classList.add('shake');document.body.classList.add('red');failSound();navigator.vibrate?.([25,35,45]);return}play.classList.add(t);document.body.classList.add(t==='perfect'?'gold':isPB||t==='epic'?'greenbg':'');win(t);navigator.vibrate?.(t==='perfect'?[30,40,70,40,110]:30);if(t==='epic'||t==='perfect')conf(t==='perfect'?65:30);if(t==='perfect')fireworks(3);else if(t==='epic')fireworks(1)}"
+          new = "function fx(t,isPB,fail){play.className='play';document.body.className='';untick();if(fail){play.classList.add('shake');document.body.classList.add('red');navigator.vibrate?.([25,35,45]);return}play.classList.add(t);document.body.classList.add(t==='perfect'?'gold':isPB||t==='epic'?'greenbg':'');navigator.vibrate?.(t==='perfect'?[30,40,70,40,110]:30);if(t==='epic'||t==='perfect')conf(t==='perfect'?65:30);if(t==='perfect')fireworks(3);else if(t==='epic')fireworks(1)}"
+          if old not in s:
+              raise SystemExit('fx block not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit result beep removal
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js
+          git commit -m "Remove synthesized result beeps"
+          git push
