@@ -1,5 +1,5 @@
 /* 99% IMPOSSIBLE — streak-aware ads + priority Petty ad banter
-   v0.10.1: claim failsafe + same-tick retry lock for device-test hardening. */
+   v0.10.2: recheck pending ads when the result modal actually settles. */
 (()=>{
 const AK=n=>'n99_ads_'+n,CK=n=>'n99_cos_'+n,hasPass=()=>localStorage.getItem(CK('ragepass'))==='1';
 const QS=new URLSearchParams(location.search),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1';
@@ -26,6 +26,7 @@ function forceOpenOrSkipAd(){if(!adBoundaryClaimed||adOpened)return;const overla
 function claimAdBoundary(){if(adBoundaryClaimed||adOpen)return false;pending=false;adBoundaryClaimed=true;adOpen=true;adOpened=false;lastAdAttempt=currentAttempt();localStorage.setItem(AK('lastAttempt'),String(lastAdAttempt));window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}const overlay=buildOverlay();beforeAd();adFailsafeTimer=setTimeout(()=>{adFailsafeTimer=0;if(adBoundaryClaimed&&!adOpened)forceOpenOrSkipAd()},AD_FAILSAFE_MS);preAdTimer=setTimeout(()=>{preAdTimer=0;if(!adBoundaryClaimed||adOpened)return;if(document.visibilityState==='hidden'){releaseAdBoundary(overlay);pending=true;return}runPlaceholderAd(overlay)},PRE_AD_PAUSE);return true}
 function tryOpenPendingAd(){updateDue();if(!pending||adOpen||adBoundaryClaimed)return false;if(hasPass()&&!AD_TEST){pending=false;return false}const now=currentAttempt(),gap=now-lastAdAttempt;if(!AD_TEST&&streak()>=2&&gap<HARD_CAP)return false;if(!safeBoundary())return false;return claimAdBoundary()}
 const tot=document.querySelector('#tot');if(tot)new MutationObserver(updateDue).observe(tot,{childList:true,characterData:true,subtree:true});
+const resultModal=document.querySelector('#modal');if(resultModal)new MutationObserver(()=>{if(resultModal.classList.contains('hide'))queueMicrotask(tryOpenPendingAd)}).observe(resultModal,{attributes:true,attributeFilter:['class']});
 document.addEventListener('click',e=>{if(!e.target?.matches?.('#retry,#close'))return;if(adOpen||adBoundaryClaimed||claimInProgress){e.preventDefault();e.stopImmediatePropagation();return}claimInProgress=true;updateDue();queueMicrotask(()=>{claimInProgress=false;tryOpenPendingAd()})},true);
 // No app-open/resume ad format by design. Resuming never calls tryOpenPendingAd().
 window.N99Ads={tryOpenPendingAd,safeBoundary,forceOpenOrSkipAd,get pending(){return pending},get adOpen(){return adOpen},get adBoundaryClaimed(){return adBoundaryClaimed},get adOpened(){return adOpened},get claimInProgress(){return claimInProgress},hardCap:HARD_CAP};
