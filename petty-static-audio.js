@@ -1,20 +1,87 @@
-/* 99% IMPOSSIBLE — Petty static-first audio transport v1.4
-   Normal path: local static MP3 -> prewarmed/runtime ElevenLabs audio.
-   If ElevenLabs audio is already prewarmed, its blob is played synchronously in the initiating gesture stack. */
+/* 99% IMPOSSIBLE — Petty HTMLAudioElement transport v2.0
+   ElevenLabs runtime only. No AudioContext, no local-MP3 probe, no device TTS in production. */
 (()=>{
-const synth=window.speechSynthesis;if(!synth||synth.__pettyStaticAudioPatched)return;
-const fallbackSpeak=synth.speak.bind(synth),fallbackCancel=synth.cancel.bind(synth),ALLOW_DEVICE_FALLBACK=new URLSearchParams(location.search).get('pettydevice')==='1';let activeAudio=null,activeUrl=null,activeUtterance=null,activeController=null,activeSource=null,welcomeCtx=null,seq=0;const staticCache=new Map(),runtimeCache=new Map(),runtimeReady=new Map(),existenceCache=new Map();
-function hashText(text){let h=0x811c9dc5;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(16).padStart(8,'0')}
-function pathFor(text){return'/assets/petty-audio/'+hashText(String(text||'').trim())+'.mp3'}
-function cleanup(){if(activeController){try{activeController.abort()}catch{}activeController=null}if(activeAudio){try{activeAudio.pause()}catch{}activeAudio.onended=activeAudio.onerror=activeAudio.onplay=null;activeAudio=null}if(activeSource){try{activeSource.stop()}catch{}activeSource.onended=null;activeSource=null}if(activeUrl){try{URL.revokeObjectURL(activeUrl)}catch{}activeUrl=null}}
-async function fetchStatic(text,signal){const filePath=pathFor(text);if(existenceCache.get(filePath)===false)throw new Error('static-miss');if(staticCache.has(filePath))return staticCache.get(filePath);const p=fetch(filePath,{cache:'force-cache',signal}).then(async r=>{if(!r.ok){existenceCache.set(filePath,false);throw new Error('static '+r.status)}existenceCache.set(filePath,true);return r.blob()});staticCache.set(filePath,p);try{return await p}catch(e){staticCache.delete(filePath);throw e}}
-async function fetchRuntimeFallback(text,signal){if(runtimeReady.has(text))return runtimeReady.get(text);if(runtimeCache.has(text))return runtimeCache.get(text);const p=fetch('/api/petty-voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal}).then(async r=>{if(!r.ok)throw new Error('voice '+r.status);const blob=await r.blob();runtimeReady.set(text,blob);return blob});runtimeCache.set(text,p);try{return await p}catch(e){runtimeCache.delete(text);runtimeReady.delete(text);throw e}}
-window.preloadPettyVoice=text=>{const t=String(text||'').trim();if(!t)return Promise.resolve(false);return fetchStatic(t).catch(()=>fetchRuntimeFallback(t)).then(()=>true).catch(()=>false)};window.PettyStaticAudio={hashText,pathFor,allowDeviceFallback:ALLOW_DEVICE_FALLBACK,isRuntimeReady:text=>runtimeReady.has(String(text||'').trim())};
-function finishUnavailable(utterance,err){try{utterance.onerror?.({type:'error',engine:'none',reason:'voice-unavailable',error:err})}catch{}try{utterance.onend?.({type:'end',engine:'none',unavailable:true})}catch{}}
-function finishUtterance(utterance,engine){if(activeUtterance===utterance)activeUtterance=null;try{utterance.onend?.({type:'end',engine})}catch{}cleanup()}
-function unlockFallbackContext(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;if(!welcomeCtx)welcomeCtx=new C();welcomeCtx.resume?.();return welcomeCtx}catch{return null}}
-async function playRuntimeFallback(utterance,text,mySeq,staticErr,ctx){if(mySeq!==seq)return;const controller=new AbortController();activeController=controller;try{const blob=await fetchRuntimeFallback(text,controller.signal);if(mySeq!==seq)return;if(activeController===controller)activeController=null;if(ctx){if(ctx.state==='suspended')await ctx.resume();const ab=await blob.arrayBuffer();if(mySeq!==seq)return;const buffer=await ctx.decodeAudioData(ab.slice(0));if(mySeq!==seq)return;const source=ctx.createBufferSource();activeSource=source;source.buffer=buffer;source.connect(ctx.destination);try{utterance.onstart?.({type:'start',engine:'runtime-context'})}catch{}source.onended=()=>{if(mySeq===seq)finishUtterance(utterance,'runtime-context')};source.start(0);return}playBlobNow(utterance,blob,mySeq,'runtime',null,staticErr)}catch(err){if(mySeq!==seq||err?.name==='AbortError')return;cleanup();if(activeUtterance===utterance)activeUtterance=null;if(ALLOW_DEVICE_FALLBACK){try{fallbackSpeak(utterance)}catch{finishUnavailable(utterance,err)}}else finishUnavailable(utterance,err||staticErr)}}
-function playBlobNow(utterance,blob,mySeq,engine,ctx,fallbackErr){if(mySeq!==seq)return false;try{activeUrl=URL.createObjectURL(blob);const a=new Audio(activeUrl);activeAudio=a;a.volume=typeof utterance.volume==='number'?utterance.volume:1;a.preload='auto';a.onplay=()=>{try{utterance.onstart?.({type:'start',engine})}catch{}};a.onended=()=>{if(mySeq===seq)finishUtterance(utterance,engine)};let failed=false;const fail=err=>{if(failed||mySeq!==seq)return;failed=true;if(activeAudio===a){try{a.pause()}catch{}activeAudio=null}a.onended=a.onerror=a.onplay=null;if(activeUrl){try{URL.revokeObjectURL(activeUrl)}catch{}activeUrl=null}if(ctx)playRuntimeFallback(utterance,String(utterance?.text||'').trim(),mySeq,err||fallbackErr,ctx);else if(ALLOW_DEVICE_FALLBACK){try{fallbackSpeak(utterance)}catch{finishUnavailable(utterance,err)}}else finishUnavailable(utterance,err||fallbackErr)};a.onerror=fail;const p=a.play();p?.catch?.(fail);return true}catch(err){if(ctx){playRuntimeFallback(utterance,String(utterance?.text||'').trim(),mySeq,err||fallbackErr,ctx);return false}if(ALLOW_DEVICE_FALLBACK){try{fallbackSpeak(utterance)}catch{finishUnavailable(utterance,err)}}else finishUnavailable(utterance,err||fallbackErr);return false}}
-function speakAudio(utterance,mySeq){const text=String(utterance?.text||'').trim();activeUtterance=utterance;if(!text){utterance.onend?.({type:'end'});activeUtterance=null;return}cleanup();activeUtterance=utterance;const ctx=unlockFallbackContext();if(runtimeReady.has(text)){playBlobNow(utterance,runtimeReady.get(text),mySeq,'runtime-prewarmed',ctx);return}const filePath=pathFor(text),a=new Audio(filePath);activeAudio=a;a.volume=typeof utterance.volume==='number'?utterance.volume:1;a.preload='auto';let failed=false;const fallback=err=>{if(failed||mySeq!==seq)return;failed=true;if(activeAudio===a){try{a.pause()}catch{}activeAudio=null}a.onended=a.onerror=a.onplay=null;existenceCache.set(filePath,false);playRuntimeFallback(utterance,text,mySeq,err,ctx)};a.onplay=()=>{existenceCache.set(filePath,true);try{utterance.onstart?.({type:'start',engine:'static'})}catch{}};a.onended=()=>{if(mySeq===seq)finishUtterance(utterance,'static')};a.onerror=fallback;try{const p=a.play();p?.catch?.(fallback)}catch(err){fallback(err)}}
-synth.speak=function(utterance){const mySeq=++seq;speakAudio(utterance,mySeq)};synth.cancel=function(){seq++;const u=activeUtterance;activeUtterance=null;cleanup();try{fallbackCancel()}catch{}try{u?.onend?.({type:'end',cancelled:true})}catch{}};synth.__pettyStaticAudioPatched=true;window.PETTY_VOICE_ENGINE='static-first';
+'use strict';
+const synth=window.speechSynthesis;
+if(!synth||synth.__pettyHtmlAudioPatched)return;
+const nativeCancel=synth.cancel.bind(synth);
+const cache=new Map();
+let audioEl=null,activeUrl=null,activeUtterance=null,seq=0,unlocked=false,unlocking=false;
+// Tiny silent WAV. Used only to claim media playback permission on a trusted gesture.
+const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+function getAudio(){
+  if(audioEl)return audioEl;
+  audioEl=document.createElement('audio');
+  audioEl.preload='auto';
+  audioEl.playsInline=true;
+  audioEl.setAttribute('playsinline','');
+  audioEl.style.display='none';
+  document.body?.appendChild(audioEl);
+  return audioEl;
+}
+function revoke(){if(activeUrl){try{URL.revokeObjectURL(activeUrl)}catch{}activeUrl=null}}
+function detach(a){if(!a)return;a.onplay=a.onended=a.onerror=null}
+function finish(u,engine='html-audio',extra={}){
+  if(activeUtterance===u)activeUtterance=null;
+  try{u?.onend?.({type:'end',engine,...extra})}catch{}
+}
+function stopCurrent(cancelled=false){
+  const a=getAudio(),u=activeUtterance;
+  activeUtterance=null;
+  try{a.pause();a.currentTime=0}catch{}
+  detach(a);revoke();
+  if(u)finish(u,'html-audio',{cancelled});
+}
+function fetchVoice(text){
+  text=String(text||'').trim();
+  if(!text)return Promise.reject(new Error('empty voice text'));
+  if(cache.has(text))return cache.get(text);
+  const p=fetch('/api/petty-voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})})
+    .then(async r=>{if(!r.ok)throw new Error('voice '+r.status);return r.blob()})
+    .catch(e=>{cache.delete(text);throw e});
+  cache.set(text,p);return p;
+}
+window.preloadPettyVoice=text=>fetchVoice(text).then(()=>true).catch(()=>false);
+window.isPettyVoicePreloaded=text=>cache.has(String(text||'').trim());
+window.unlockPettyAudio=()=>{
+  if(unlocked||unlocking)return true;
+  const a=getAudio();
+  try{
+    unlocking=true;
+    a.src=SILENT;a.currentTime=0;a.volume=.01;
+    const p=a.play();
+    if(p?.then)p.then(()=>{unlocked=true;unlocking=false;try{a.pause();a.currentTime=0}catch{};a.removeAttribute('src');a.load?.()}).catch(()=>{unlocking=false});
+    else{unlocked=true;unlocking=false}
+    return true;
+  }catch{unlocking=false;return false}
+};
+// Always try to claim the dedicated media element on a genuine mobile gesture.
+addEventListener('pointerdown',()=>window.unlockPettyAudio?.(),{capture:true});
+addEventListener('touchstart',()=>window.unlockPettyAudio?.(),{capture:true,passive:true});
+function playBlob(u,blob,mySeq){
+  if(mySeq!==seq)return;
+  const a=getAudio();
+  stopCurrent(false);
+  activeUtterance=u;
+  activeUrl=URL.createObjectURL(blob);
+  a.src=activeUrl;a.volume=typeof u.volume==='number'?u.volume:1;a.currentTime=0;a.preload='auto';
+  let done=false;
+  const fail=err=>{if(done||mySeq!==seq)return;done=true;detach(a);revoke();if(activeUtterance===u)activeUtterance=null;try{u.onerror?.({type:'error',engine:'html-audio',error:err})}catch{};try{u.onend?.({type:'end',engine:'html-audio',error:true})}catch{}};
+  a.onplay=()=>{unlocked=true;try{u.onstart?.({type:'start',engine:'html-audio'})}catch{}};
+  a.onended=()=>{if(done||mySeq!==seq)return;done=true;detach(a);revoke();finish(u)};
+  a.onerror=fail;
+  try{const p=a.play();p?.catch?.(fail)}catch(err){fail(err)}
+}
+function speakHtml(u){
+  const text=String(u?.text||'').trim(),mySeq=++seq;
+  if(!text){try{u?.onend?.({type:'end',engine:'html-audio'})}catch{};return}
+  // Do not route through AudioContext under any condition.
+  fetchVoice(text).then(blob=>{if(mySeq===seq)playBlob(u,blob,mySeq)}).catch(err=>{if(mySeq!==seq)return;try{u.onerror?.({type:'error',engine:'html-audio',error:err})}catch{};try{u.onend?.({type:'end',engine:'html-audio',error:true})}catch{}});
+}
+synth.speak=speakHtml;
+synth.cancel=function(){seq++;stopCurrent(true);try{nativeCancel()}catch{}};
+synth.__pettyHtmlAudioPatched=true;
+synth.__pettyStaticAudioPatched=true;
+window.PETTY_VOICE_ENGINE='elevenlabs-html-audio';
+window.PettyStaticAudio={allowDeviceFallback:false,transport:'html-audio-only'};
 })();
