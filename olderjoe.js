@@ -1,5 +1,5 @@
 /* Petty voice transport: routes Petty speech through server-side ElevenLabs Older Joe.
-   v0.7.5: cached preloads + guaranteed gesture-unlocked first Android welcome. */
+   v0.7.6: synchronous first-gesture HTMLAudio unlock for iPhone/Android welcome. */
 (()=>{
   const synth=window.speechSynthesis;
   if(!synth||synth.__olderJoePatched)return;
@@ -9,11 +9,21 @@
   let activeAudio=null,activeUrl=null,activeUtterance=null,seq=0;
   const cache=new Map();
   const readyBlobs=new Map();
-  let welcomeCtx=null;
+
+  // Tiny silent WAV. We use this only to unlock one dedicated media element during
+  // the first genuine user gesture if the real welcome MP3 has not finished loading.
+  const SILENT_WAV='data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAACA';
+  const welcomeAudio=new Audio();
+  welcomeAudio.preload='auto';
+  welcomeAudio.setAttribute('playsinline','');
+  let welcomeUrl=null,welcomeUnlocked=false;
 
   function cleanup(){
     if(activeAudio){try{activeAudio.pause()}catch{} activeAudio=null}
     if(activeUrl){try{URL.revokeObjectURL(activeUrl)}catch{} activeUrl=null}
+  }
+  function cleanupWelcomeUrl(){
+    if(welcomeUrl){try{URL.revokeObjectURL(welcomeUrl)}catch{} welcomeUrl=null}
   }
 
   async function fetchVoice(text){
@@ -37,62 +47,51 @@
     return fetchVoice(String(text)).then(()=>true).catch(()=>false);
   };
 
-  // Called from the first real user gesture. Unlock a dedicated AudioContext now,
-  // while browser user activation is definitely present. Once the already-started
-  // fetch completes, decode/play the MP3 through that unlocked context. This avoids
-  // both Android autoplay rejection and the robotic speechSynthesis fallback.
+  function playWelcomeBlob(blob){
+    try{
+      cleanupWelcomeUrl();
+      welcomeUrl=URL.createObjectURL(blob);
+      welcomeAudio.src=welcomeUrl;
+      welcomeAudio.currentTime=0;
+      const p=welcomeAudio.play();
+      p?.catch?.(err=>console.warn('Petty welcome playback blocked.',err));
+      return true;
+    }catch(err){
+      console.warn('Petty welcome playback failed.',err);
+      return false;
+    }
+  }
+
+  // Must be called directly inside pointerdown/click. If the MP3 is already cached,
+  // .play() happens synchronously in this same gesture. If it is still loading, we
+  // synchronously unlock this exact <audio> element with silence, then reuse the
+  // unlocked element as soon as the MP3 arrives. No await/promise occurs before the
+  // gesture-time play() call and no device TTS fallback is used for the welcome.
   window.playPettyVoiceWhenReady=text=>{
     text=String(text||'');
     if(!text)return false;
+    const ready=readyBlobs.get(text);
+    if(ready)return playWelcomeBlob(ready);
     try{
-      const C=window.AudioContext||window.webkitAudioContext;
-      if(!C)return false;
-      if(!welcomeCtx)welcomeCtx=new C();
-      try{welcomeCtx.resume?.()}catch{}
-      const ctx=welcomeCtx;
-      fetchVoice(text).then(async blob=>{
-        try{
-          if(ctx.state==='suspended')await ctx.resume();
-          const ab=await blob.arrayBuffer();
-          const buffer=await ctx.decodeAudioData(ab.slice(0));
-          const source=ctx.createBufferSource();
-          source.buffer=buffer;
-          source.connect(ctx.destination);
-          source.start(0);
-        }catch(err){console.warn('Petty welcome playback failed.',err)}
-      }).catch(err=>console.warn('Petty welcome preload failed.',err));
-      return true;
-    }catch(err){
-      console.warn('Could not unlock Petty welcome audio.',err);
-      return false;
-    }
+      welcomeAudio.src=SILENT_WAV;
+      welcomeAudio.currentTime=0;
+      const unlock=welcomeAudio.play();
+      welcomeUnlocked=true;
+      unlock?.catch?.(()=>{});
+    }catch{}
+    fetchVoice(text).then(blob=>{
+      // Reusing the gesture-unlocked media element is the Safari-safe fallback when
+      // the network response was not ready at first touch.
+      if(welcomeUnlocked)playWelcomeBlob(blob);
+    }).catch(err=>console.warn('Petty welcome preload failed.',err));
+    return true;
   };
 
-  // Retained for any already-buffered gesture-safe callers.
   window.playPreloadedPettyVoice=text=>{
     text=String(text||'');
     const blob=readyBlobs.get(text);
     if(!blob)return false;
-    try{
-      seq++;
-      activeUtterance=null;
-      cleanup();
-      activeUrl=URL.createObjectURL(blob);
-      activeAudio=new Audio(activeUrl);
-      activeAudio.volume=1;
-      const a=activeAudio;
-      a.onended=a.onerror=()=>{if(activeAudio===a)cleanup()};
-      const p=a.play();
-      p?.catch?.(err=>{
-        console.warn('Preloaded Petty playback blocked.',err);
-        if(activeAudio===a)cleanup();
-      });
-      return true;
-    }catch(err){
-      console.warn('Preloaded Petty playback failed.',err);
-      cleanup();
-      return false;
-    }
+    return playWelcomeBlob(blob);
   };
 
   window.isPettyVoicePreloaded=text=>readyBlobs.has(String(text||''));
@@ -107,6 +106,7 @@
       activeUrl=URL.createObjectURL(blob);
       activeAudio=new Audio(activeUrl);
       activeAudio.volume=typeof utterance.volume==='number'?utterance.volume:1;
+      activeAudio.setAttribute('playsinline','');
       await activeAudio.play();
       await new Promise((resolve,reject)=>{
         activeAudio.onended=resolve;
@@ -132,8 +132,6 @@
       activeUtterance=null;
       cleanup();
       try{nativeCancel()}catch{}
-      // Critical: Petty core uses onend/onerror to clear its own speech lock.
-      // A cancel must therefore finish the lifecycle too.
       try{u?.onend?.({type:'end',cancelled:true})}catch{}
     };
     synth.__olderJoePatched=true;
