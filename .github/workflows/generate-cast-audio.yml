@@ -7,6 +7,7 @@ on:
       - 'cast-phrases-v1.js'
       - 'scripts/generate-cast-audio.mjs'
       - '.github/workflows/generate-cast-audio.yml'
+      - '.trigger-daisy-mick-audio'
 permissions:
   contents: write
 jobs:
