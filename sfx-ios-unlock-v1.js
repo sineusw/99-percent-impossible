@@ -1,7 +1,6 @@
-/* 99% IMPOSSIBLE — discrete HTMLAudioElement SFX v1.0.2
-   Dedicated SFX element; never shares Petty's audio element/pool.
+/* 99% IMPOSSIBLE — discrete HTMLAudioElement SFX v1.0.3
+   Dedicated shared SFX element plus dedicated preloaded fail element for Reaction TOO EARLY.
    48kHz / 16-bit / mono PCM WAV clips with 5ms tail fade.
-   Diagnostic BEFORE/AFTER snapshots added; playback behavior unchanged.
    No AudioContext. No Timer/Stop ticks. No high-pitched Reaction GO beep. */
 (()=>{
 'use strict';
@@ -26,6 +25,12 @@ const SFX={
 };
 const a=document.createElement('audio');
 a.preload='auto';a.playsInline=true;a.setAttribute('playsinline','');a.style.display='none';document.body?.appendChild(a);
+
+// Dedicated fail element for Reaction TOO EARLY: src is fixed once at startup, so Android never has to swap src on an already-playing shared element.
+const earlyFail=document.createElement('audio');
+earlyFail.preload='auto';earlyFail.playsInline=true;earlyFail.setAttribute('playsinline','');earlyFail.style.display='none';earlyFail.src=SFX.fail;earlyFail.volume=.85;document.body?.appendChild(earlyFail);
+try{earlyFail.load()}catch{}
+
 const SILENT=wavData(.120,()=>0);
 let primed=false,priming=false,holding=false;
 function prime(){
@@ -55,7 +60,19 @@ function play(name,volume=1){
     return p;
   }catch(e){console.warn('[SFX AUDIO LOG]',name,'play threw',e)}
 }
-window.N99DiscreteSFX={prime,play,format:'48kHz-16bit-mono-wav'};
+function playEarlyFail(volume=.85){
+  try{
+    earlyFail.pause();
+    earlyFail.currentTime=0;
+    earlyFail.volume=volume;
+    console.log('[EARLY SFX] dedicated fail element play called',{paused:earlyFail.paused,readyState:earlyFail.readyState,currentTime:earlyFail.currentTime});
+    const p=earlyFail.play();
+    p?.then?.(()=>console.log('[EARLY SFX] dedicated fail play resolved',{paused:earlyFail.paused,readyState:earlyFail.readyState,currentTime:earlyFail.currentTime}))
+      .catch?.(e=>console.warn('[EARLY SFX] dedicated fail play rejected',e));
+    return p;
+  }catch(e){console.warn('[EARLY SFX] dedicated fail play threw',e)}
+}
+window.N99DiscreteSFX={prime,play,playEarlyFail,format:'48kHz-16bit-mono-wav'};
 window.tone=function(){play('tap',.48)};
 window.ticks=function(){if(typeof untick==='function')untick()};
 window.failSound=function(){if(typeof untick==='function')untick();setTimeout(()=>play('fail',.72),20)};
