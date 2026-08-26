@@ -1,8 +1,8 @@
-/* 99% IMPOSSIBLE — integrated Reaction Test v1.4.2
+/* 99% IMPOSSIBLE — integrated Reaction Test v1.4.3
    - Silent unpredictable 1–5s wait (no learnable rhythm)
    - Physical-press timestamp is authoritative when supplied
    - GO and press timestamps are normalized to performance.now() origin
-   - TOO EARLY suppresses generic tap SFX so the shared HTML audio element plays one clean fail thud
+   - TOO EARLY plays one synchronous fail thud on the physical touch event
    - One result object drives percentage, PB, tier, near-miss, Petty and share copy
 */
 (()=>{
@@ -27,8 +27,9 @@ function normalizePressTime(value){const now=performance.now(),raw=Number(value)
 window.N99ReactionScoring={reactionPercent,reactionTier,normalizePressTime};
 window.rxStart=function(){st.run=1;st.ready=0;st.start=0;primary.textContent='WAIT FOR GREEN…';untick();const r=play.querySelector('.rx');r.className='rx wait';r.innerHTML='<b>WAIT…</b><div>Do not tap yet. The whole box will turn GREEN.</div>';const delay=1000+Math.random()*4000;st.to=setTimeout(()=>{if(!st.run)return;st.ready=1;st.start=performance.now();r.className='rx go';r.innerHTML='<b>GO!</b><div>TAP THIS GREEN BOX NOW</div>';primary.textContent='TAP GREEN BOX!';navigator.vibrate?.(30)},delay)};
 window.rxHit=function(pressTime){if(!st.run)return;if(!st.ready){clearTimeout(st.to);untick();st.run=0;bump();streak(false);publish({reactionMs:null,reactionPercent:null,isPB:false,pbGap:null,tier:'too-early'});const r=play.querySelector('.rx');r.className='rx early';r.innerHTML='<b>TOO EARLY</b><div>Wait for BRIGHT GREEN.</div>';
-// TOO EARLY uses the same single HTMLAudioElement for SFX. Suppress show()'s generic tap clip for this call so fx()->failSound() is the only sound competing for the element.
-const savedTone=window.tone;try{window.tone=()=>{};show('TOO EARLY',pick(ROAST.reaction.early),'NO TIME RECORDED','I got baited by Reaction Test in 99% IMPOSSIBLE and tapped TOO EARLY 💀 bet you do the same.','fail',false,true,'')}finally{window.tone=savedTone}
+// TOO EARLY occurs inside the trusted physical touch handler. Play the fail clip synchronously on that same event, then suppress show()'s generic tap/fail audio so nothing competes with it.
+try{window.N99DiscreteSFX?.play?.('fail',.85)}catch{}
+const savedTone=window.tone,savedFail=window.failSound;try{window.tone=()=>{};window.failSound=()=>{if(typeof untick==='function')untick()};show('TOO EARLY',pick(ROAST.reaction.early),'NO TIME RECORDED','I got baited by Reaction Test in 99% IMPOSSIBLE and tapped TOO EARLY 💀 bet you do the same.','fail',false,true,'')}finally{window.tone=savedTone;window.failSound=savedFail}
 primary.textContent='TRY AGAIN';return window.N99ReactionResult}
 const at=normalizePressTime(pressTime),go=Number.isFinite(st.start)?st.start:performance.now(),reactionMs=Math.max(0,at-go);st.run=st.ready=0;bump();const raw=localStorage.getItem(K('reaction_best')),old=raw===null?null:+raw,isPB=old===null||reactionMs<old;if(isPB)S('reaction_best',reactionMs);const pct=Math.round((reactionPercent(reactionMs)+Number.EPSILON)*10)/10,pbGap=old===null?null:reactionMs-old,result=publish({reactionMs,reactionPercent:pct,isPB,pbGap,tier:reactionTier(reactionMs)});streak(reactionMs<=230);const ro=reactionMs<180?pick(ROAST.reaction.elite):reactionMs<=250?pick(ROAST.reaction.good):pick(ROAST.reaction.slow),delta=deltaMark('reaction_lastMs',reactionMs,'ms',0),suspicious=result.tier==='suspicious',restorePetty=armReactionPetty(result),visualTier=suspicious?'subtle':result.tier==='extreme'||result.tier==='elite'?'epic':rtier(reactionMs),label=suspicious?'🤖 SUSPICIOUSLY FAST':result.tier==='extreme'?'EXTREMELY FAST':result.tier==='elite'?'ELITE REACTION':'REACTION TIME';const done=()=>{show(Math.round(reactionMs)+'ms',ro,pct.toFixed(1)+'% · '+label,`I hit ${Math.round(reactionMs)}ms (${pct.toFixed(1)}%) on Reaction Test in 99% IMPOSSIBLE ⚡ bet your reflexes are slower.`,visualTier,isPB,visualTier==='fail',delta);restorePetty();document.body.classList.toggle('reaction-suspicious',suspicious);document.body.classList.toggle('reaction-elite',result.tier==='extreme'||result.tier==='elite');primary.textContent='TRY AGAIN'};if(reactionMs>=231&&reactionMs<=250&&old!==null&&!isPB&&pbGap>0&&pbGap<=6)nearReveal('reaction',Math.round(pbGap)+'ms FROM YOUR BEST','SO CLOSE',done);else done();return result};
 })();
