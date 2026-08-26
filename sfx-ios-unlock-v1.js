@@ -1,5 +1,4 @@
-/* 99% IMPOSSIBLE — discrete HTMLAudioElement SFX v1.0.4-ab
-   A/B diagnostic: dedicated Reaction TOO EARLY element temporarily uses known-good success asset.
+/* 99% IMPOSSIBLE — discrete HTMLAudioElement SFX v1.0.4
    Dedicated shared SFX element plus dedicated preloaded fail element for Reaction TOO EARLY.
    48kHz / 16-bit / mono PCM WAV clips with 5ms tail fade.
    No AudioContext. No Timer/Stop ticks. No high-pitched Reaction GO beep. */
@@ -22,14 +21,13 @@ const SFX={
   tap:wavData(.030,(t,d)=>.52*Math.sin(2*Math.PI*180*t)*Math.exp(-5*t/d)+.16*Math.sin(2*Math.PI*320*t)*Math.exp(-6*t/d)),
   go:wavData(.040,(t,d)=>.42*Math.sin(2*Math.PI*220*t)*Math.exp(-7*t/d)+.13*Math.sin(2*Math.PI*440*t)*Math.exp(-8*t/d)),
   success:wavData(.120,(t,d)=>(.22*Math.sin(2*Math.PI*261.63*t)+.20*Math.sin(2*Math.PI*329.63*t)+.18*Math.sin(2*Math.PI*392*t))*Math.exp(-2.2*t/d)),
-  fail:wavData(.100,(t,d)=>.58*Math.sin(2*Math.PI*(110-55*t/d)*t)*Math.exp(-4*t/d))
+  fail:wavData(.100,(t,d)=>.58*Math.sin(2*Math.PI*(180-40*t/d)*t)*Math.exp(-4*t/d))
 };
 const a=document.createElement('audio');
 a.preload='auto';a.playsInline=true;a.setAttribute('playsinline','');a.style.display='none';document.body?.appendChild(a);
 
-// A/B TEST ONLY: use known-good success asset on the dedicated TOO EARLY element.
 const earlyFail=document.createElement('audio');
-earlyFail.preload='auto';earlyFail.playsInline=true;earlyFail.setAttribute('playsinline','');earlyFail.style.display='none';earlyFail.src=SFX.success;earlyFail.volume=.85;document.body?.appendChild(earlyFail);
+earlyFail.preload='auto';earlyFail.playsInline=true;earlyFail.setAttribute('playsinline','');earlyFail.style.display='none';earlyFail.src=SFX.fail;earlyFail.volume=.85;document.body?.appendChild(earlyFail);
 try{earlyFail.load()}catch{}
 
 const SILENT=wavData(.120,()=>0);
