@@ -1,11 +1,13 @@
-/* 99% IMPOSSIBLE — Petty first-welcome no-cancel adapter v1.1
+/* 99% IMPOSSIBLE — Petty first-welcome no-cancel adapter v1.2
    Preserves the gesture-warmed HTMLAudioElement through the entire cold-start fetch gap.
-   Normal cancels are blocked only until the first welcome actually starts; ads may still override. */
+   Normal cancels are blocked only until the first welcome actually starts; ads may still override.
+   Emits n99:petty-welcome-start when real welcome audio starts. */
 (()=>{
   'use strict';
   const pp=window.PettyPersonality;
   const synth=window.speechSynthesis;
   if(!pp||!synth||pp.speakWelcome)return;
+  window.__PETTY_WELCOME_STARTED=false;
 
   pp.speakWelcome=function(text,force=true,kind='welcome'){
     const realCancel=synth.cancel;
@@ -19,8 +21,6 @@
     };
 
     function guardedCancel(){
-      // Ads retain highest priority. Everything else must not kill the
-      // gesture-warmed Petty element before the first real welcome starts.
       if(window.__PETTY_AD_BANTER_LOCK){
         restoreCancel();
         return realCancel.call(synth);
@@ -34,7 +34,12 @@
       const oldEnd=u?.onend;
       const oldError=u?.onerror;
       if(u){
-        u.onstart=e=>{restoreCancel();try{oldStart?.(e)}catch{}};
+        u.onstart=e=>{
+          window.__PETTY_WELCOME_STARTED=true;
+          try{window.dispatchEvent(new CustomEvent('n99:petty-welcome-start'))}catch{}
+          restoreCancel();
+          try{oldStart?.(e)}catch{}
+        };
         u.onend=e=>{restoreCancel();try{oldEnd?.(e)}catch{}};
         u.onerror=e=>{restoreCancel();try{oldError?.(e)}catch{}};
       }
@@ -44,8 +49,6 @@
     try{
       return pp.speak?.(text,force,kind) ?? false;
     } finally {
-      // Only the speak interception is synchronous. Keep cancel guarded until
-      // the utterance's onstart/onend/onerror, with a hard fallback timeout.
       synth.speak=realSpeak;
       setTimeout(restoreCancel,5000);
     }
