@@ -1,14 +1,17 @@
-/* 99% IMPOSSIBLE — Petty HTMLAudioElement transport v2.0
-   ElevenLabs runtime only. No AudioContext, no local-MP3 probe, no device TTS in production. */
+/* 99% IMPOSSIBLE — Petty HTMLAudioElement transport v2.2
+   ElevenLabs runtime only. No AudioContext, no local-MP3 probe, no device TTS in production.
+   Android hypothesis test: keep a genuine ~1s silent MP3 looping on the dedicated <audio> element from first gesture until real voice playback swaps in. */
 (()=>{
 'use strict';
 const synth=window.speechSynthesis;
 if(!synth||synth.__pettyHtmlAudioPatched)return;
 const nativeCancel=synth.cancel.bind(synth);
 const cache=new Map();
-let audioEl=null,activeUrl=null,activeUtterance=null,seq=0,unlocked=false,unlocking=false;
-// Tiny silent WAV. Used only to claim media playback permission on a trusted gesture.
-const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+let audioEl=null,activeUrl=null,activeUtterance=null,seq=0,unlocked=false,unlocking=false,silentLoopRunning=false;
+const log=(...a)=>console.log('[PETTY AUDIO LOG]',...a);
+const errlog=(...a)=>console.error('[PETTY AUDIO LOG]',...a);
+// Verified with ffprobe before embedding: MP3, ~1.045s duration, mono 44.1kHz silence.
+const SILENT_LOOP='data:audio/mpeg;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTGF2ZjYxLjcuMTAzAAAAAAAAAAAAAAD/+0DAAAAAAAAAAAAAAAAAAAAAAABJbmZvAAAADwAAACgAABD2ABAQFhYdHR0jIykpKS8vNTU1OztBQUFISE5OTlRUWlpaYGBmZmZsbHJycnl5f39/hYWLi4uRkZeXl52dpKSkqqqwsLC2try8vMLCyMjIzs7V1dXb2+Hh4efn7e3t8/P5+fn//wAAAABMYXZjNjEuMTkAAAAAAAAAAAAAAAAkBXwAAAAAAAAQ9in4b6YAAAAAAP/7EMQAA8AAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxCmDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDEUwPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMR8g8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxKYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDEz4PAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
 function getAudio(){
   if(audioEl)return audioEl;
   audioEl=document.createElement('audio');
@@ -28,7 +31,8 @@ function finish(u,engine='html-audio',extra={}){
 function stopCurrent(cancelled=false){
   const a=getAudio(),u=activeUtterance;
   activeUtterance=null;
-  try{a.pause();a.currentTime=0}catch{}
+  try{a.pause();a.currentTime=0;a.loop=false}catch{}
+  silentLoopRunning=false;
   detach(a);revoke();
   if(u)finish(u,'html-audio',{cancelled});
 }
@@ -44,44 +48,54 @@ function fetchVoice(text){
 window.preloadPettyVoice=text=>fetchVoice(text).then(()=>true).catch(()=>false);
 window.isPettyVoicePreloaded=text=>cache.has(String(text||'').trim());
 window.unlockPettyAudio=()=>{
-  if(unlocked||unlocking)return true;
+  if(unlocked||unlocking||silentLoopRunning)return true;
   const a=getAudio();
+  log('gesture unlock initiated');
   try{
     unlocking=true;
-    a.src=SILENT;a.currentTime=0;a.volume=.01;
+    a.loop=true;
+    a.src=SILENT_LOOP;
+    a.currentTime=0;
+    a.volume=.01;
     const p=a.play();
-    if(p?.then)p.then(()=>{unlocked=true;unlocking=false;try{a.pause();a.currentTime=0}catch{};a.removeAttribute('src');a.load?.()}).catch(()=>{unlocking=false});
-    else{unlocked=true;unlocking=false}
+    if(p?.then)p.then(()=>{unlocked=true;unlocking=false;silentLoopRunning=true;log('unlock resolved; silent loop running')}).catch(err=>{unlocking=false;silentLoopRunning=false;errlog('unlock rejected',err)});
+    else{unlocked=true;unlocking=false;silentLoopRunning=true;log('unlock resolved synchronously; silent loop running')}
     return true;
-  }catch{unlocking=false;return false}
+  }catch(err){unlocking=false;silentLoopRunning=false;errlog('unlock threw',err);return false}
 };
-// Always try to claim the dedicated media element on a genuine mobile gesture.
 addEventListener('pointerdown',()=>window.unlockPettyAudio?.(),{capture:true});
 addEventListener('touchstart',()=>window.unlockPettyAudio?.(),{capture:true,passive:true});
 function playBlob(u,blob,mySeq){
   if(mySeq!==seq)return;
   const a=getAudio();
-  stopCurrent(false);
+  // If this is the first real voice, preserve the already-running media element and swap source in place.
+  if(activeUtterance)stopCurrent(false);
+  else{detach(a);revoke()}
   activeUtterance=u;
+  a.loop=false;
+  silentLoopRunning=false;
   activeUrl=URL.createObjectURL(blob);
-  a.src=activeUrl;a.volume=typeof u.volume==='number'?u.volume:1;a.currentTime=0;a.preload='auto';
+  a.src=activeUrl;
+  a.volume=typeof u.volume==='number'?u.volume:1;
+  a.currentTime=0;
+  a.preload='auto';
   let done=false;
-  const fail=err=>{if(done||mySeq!==seq)return;done=true;detach(a);revoke();if(activeUtterance===u)activeUtterance=null;try{u.onerror?.({type:'error',engine:'html-audio',error:err})}catch{};try{u.onend?.({type:'end',engine:'html-audio',error:true})}catch{}};
-  a.onplay=()=>{unlocked=true;try{u.onstart?.({type:'start',engine:'html-audio'})}catch{}};
-  a.onended=()=>{if(done||mySeq!==seq)return;done=true;detach(a);revoke();finish(u)};
+  const fail=err=>{if(done||mySeq!==seq)return;done=true;errlog('voice playback failed',err);detach(a);revoke();if(activeUtterance===u)activeUtterance=null;try{u.onerror?.({type:'error',engine:'html-audio',error:err})}catch{};try{u.onend?.({type:'end',engine:'html-audio',error:true})}catch{}};
+  a.onplay=()=>{unlocked=true;log('speech started');try{u.onstart?.({type:'start',engine:'html-audio'})}catch{}};
+  a.onended=()=>{if(done||mySeq!==seq)return;done=true;log('speech ended naturally');detach(a);revoke();finish(u)};
   a.onerror=fail;
-  try{const p=a.play();p?.catch?.(fail)}catch(err){fail(err)}
+  try{const p=a.play();p?.then?.(()=>log('real blob play() resolved')).catch?.(fail)}catch(err){fail(err)}
 }
 function speakHtml(u){
   const text=String(u?.text||'').trim(),mySeq=++seq;
+  log('speakHtml called',{text,seq:mySeq,unlocked,silentLoopRunning});
   if(!text){try{u?.onend?.({type:'end',engine:'html-audio'})}catch{};return}
-  // Do not route through AudioContext under any condition.
-  fetchVoice(text).then(blob=>{if(mySeq===seq)playBlob(u,blob,mySeq)}).catch(err=>{if(mySeq!==seq)return;try{u.onerror?.({type:'error',engine:'html-audio',error:err})}catch{};try{u.onend?.({type:'end',engine:'html-audio',error:true})}catch{}});
+  fetchVoice(text).then(blob=>{if(mySeq===seq)playBlob(u,blob,mySeq)}).catch(err=>{if(mySeq!==seq)return;errlog('voice fetch failed',err);try{u.onerror?.({type:'error',engine:'html-audio',error:err})}catch{};try{u.onend?.({type:'end',engine:'html-audio',error:true})}catch{}});
 }
 synth.speak=speakHtml;
-synth.cancel=function(){seq++;stopCurrent(true);try{nativeCancel()}catch{}};
+synth.cancel=function(){seq++;log('speech cancel',{seq});stopCurrent(true);try{nativeCancel()}catch{}};
 synth.__pettyHtmlAudioPatched=true;
 synth.__pettyStaticAudioPatched=true;
 window.PETTY_VOICE_ENGINE='elevenlabs-html-audio';
-window.PettyStaticAudio={allowDeviceFallback:false,transport:'html-audio-only'};
+window.PettyStaticAudio={allowDeviceFallback:false,transport:'html-audio-only',version:'2.2'};
 })();
