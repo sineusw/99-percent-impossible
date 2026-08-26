@@ -2,7 +2,7 @@
 (()=>{
 const AK=n=>'n99_ads_'+n,CK=n=>'n99_cos_'+n,hasPass=()=>localStorage.getItem(CK('ragepass'))==='1';
 const QS=new URLSearchParams(location.search),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1';
-let adOpen=false,pending=false,lastAdAttempt=+(localStorage.getItem(AK('lastAttempt'))||0);
+let adOpen=false,pending=false,resumeRetry=false,lastAdAttempt=+(localStorage.getItem(AK('lastAttempt'))||0);
 const PRE_AD_PAUSE=AD_TEST?1400:3600,SIM_AD_SECONDS=5;
 const BEFORE_LINES=['Hold that thought. Capitalism.','And now, a word from my landlord.','Sponsor break. Try not to improve.','Commerce has entered the chat.','Your suffering has attracted advertisers.','A brief message from your financial enablers.','Pause. Someone paid for your attention.','Advert time. Even failure has overhead.','Right. Let us monetize the trauma.','A sponsor would like a turn.','Tiny break. Big corporate energy.','Your thumb has created shareholder value.','Commercial incoming. Stay emotionally available.','Good news: a break. Bad news: monetized.','The advertisers have seen enough.','Please hold. Capitalism needs five seconds.','Someone bought these next few seconds.','A sponsor believes in you. Weird.','Time out. Sponsored, obviously.','Before the next loss: commerce.','I would apologize, but rent exists.','Brief commercial. Dignity resumes shortly.','Pause the comeback. We have invoices.','This humiliation is now sponsored.','Advert break. Very glamorous.','Fam, hold up. Capitalism called.','Bro, even roasting you costs money.','My guy, the sponsors want screen time.','A word from people with a marketing budget.','Do not move. Someone paid for this interruption.','Financially responsible interruption incoming.','And now, the part that pays for me.','Corporate would like a moment.','Please enjoy this tasteful monetization.','We interrupt the chaos for revenue.','One sec. The shareholders are hungry.'];
 const AFTER_LINES=['Welcome back to your suffering.','Right. Back to the damage.','Commercial over. Problems remain.','Revenue secured. Dignity pending.','Welcome back. Nothing improved.','And we return to the experiment.','Sponsor satisfied. Your move.','Break over. Confidence still intact?','Right then. Back to milliseconds.','Welcome back, victim.','Commercial complete. Resume delusion.','We are back. I have notes.','And now, accountability.','Break is over. Unfortunately.','Welcome back. The target missed you.','Capitalism is done. I am not.','Back again. Lovely.','The ad ended. Your score did not improve.','Right. Where were we? Ah yes. Failure.','Commercial over. Cook yourself responsibly.','We return to our scheduled disappointment.','Welcome back. The game remembers.','The sponsor left. I stayed.','Break complete. Continue the evidence.','And we are back. Fam, lock in.','Bro, commercial is over. Focus.','My guy, the break did not fix your timing.','Back to work. And by work, I mean this.','Welcome back. Shareholders thank you.','Revenue acquired. Reflexes unchanged.','Excellent. Bills paid. Now perform.','The capitalism portion is complete.','Sponsor gone. Pressure back.','Back from commercial. Still confident?','And now, the sequel nobody needed.','Right. Humiliation may resume.'];
@@ -15,5 +15,23 @@ function playPlaceholderAd(onComplete=()=>{}){if(adOpen||NO_ADS)return;adOpen=tr
 function currentAttempt(){return +(localStorage.getItem('n99_total')||document.querySelector('#tot')?.textContent||0)}
 function streak(){return +(localStorage.getItem('n99_currentStreak')||0)}
 function updateDue(){if(NO_ADS){pending=false;return}if(hasPass()&&!AD_TEST)return;const now=currentAttempt(),gap=now-lastAdAttempt,hot=streak()>=2;if(AD_TEST){if(gap>=1)pending=true;return}if(gap>=5&&!hot)pending=true;if(gap>=9)pending=true}
-const tot=document.querySelector('#tot');if(tot)new MutationObserver(updateDue).observe(tot,{childList:true,characterData:true,subtree:true});document.addEventListener('click',e=>{if(NO_ADS)return;if(!e.target?.matches?.('#retry,#close'))return;updateDue();if(!pending||(hasPass()&&!AD_TEST)||adOpen)return;const now=currentAttempt(),gap=now-lastAdAttempt;if(!AD_TEST&&streak()>=2&&gap<9)return;pending=false;lastAdAttempt=now;localStorage.setItem(AK('lastAttempt'),String(now));window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}setTimeout(()=>playPlaceholderAd(),0)},true);
+const tot=document.querySelector('#tot');if(tot)new MutationObserver(updateDue).observe(tot,{childList:true,characterData:true,subtree:true});
+document.addEventListener('click',e=>{
+  if(NO_ADS)return;
+  const isRetry=e.target?.matches?.('#retry'),isClose=e.target?.matches?.('#close');
+  if(!isRetry&&!isClose)return;
+  if(resumeRetry){resumeRetry=false;return}
+  updateDue();
+  if(!pending||(hasPass()&&!AD_TEST)||adOpen)return;
+  const now=currentAttempt(),gap=now-lastAdAttempt;
+  if(!AD_TEST&&streak()>=2&&gap<9)return;
+  pending=false;lastAdAttempt=now;localStorage.setItem(AK('lastAttempt'),String(now));window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}
+  if(isRetry){
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    setTimeout(()=>playPlaceholderAd(()=>{resumeRetry=true;document.querySelector('#retry')?.click()}),0);
+  }else{
+    setTimeout(()=>playPlaceholderAd(),0);
+  }
+},true);
 })();
