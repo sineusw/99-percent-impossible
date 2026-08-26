@@ -1,6 +1,7 @@
-/* 99% IMPOSSIBLE — discrete HTMLAudioElement SFX v1.0.1
+/* 99% IMPOSSIBLE — discrete HTMLAudioElement SFX v1.0.2
    Dedicated SFX element; never shares Petty's audio element/pool.
    48kHz / 16-bit / mono PCM WAV clips with 5ms tail fade.
+   Diagnostic BEFORE/AFTER snapshots added; playback behavior unchanged.
    No AudioContext. No Timer/Stop ticks. No high-pitched Reaction GO beep. */
 (()=>{
 'use strict';
@@ -18,16 +19,11 @@ function wavData(duration,sample){
   return'data:audio/wav;base64,'+btoa(bin);
 }
 const SFX={
-  // Soft sub-click: ~30ms, intentionally low and unobtrusive.
   tap:wavData(.030,(t,d)=>.52*Math.sin(2*Math.PI*180*t)*Math.exp(-5*t/d)+.16*Math.sin(2*Math.PI*320*t)*Math.exp(-6*t/d)),
-  // Muted woodblock/pop asset retained for future explicit GO use; current Reaction GO remains silent.
   go:wavData(.040,(t,d)=>.42*Math.sin(2*Math.PI*220*t)*Math.exp(-7*t/d)+.13*Math.sin(2*Math.PI*440*t)*Math.exp(-8*t/d)),
-  // Warm, short success chord: ~120ms.
   success:wavData(.120,(t,d)=>(.22*Math.sin(2*Math.PI*261.63*t)+.20*Math.sin(2*Math.PI*329.63*t)+.18*Math.sin(2*Math.PI*392*t))*Math.exp(-2.2*t/d)),
-  // Soft low thud: ~100ms, pitch falls instead of producing a sharp beep.
   fail:wavData(.100,(t,d)=>.58*Math.sin(2*Math.PI*(110-55*t/d)*t)*Math.exp(-4*t/d))
 };
-// This is a completely separate media element from petty-static-audio.js.
 const a=document.createElement('audio');
 a.preload='auto';a.playsInline=true;a.setAttribute('playsinline','');a.style.display='none';document.body?.appendChild(a);
 const SILENT=wavData(.120,()=>0);
@@ -44,13 +40,19 @@ function prime(){
 }
 addEventListener('pointerdown',prime,{capture:true});
 addEventListener('touchstart',prime,{capture:true,passive:true});
+function snapshot(){return{paused:a.paused,ended:a.ended,readyState:a.readyState,networkState:a.networkState,currentSrc:a.currentSrc,currentTime:a.currentTime}}
 function play(name,volume=1){
   const src=SFX[name];if(!src)return;
   try{
+    console.log('[SFX AUDIO LOG]',name,'BEFORE',snapshot());
     a.loop=false;holding=false;a.pause();a.src=src;a.currentTime=0;a.volume=volume;
+    console.log('[SFX AUDIO LOG]',name,'src set');
+    console.log('[SFX AUDIO LOG]',name,'currentTime reset');
     const p=a.play();
-    p?.then?.(()=>{primed=true;console.log('[SFX AUDIO LOG]',name,'play resolved')})
+    console.log('[SFX AUDIO LOG]',name,'play called');
+    p?.then?.(()=>{primed=true;console.log('[SFX AUDIO LOG]',name,'play resolved');console.log('[SFX AUDIO LOG]',name,'AFTER',snapshot())})
       .catch?.(e=>console.warn('[SFX AUDIO LOG]',name,'play rejected',e));
+    return p;
   }catch(e){console.warn('[SFX AUDIO LOG]',name,'play threw',e)}
 }
 window.N99DiscreteSFX={prime,play,format:'48kHz-16bit-mono-wav'};
