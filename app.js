@@ -1,5 +1,5 @@
 const $=s=>document.querySelector(s),K=n=>'n99_'+n,G=(n,d=0)=>{let v=localStorage.getItem(K(n));return v===null?d:+v},S=(n,v)=>localStorage.setItem(K(n),v);
-let st={g:null,run:0,ready:0,start:0,raf:0,to:0,pos:1,dir:1,tgt:null,ctx:null,tick:0,share:'',locked:0};
+let st={g:null,run:0,ready:0,start:0,raf:0,to:0,pos:1,dir:1,tgt:null,ctx:null,tick:0,share:'',locked:0,audioUnlocked:0};
 const names={timer:['PERFECT TIMER','Stop at exactly 1.000 seconds. The timer hides after 0.500s — keep counting in your head.'],stop:['PERFECT STOP','Tap START, then stop the moving white marker inside the bright green target.'],reaction:['REACTION TEST','Tap START, wait for the entire box to turn bright green, then tap the green box.']};
 const home=$('#home'),game=$('#game'),title=$('#title'),prompt=$('#prompt'),play=$('#play'),res=$('#res'),primary=$('#primary'),best=$('#best'),att=$('#att'),tot=$('#tot'),bst=$('#bst'),modal=$('#modal'),mg=$('#mg'),ms=$('#ms'),mm=$('#mm'),mr=$('#mr'),back=$('#back'),closeBtn=$('#close'),retryBtn=$('#retry'),copyBtn=$('#copy');
 
@@ -31,7 +31,7 @@ function streak(ok){let c=ok?G('currentStreak')+1:0;S('currentStreak',c);if(c>G(
 function pb(){let v=localStorage.getItem(K(st.g+'_best'));if(v===null)return'—';v=+v;return st.g==='reaction'?Math.round(v)+'ms':st.g==='timer'?v.toFixed(3)+'s':v.toFixed(1)+'%'}
 function deltaMark(key,current,unit,decimals=0){let raw=localStorage.getItem(K(key));S(key,current);if(raw===null)return'';let prev=+raw,diff=prev-current,eps=unit==='ms'?.5:.0000001;if(Math.abs(diff)<=eps)return'<div style="margin-top:8px;font-size:11px;letter-spacing:.7px;color:#90909c;font-weight:800">HOLD THE LINE</div>';if(diff>0){let n=Math.abs(diff).toFixed(decimals);return'<div style="margin-top:8px;font-size:11px;letter-spacing:.7px;color:#00FFA3;font-weight:800">'+n+unit+' CLOSER ↑</div>'}return'<div style="margin-top:8px;font-size:11px;letter-spacing:.7px;color:#FF5A7D;font-weight:800">YOU HAD IT LAST TIME ↓</div>'}
 
-function audio(){let A=window.AudioContext||window.webkitAudioContext;if(!A)return null;if(!st.ctx)st.ctx=new A;if(st.ctx.state==='suspended')st.ctx.resume();return st.ctx}
+function audio(){let A=window.AudioContext||window.webkitAudioContext;if(!A)return null;if(!st.ctx)st.ctx=new A;if(st.ctx.state==='suspended')st.ctx.resume();if(!st.audioUnlocked){try{const b=st.ctx.createBuffer(1,1,22050),s=st.ctx.createBufferSource();s.buffer=b;s.connect(st.ctx.destination);s.start(0);st.audioUnlocked=1}catch(e){}}return st.ctx}
 function tone(f,d=.06,t='sine',v=.04,w=0){let c=audio();if(!c)return;let o=c.createOscillator(),g=c.createGain(),s=c.currentTime+w;o.type=t;o.frequency.value=f;g.gain.setValueAtTime(.0001,s);g.gain.exponentialRampToValueAtTime(v,s+.006);g.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(g).connect(c.destination);o.start(s);o.stop(s+d+.02)}
 function ticks(mode){untick();let b=mode==='timer'?250:mode==='stop'?190:150,i=0,ms=mode==='reaction'?360:190;st.tick=setInterval(()=>tone(b+Math.min(420,++i*11),.035,mode==='reaction'?'sine':'square',.018),ms)}
 function untick(){clearInterval(st.tick);st.tick=0}
