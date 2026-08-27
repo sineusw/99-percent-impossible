@@ -1,0 +1,10 @@
+import fs from 'node:fs/promises';import path from 'node:path';import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);const lib=require('../cast-lines.js');
+const KEY=process.env.ELEVENLABS_API_KEY;if(!KEY)throw new Error('ELEVENLABS_API_KEY is required');
+const CFG={daisy:{voiceId:'9QPzUjm1evjwY2ENQBKU',settings:{stability:.66,similarity_boost:.76,style:.43,use_speaker_boost:true,speed:1}},mick:{voiceId:'YLbQE9U7P1K6rBNJWNSv',settings:{stability:.50,similarity_boost:.64,style:.85,use_speaker_boost:true,speed:1.01}}};
+function hashText(text){let h=0x811c9dc5;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(16).padStart(8,'0')}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function generate(character,line){const cfg=CFG[character],dir=path.join('assets',`${character}-audio`);await fs.mkdir(dir,{recursive:true});const out=path.join(dir,`${hashText(line.text.trim())}.mp3`);try{await fs.access(out);return{status:'skip',out}}catch{}
+ for(let attempt=1;attempt<=4;attempt++){const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${cfg.voiceId}?output_format=mp3_22050_32`,{method:'POST',headers:{'xi-api-key':KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({text:line.text,model_id:'eleven_multilingual_v2',voice_settings:cfg.settings})});if(r.ok){await fs.writeFile(out,Buffer.from(await r.arrayBuffer()));return{status:'made',out}}if(r.status===429||r.status>=500){await sleep(800*attempt);continue}throw new Error(`${character} ${line.id}: ${r.status} ${await r.text()}`)}throw new Error(`${character} ${line.id}: retries exhausted`)}
+for(const character of ['daisy','mick']){const lines=Object.values(lib[character]).flat();console.log(`${character}: ${lines.length} lines`);let made=0,skip=0;for(const line of lines){const x=await generate(character,line);x.status==='made'?made++:skip++;process.stdout.write(`\r${character}: ${made} generated, ${skip} existing`);await sleep(90)}console.log('\nDone.')}
+console.log('Static cast audio complete. Commit assets/daisy-audio and assets/mick-audio.');
