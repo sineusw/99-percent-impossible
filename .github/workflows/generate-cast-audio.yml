@@ -4,7 +4,7 @@ on:
   push:
     branches: [voices/daisy-mick-static]
     paths:
-      - 'cast-phrases-v1.js'
+      - 'cast-lines.js'
       - 'scripts/generate-cast-audio.mjs'
       - '.github/workflows/generate-cast-audio.yml'
       - '.trigger-daisy-mick-audio'
