@@ -1,5 +1,6 @@
 /* 99% IMPOSSIBLE — streak-aware ads + selected-cast ad banter
-   v0.10.4: preserve atomic retry/ad boundary; only voice routing is cast-aware. */
+   v0.10.5: preserve atomic retry/ad boundary; only voice routing is cast-aware.
+   Daisy/Mick use verified generated ad assets for launch reliability. */
 (()=>{
 const AK=n=>'n99_ads_'+n,CK=n=>'n99_cos_'+n,hasPass=()=>localStorage.getItem(CK('ragepass'))==='1';
 const QS=new URLSearchParams(location.search),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1';
@@ -11,7 +12,7 @@ const AFTER_LINES=['Welcome back to your suffering.','Right. Back to the damage.
 function shuffled(lines,key){let a;try{a=JSON.parse(localStorage.getItem(AK(key+'_deck'))||'[]')}catch{}if(!Array.isArray(a)||!a.length){a=[...lines];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}const last=localStorage.getItem(AK(key+'_last'));if(a.length>1&&a[0]===last)[a[0],a[1]]=[a[1],a[0]]}const text=a.shift();localStorage.setItem(AK(key+'_deck'),JSON.stringify(a));localStorage.setItem(AK(key+'_last'),text);return text}
 function currentCast(){const c=window.N99Character?.get?.()||'petty';return c==='daisy'||c==='mick'?c:'petty'}
 function castName(){const c=currentCast();return c==='daisy'?'DAISY':c==='mick'?'MICK':'PETTY'}
-function pickCastLine(kind){const c=currentCast();if(c==='petty')return null;const pool=window.N99CastLines?.[c]?.[kind]||[];return pool.length?pool[Math.floor(Math.random()*pool.length)]?.text||null:null}
+function pickCastLine(kind){const c=currentCast();if(c==='petty')return null;const pool=window.N99CastLines?.[c]?.[kind]||[];return pool[0]?.text||null}
 function adSpeak(text,onDone=()=>{}){if(localStorage.getItem('n99_petty_voice')==='0'||!text){onDone();return false}try{window.speechSynthesis?.cancel?.();const u=new SpeechSynthesisUtterance(text);u.lang='en-GB';u.rate=.96;u.pitch=.86;u.volume=1;let finished=false,watchdog=0;const done=()=>{if(finished)return;finished=true;if(watchdog)clearTimeout(watchdog);onDone()};u.onend=done;u.onerror=done;window.speechSynthesis.speak(u);watchdog=setTimeout(done,5000);return true}catch{onDone();return false}}
 function castAdSpeak(kind,onDone=()=>{}){const c=currentCast();if(c==='petty')return adSpeak(shuffled(kind==='adBefore'?BEFORE_LINES:AFTER_LINES,kind==='adBefore'?'before':'after'),onDone);if(localStorage.getItem('n99_petty_voice')==='0'){onDone();return false}const text=pickCastLine(kind),transport=window.N99CastStaticAudio;if(!text||!transport?.playText){onDone();return false}let finished=false,watchdog=0;const done=()=>{if(finished)return;finished=true;if(watchdog)clearTimeout(watchdog);onDone()};try{transport.stop?.();const ok=transport.playText(c,text,{onend:done,onerror:done});if(!ok){done();return false}watchdog=setTimeout(done,5000);return true}catch{done();return false}}
 const beforeAd=()=>castAdSpeak('adBefore');
