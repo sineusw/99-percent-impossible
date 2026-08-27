@@ -1,18 +1,101 @@
-/* 99% IMPOSSIBLE — Petty static-first audio transport v1.2
-   Normal path: local static MP3 -> runtime ElevenLabs audio.
-   Device speech is diagnostics-only (?pettydevice=1) so a provider miss never turns Petty into a surprise robot voice. */
+/* 99% IMPOSSIBLE — Petty HTMLAudioElement transport v2.2
+   ElevenLabs runtime only. No AudioContext, no local-MP3 probe, no device TTS in production.
+   Android hypothesis test: keep a genuine ~1s silent MP3 looping on the dedicated <audio> element from first gesture until real voice playback swaps in. */
 (()=>{
-const synth=window.speechSynthesis;if(!synth||synth.__pettyStaticAudioPatched)return;
-const fallbackSpeak=synth.speak.bind(synth),fallbackCancel=synth.cancel.bind(synth),ALLOW_DEVICE_FALLBACK=new URLSearchParams(location.search).get('pettydevice')==='1';let activeAudio=null,activeUrl=null,activeUtterance=null,activeController=null,seq=0;const staticCache=new Map(),runtimeCache=new Map(),existenceCache=new Map();
-function hashText(text){let h=0x811c9dc5;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(16).padStart(8,'0')}
-function selectedCharacter(){const c=window.N99Character?.get?.()||'petty';return['petty','daisy','mick'].includes(c)?c:'petty'}
-function pathFor(text,character=selectedCharacter()){return'/assets/'+character+'-audio/'+hashText(String(text||'').trim())+'.mp3'}
-function cleanup(){if(activeController){try{activeController.abort()}catch{}activeController=null}if(activeAudio){try{activeAudio.pause()}catch{}activeAudio.onended=activeAudio.onerror=activeAudio.onplay=null;activeAudio=null}if(activeUrl){try{URL.revokeObjectURL(activeUrl)}catch{}activeUrl=null}}
-async function fetchStatic(text,signal,character=selectedCharacter()){const filePath=pathFor(text,character);if(existenceCache.get(filePath)===false)throw new Error('static-miss');if(staticCache.has(filePath))return staticCache.get(filePath);const p=fetch(filePath,{cache:'force-cache',signal}).then(async r=>{if(!r.ok){existenceCache.set(filePath,false);throw new Error('static '+r.status)}existenceCache.set(filePath,true);return r.blob()});staticCache.set(filePath,p);try{return await p}catch(e){staticCache.delete(filePath);throw e}}
-async function fetchRuntimeFallback(text,signal){if(runtimeCache.has(text))return runtimeCache.get(text);const p=fetch('/api/petty-voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal}).then(async r=>{if(!r.ok)throw new Error('voice '+r.status);return r.blob()});runtimeCache.set(text,p);try{return await p}catch(e){runtimeCache.delete(text);throw e}}
-async function loadVoice(text,signal){const character=selectedCharacter();try{return{blob:await fetchStatic(text,signal,character),engine:'static'}}catch(err){if(err?.name==='AbortError')throw err;if(character!=='petty')throw err;return{blob:await fetchRuntimeFallback(text,signal),engine:'runtime'}}}
-window.preloadPettyVoice=text=>{const t=String(text||'').trim();if(!t)return Promise.resolve(false);const character=selectedCharacter();return fetchStatic(t,undefined,character).then(()=>true).catch(()=>false)};window.PettyStaticAudio={hashText,pathFor,allowDeviceFallback:ALLOW_DEVICE_FALLBACK};
-function finishUnavailable(utterance,err){try{utterance.onerror?.({type:'error',engine:'none',reason:'voice-unavailable',error:err})}catch{}try{utterance.onend?.({type:'end',engine:'none',unavailable:true})}catch{}}
-async function speakAudio(utterance,mySeq){const text=String(utterance?.text||'').trim();activeUtterance=utterance;if(!text){utterance.onend?.({type:'end'});activeUtterance=null;return}const controller=new AbortController();activeController=controller;try{const loaded=await loadVoice(text,controller.signal);if(mySeq!==seq)return;if(activeController===controller)activeController=null;activeUrl=URL.createObjectURL(loaded.blob);const a=new Audio(activeUrl);activeAudio=a;a.volume=typeof utterance.volume==='number'?utterance.volume:1;a.preload='auto';a.onplay=()=>{try{utterance.onstart?.({type:'start',engine:loaded.engine})}catch{}};await a.play();await new Promise((resolve,reject)=>{a.onended=resolve;a.onerror=reject});if(mySeq===seq)utterance.onend?.({type:'end',engine:loaded.engine});if(activeUtterance===utterance)activeUtterance=null;cleanup()}catch(err){if(mySeq!==seq||err?.name==='AbortError')return;cleanup();if(activeUtterance===utterance)activeUtterance=null;if(selectedCharacter()==='petty'&&ALLOW_DEVICE_FALLBACK){try{fallbackSpeak(utterance)}catch{finishUnavailable(utterance,err)}}else finishUnavailable(utterance,err)}}
-synth.speak=function(utterance){const mySeq=++seq;speakAudio(utterance,mySeq)};synth.cancel=function(){seq++;const u=activeUtterance;activeUtterance=null;cleanup();try{fallbackCancel()}catch{}try{u?.onend?.({type:'end',cancelled:true})}catch{}};synth.__pettyStaticAudioPatched=true;window.PETTY_VOICE_ENGINE='static-first';
+'use strict';
+const synth=window.speechSynthesis;
+if(!synth||synth.__pettyHtmlAudioPatched)return;
+const nativeCancel=synth.cancel.bind(synth);
+const cache=new Map();
+let audioEl=null,activeUrl=null,activeUtterance=null,seq=0,unlocked=false,unlocking=false,silentLoopRunning=false;
+const log=(...a)=>console.log('[PETTY AUDIO LOG]',...a);
+const errlog=(...a)=>console.error('[PETTY AUDIO LOG]',...a);
+// Verified with ffprobe before embedding: MP3, ~1.045s duration, mono 44.1kHz silence.
+const SILENT_LOOP='data:audio/mpeg;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTGF2ZjYxLjcuMTAzAAAAAAAAAAAAAAD/+0DAAAAAAAAAAAAAAAAAAAAAAABJbmZvAAAADwAAACgAABD2ABAQFhYdHR0jIykpKS8vNTU1OztBQUFISE5OTlRUWlpaYGBmZmZsbHJycnl5f39/hYWLi4uRkZeXl52dpKSkqqqwsLC2try8vMLCyMjIzs7V1dXb2+Hh4efn7e3t8/P5+fn//wAAAABMYXZjNjEuMTkAAAAAAAAAAAAAAAAkBXwAAAAAAAAQ9in4b6YAAAAAAP/7EMQAA8AAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxCmDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDEUwPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMR8g8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxKYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDEz4PAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxNYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDE1gPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMTWA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+function getAudio(){
+  if(audioEl)return audioEl;
+  audioEl=document.createElement('audio');
+  audioEl.preload='auto';
+  audioEl.playsInline=true;
+  audioEl.setAttribute('playsinline','');
+  audioEl.style.display='none';
+  document.body?.appendChild(audioEl);
+  return audioEl;
+}
+function revoke(){if(activeUrl){try{URL.revokeObjectURL(activeUrl)}catch{}activeUrl=null}}
+function detach(a){if(!a)return;a.onplay=a.onended=a.onerror=null}
+function finish(u,engine='html-audio',extra={}){
+  if(activeUtterance===u)activeUtterance=null;
+  try{u?.onend?.({type:'end',engine,...extra})}catch{}
+}
+function stopCurrent(cancelled=false){
+  const a=getAudio(),u=activeUtterance;
+  activeUtterance=null;
+  try{a.pause();a.currentTime=0;a.loop=false}catch{}
+  silentLoopRunning=false;
+  detach(a);revoke();
+  if(u)finish(u,'html-audio',{cancelled});
+}
+function fetchVoice(text){
+  text=String(text||'').trim();
+  if(!text)return Promise.reject(new Error('empty voice text'));
+  if(cache.has(text))return cache.get(text);
+  const p=fetch('/api/petty-voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})})
+    .then(async r=>{if(!r.ok)throw new Error('voice '+r.status);return r.blob()})
+    .catch(e=>{cache.delete(text);throw e});
+  cache.set(text,p);return p;
+}
+window.preloadPettyVoice=text=>fetchVoice(text).then(()=>true).catch(()=>false);
+window.isPettyVoicePreloaded=text=>cache.has(String(text||'').trim());
+window.unlockPettyAudio=()=>{
+  if(unlocked||unlocking||silentLoopRunning)return true;
+  const a=getAudio();
+  log('gesture unlock initiated');
+  try{
+    unlocking=true;
+    a.loop=true;
+    a.src=SILENT_LOOP;
+    a.currentTime=0;
+    a.volume=.01;
+    const p=a.play();
+    if(p?.then)p.then(()=>{unlocked=true;unlocking=false;silentLoopRunning=true;log('unlock resolved; silent loop running')}).catch(err=>{unlocking=false;silentLoopRunning=false;errlog('unlock rejected',err)});
+    else{unlocked=true;unlocking=false;silentLoopRunning=true;log('unlock resolved synchronously; silent loop running')}
+    return true;
+  }catch(err){unlocking=false;silentLoopRunning=false;errlog('unlock threw',err);return false}
+};
+addEventListener('pointerdown',()=>window.unlockPettyAudio?.(),{capture:true});
+addEventListener('touchstart',()=>window.unlockPettyAudio?.(),{capture:true,passive:true});
+function playBlob(u,blob,mySeq){
+  if(mySeq!==seq)return;
+  const a=getAudio();
+  // If this is the first real voice, preserve the already-running media element and swap source in place.
+  if(activeUtterance)stopCurrent(false);
+  else{detach(a);revoke()}
+  activeUtterance=u;
+  a.loop=false;
+  silentLoopRunning=false;
+  activeUrl=URL.createObjectURL(blob);
+  a.src=activeUrl;
+  a.volume=typeof u.volume==='number'?u.volume:1;
+  a.currentTime=0;
+  a.preload='auto';
+  let done=false;
+  const fail=err=>{if(done||mySeq!==seq)return;done=true;errlog('voice playback failed',err);detach(a);revoke();if(activeUtterance===u)activeUtterance=null;try{u.onerror?.({type:'error',engine:'html-audio',error:err})}catch{};try{u.onend?.({type:'end',engine:'html-audio',error:true})}catch{}};
+  a.onplay=()=>{unlocked=true;log('speech started');try{u.onstart?.({type:'start',engine:'html-audio'})}catch{}};
+  a.onended=()=>{if(done||mySeq!==seq)return;done=true;log('speech ended naturally');detach(a);revoke();finish(u)};
+  a.onerror=fail;
+  try{const p=a.play();p?.then?.(()=>log('real blob play() resolved')).catch?.(fail)}catch(err){fail(err)}
+}
+function speakHtml(u){
+  const text=String(u?.text||'').trim(),mySeq=++seq;
+  log('speakHtml called',{text,seq:mySeq,unlocked,silentLoopRunning});
+  if(!text){try{u?.onend?.({type:'end',engine:'html-audio'})}catch{};return}
+  fetchVoice(text).then(blob=>{if(mySeq===seq)playBlob(u,blob,mySeq)}).catch(err=>{if(mySeq!==seq)return;errlog('voice fetch failed',err);try{u.onerror?.({type:'error',engine:'html-audio',error:err})}catch{};try{u.onend?.({type:'end',engine:'html-audio',error:true})}catch{}});
+}
+synth.speak=speakHtml;
+synth.cancel=function(){seq++;log('speech cancel',{seq});stopCurrent(true);try{nativeCancel()}catch{}};
+synth.__pettyHtmlAudioPatched=true;
+synth.__pettyStaticAudioPatched=true;
+window.PETTY_VOICE_ENGINE='elevenlabs-html-audio';
+window.PettyStaticAudio={allowDeviceFallback:false,transport:'html-audio-only',version:'2.2'};
 })();
