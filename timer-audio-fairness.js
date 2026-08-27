@@ -1,12 +1,13 @@
 /* 99% IMPOSSIBLE — Perfect Timer hidden-phase audio fairness
-   Keep the existing pre-0.500s ticks.
-   At 0.500s: stop repeating ticks, play one blind cue, then stay silent until STOP.
+   Keep one subtle start/tick cue and one blind cue at 0.500s.
+   The cues route through the Safari-safe non-beep SFX layer.
 */
 (()=>{
   'use strict';
 
   timerStart=function(){
     audio();
+    window.N99SFX?.prime?.();
     st.run=1;
     st.start=performance.now();
     primary.textContent='STOP';
@@ -24,7 +25,7 @@
         if(!blindCuePlayed){
           blindCuePlayed=true;
           untick();
-          tone(760,.08,'sine',.05);
+          window.N99SFX?.play?.('blind');
         }
         n.textContent='???';
         n.classList.add('green');
