@@ -1,0 +1,75 @@
+/* 99% IMPOSSIBLE — Daisy + Mick phrase pools only. Mirrors Petty category names. */
+(function(root,factory){const x=factory();if(typeof module==='object'&&module.exports)module.exports=x;else root.N99CastLines=x})(typeof globalThis!=='undefined'?globalThis:this,function(){
+'use strict';
+const line=(who,key,i,text)=>({id:`${who}_${key}_${String(i+1).padStart(2,'0')}`,text});
+const list=(who,key,a)=>a.map((text,i)=>line(who,key,i,text));
+const mix=(who,key,a,b,n)=>Array.from({length:n},(_,i)=>line(who,key,i,`${a[i%a.length]}${b[Math.floor(i/a.length)%b.length]}`));
+const make=(who,t)=>({
+  intro:list(who,'intro',t.intro),adBefore:list(who,'adBefore',t.adBefore),adAfter:list(who,'adAfter',t.adAfter),
+  timer:mix(who,'timer',t.timerA,t.timerB,20),stop:mix(who,'stop',t.stopA,t.stopB,20),reaction:mix(who,'reaction',t.reactA,t.reactB,20),early:mix(who,'early',t.earlyA,t.earlyB,16),
+  suspicious:mix(who,'suspicious',t.susA,t.susB,12),slow:mix(who,'slow',t.slowA,t.slowB,12),good:mix(who,'good',t.goodA,t.goodB,12),veryClose:mix(who,'veryClose',t.closeA,t.closeB,12),pb:mix(who,'pb',t.pbA,t.pbB,12),perfect:mix(who,'perfect',t.perfA,t.perfB,12),streak:mix(who,'streak',t.streakA,t.streakB,12),generic:mix(who,'generic',t.genA,t.genB,12),interrupt:mix(who,'interrupt',t.intA,t.intB,16),respect:mix(who,'respect',t.resA,t.resB,4)
+});
+const daisy=make('daisy',{
+  intro:[
+    "Well butter my biscuits, look who wandered in. Welcome to 99% Impossible, sugar. Let's see what that thumb of yours can do.",
+    "Well I'll be. Fresh meat. Welcome to 99% Impossible, darlin'. Three games, one thumb, and a whole lotta pride on the line.",
+    "Lord have mercy, somebody actually showed up. Come on in, sugar. Let's see if you're quick or just confident.",
+    "Well slap my knee and call me impressed. You found the game. Now let's see if you can actually play it.",
+    "Good gravy, darlin'. Welcome to 99% Impossible. I hope you brought fast fingers and a sense of humor."
+  ],
+  adBefore:[
+    "Well hold your horses, sugar. Somebody paid for a commercial.","Good gravy. Capitalism done found us.","Darlin', park that thumb for a second. The sponsors are hollerin'.","Well butter my biscuits, somebody bought the next few seconds.","Lordy. Even failure's got sponsors these days.","Sugar, sit tight. Somebody's gotta pay for all this foolishness.","Well bless it. Time for a tiny commercial break.","Hold your horses, honey. The money folks need a minute.","Good gravy, darlin'. We've been monetized.","Settle in, sugar. Corporate done come knockin'.","Well I'll be. Your bad timing attracted advertisers.","Honey child, don't go nowhere. Somebody paid for your attention."
+  ],
+  adAfter:[
+    "Well alright, sugar. Commercial's over. Back to the rodeo.","And we're back, darlin'. Your thumb get any smarter?","Well bless it. Bills are paid. Let's get back to business.","Good gravy, we're free again. Now where were we?","Alright honey, sponsors are happy. Time to make me proud.","Well butter my biscuit, we're back. Try not to embarrass yourself.","Commercial's done, sugar. Let's see if that break helped.","Lordy, back already. Alright darlin', show me somethin'.","The money folks are gone. It's just you, me, and that questionable timing again.","Alright sugar, enough capitalism. Back to the chaos."
+  ],
+  timerA:["Oh sugar… ","Lordy, darlin'… ","Bless your heart… ","Good gravy, honey… "],
+  timerB:["were we countin' or just prayin'?","one little second should not be whippin' you like this.","honey, that clock just took you behind the woodshed.","that guess wandered farther than a hound dog after supper.","darlin', I've seen biscuits rise with better timing."],
+  stopA:["Sugar… ","Oh, darlin'… ","Lord have mercy… ","Bless your little heart… "],
+  stopB:["that target was sittin' there plain as a barn in daylight.","where were you aimin', three counties over?","that aim wandered off like a cow through an open gate.","honey, the target wasn't hidin' in the cornfield.","darlin', you missed the whole biscuit basket."],
+  reactA:["Lordy, sugar… ","Oh, honey… ","Bless it, darlin'… ","Sweet mercy… "],
+  reactB:["that green light had time to grow tomatoes.","I've seen molasses in January move quicker.","darlin', that light was waitin' on you like Sunday supper.","your thumb moseyed over there like it had nowhere to be.","honey, a porch swing would've reacted faster."],
+  earlyA:["WHOA, sugar! ","Lord have mercy! ","Easy there, darlin'! ","Good gravy, honey! "],
+  earlyB:["that light wasn't green yet!","you jumped that gun before the rooster even crowed!","we said wait, not read my mind!","honey, you just tapped pure imagination."],
+  susA:["Now hold on just a cotton-pickin' minute… ","Well I'll be… ","Sugar, listen… ","Lordy… "],
+  susB:["are you part hummingbird?","that was faster than gossip at a church picnic.","honey, humans ain't usually built like that."],
+  slowA:["Oh sugar… ","Lordy, darlin'… ","Good gravy… ","Honey child… "],
+  slowB:["that reaction was slower than cold molasses.","I've seen turtles cross dirt roads with more urgency.","that green light nearly retired waitin' on you."],
+  goodA:["Well now! ","Good gravy! ","Look at you! ","Mercy me! "],
+  goodB:["you're cookin' with Crisco now!","that was smoother than sweet tea on a hot porch.","well I'll be. You might actually know what you're doin'."],
+  closeA:["OHH, sugar! ","Lordy! ","Darlin'! ","Sweet mercy! "],
+  closeB:["you were closer than a June bug on a porch light!","that one hurt worse than droppin' the last biscuit.","you were one whisker away from glory."],
+  pbA:["Well butter my biscuit! ","Look at you, sugar! ","Well I'll be! ","Good gravy! "],
+  pbB:["that's a new personal best!","somebody's been practicin' behind the barn.","darlin', that's your best one yet!"],
+  perfA:["WELL BUTTER MY BISCUITS! ","Sweet mercy! ","Well I'll be dipped in honey! ","Lord have mercy, sugar! "],
+  perfB:["that was beautiful!","you absolutely nailed that!","that was slicker than butter on a hot biscuit!"],
+  streakA:["Well bless it… ","Sugar… ","Lordy… ","Good gravy… "],
+  streakB:["there went the whole biscuit basket.","you dropped that streak like a hot skillet.","that streak is out to pasture."],
+  genA:["Oh sugar… ","Bless your heart… ","Good gravy… ","Darlin'… "],
+  genB:["honey, that dog won't hunt.","what in the corn bread was that?","we're gonna pretend nobody saw that."],
+  intA:["Excuse me, sugar? ","Lord have mercy! ","Darlin'! ","Well bless it… "],
+  intB:["can a lady finish one cotton-pickin' sentence?","you really hit retry while I was still talkin'.","I've still got words left!","apparently manners left the building."],
+  resA:["Well look at that… ","Aww, sugar… ","Thank you, darlin'… ","Bless it… "],
+  resB:["you let me finish. That's mighty kind of you."]
+});
+const mick=make('mick',{
+  intro:["OI! Welcome to 99% Impossible, mate. Three tests, one thumb, absolutely no excuses. Let's see what you've got.","Alright mate, you're in. Three games between you and bragging rights. Don't bottle it.","Crikey, another volunteer. Welcome to 99% Impossible. Let's see if that thumb actually works.","OI! You've found the bloody game. Good. Now prove you're not hopeless.","Righto, legend. Three tests. Zero excuses. Have a proper crack."],
+  adBefore:["OI, hold up mate. The sponsors want a bloody turn.","Right, commercial break. Apparently humiliation isn't free.","Bloody hell, capitalism again.","Park the thumb, champion. Someone paid for these next few seconds.","Mate, the advertisers have entered the bloody chat.","Quick break. Even roasting you has overhead.","OI! Don't go anywhere. Corporate's having a go.","Righto. Time for the bit that pays the bills.","Mate, pause the comeback. We've got invoices.","Bloody sponsors. Give 'em five seconds."],
+  adAfter:["OI, we're back! Enough advertising. Get on with it.","Right mate, commercial's done. Try not to bottle this one.","Sponsors are happy. Your thumb still questionable.","Back to work, champion.","Bloody hell, freedom. Right, where were we?","Ad's finished. Time to have another crack.","Righto mate, capitalism's done with you. I'm not.","We're back, legend. Lock in.","Commercial complete. Reflexes hopefully upgraded.","OI! Break's over. Show me something."],
+  timerA:['OI! ','Mate… ','Bloody hell, ','Crikey, mate… '],timerB:['one second! ONE!','were ya counting or consulting the stars?','that clock just absolutely mugged ya.','my nan could count that better.','have another crack, ya drongo.'],
+  stopA:['OI! ','Mate… ','Bloody hell! ','Crikey… '],stopB:['the target was right bloody there!','I have seen a shopping trolley with better aim.','where were ya aiming, New Zealand?','the box did not move, champion.','that aim needs a bloody map.'],
+  reactA:['OI! ','Mate… ','Bloody hell… ','Crikey, '],reactB:['green means GO!','by the time ya reacted I went to the pub and came back.','that thumb is on smoko.','you react like dodgy Australian internet.','wake up, legend!'],
+  earlyA:['OI! ','MATE! ','Bloody hell! ','Easy, tiger! '],earlyB:['IT WAS NOT GREEN YET!','calm ya bloody thumb down!','you tapped on pure imagination.','stop trying to predict the future.'],
+  susA:['Nah mate… ','OI… ','Yeah right, mate… ','Bloody hell… '],susB:['I am calling bullshit. Nobody is that quick.','and I am the bloody Prime Minister.','that was suspicious as hell.'],
+  slowA:['Mate… ','OI! ','Crikey… ','Bloody hell… '],slowB:['did ya stop for a meat pie first?','the light nearly filed for retirement.','move that thumb before next Tuesday.'],
+  goodA:['OI! ','Not bad, mate! ','Alright! ','Bloody hell! '],goodB:['that was actually tidy.','look at you having a proper crack.','you might not be hopeless after all.'],
+  closeA:['OHHHH MATE! ','OI! ','Bloody hell! ','Crikey! '],closeB:["you were a bee's dick away!",'that was heartbreak in high definition.','you nearly bloody had it!'],
+  pbA:['OI! ','Mate! ','Well bloody hell! ','Crikey! '],pbB:['new best! Someone is finally awake.','that is a proper personal best.','look at you improving, ya weapon.'],
+  perfA:['BLOODY HELL! ','OI! PERFECT! ','MATE! ','Crikey! '],perfB:['where did that come from?!','look at this bloody legend!','that was absolutely brilliant. Do not get cocky.'],
+  streakA:['Ahhh mate… ','OI… ','Bloody hell… ','Crikey… '],streakB:['you cooked the whole streak.','there goes a perfectly good run.','you had momentum and bottled it.'],
+  genA:['Mate… ','OI… ','Bloody hell… ','Crikey… '],genB:['what was THAT?','have another crack.','that was cooked, and not in the good way.'],
+  intA:['OI! ','Mate! ','Bloody hell! ','Hold up, champion! '],intB:['can I finish a bloody sentence?','you hit retry while I was still talking!','I have words left, ya menace.','speedrun the game, not my bloody dialogue.'],
+  resA:['Cheers, mate… ','Well look at that… ','Crikey… ','Good on ya… '],resB:['you actually let me finish.']
+});
+return{daisy,mick};
+});
