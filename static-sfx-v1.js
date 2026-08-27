@@ -29,7 +29,25 @@ function makeUrl(name,samples){urls[name]=URL.createObjectURL(wavBlob(samples));
 
 const sources={
   tap:makeUrl('tap',pcm(.12,(t,d)=>rnd()*expEnv(t,d,16)*.60)),
+
+  // Reaction keeps the existing dry muted tick.
   tick:makeUrl('tick',pcm(.11,(t,d)=>rnd()*expEnv(t,d,20)*.42)),
+
+  // Game 1: softer rounded clock-click. Low-mid, warm, very short, no piercing edge.
+  timerTick:makeUrl('timerTick',pcm(.13,(t,d)=>{
+    const body=Math.sin(2*Math.PI*185*t)*expEnv(t,d,14)*.30;
+    const wood=rnd()*expEnv(t,d,24)*.22;
+    return body+wood;
+  })),
+
+  // Game 2: gentle tactile pulse with a slightly deeper body than Timer.
+  stopTick:makeUrl('stopTick',pcm(.15,(t,d)=>{
+    const body=Math.sin(2*Math.PI*145*t)*expEnv(t,d,12)*.34;
+    const soft=Math.sin(2*Math.PI*245*t)*expEnv(t,d,18)*.10;
+    const touch=rnd()*expEnv(t,d,26)*.14;
+    return body+soft+touch;
+  })),
+
   start:makeUrl('start',pcm(.22,(t,d)=>Math.sin(2*Math.PI*(120-30*t/d)*t)*expEnv(t,d,8)*.50+rnd()*expEnv(t,d,15)*.25)),
   go:makeUrl('go',pcm(.28,(t,d)=>Math.sin(2*Math.PI*(170+180*t/d)*t)*expEnv(t,d,6)*.28+rnd()*expEnv(t,d,9)*.45)),
   blind:makeUrl('blind',pcm(.30,(t,d)=>rnd()*Math.min(1,t/.04)*expEnv(t,d,6)*.42+Math.sin(2*Math.PI*300*t)*expEnv(t,d,8)*.12)),
@@ -41,7 +59,9 @@ const sources={
 function build(name,url){
   const pool=[];
   for(let i=0;i<POOL_SIZE;i++){
-    const a=new Audio(url);a.preload='auto';a.volume=name==='tick'?.22:.62;pool.push(a);
+    const a=new Audio(url);a.preload='auto';
+    a.volume=name==='timerTick'?.16:name==='stopTick'?.18:name==='tick'?.22:.62;
+    pool.push(a);
   }
   banks[name]=pool;
 }
@@ -72,8 +92,12 @@ function play(name){
 
 window.N99SFX={play,prime:unlock,bank:sources};
 
-// Preserve the existing anti-beep overrides so old Web Audio tones never come back.
-window.ticks=function(){try{untick()}catch{}try{window.N99SFX.play('tick')}catch{}};
+// Preserve anti-beep overrides and make Timer/Stop ticks intentionally distinct.
+window.ticks=function(mode){
+  try{untick()}catch{}
+  const name=mode==='timer'?'timerTick':mode==='stop'?'stopTick':'tick';
+  try{window.N99SFX.play(name)}catch{}
+};
 window.failSound=function(){try{untick()}catch{}try{window.N99SFX.play('fail')}catch{}};
 window.win=function(t){try{untick()}catch{}try{window.N99SFX.play(t==='perfect'?'perfect':'win')}catch{}};
 })();
