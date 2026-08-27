@@ -1,83 +1,79 @@
-/* 99% IMPOSSIBLE — Safari-safe non-beep SFX
-   Uses the game's already-unlocked Web Audio context. No new gesture listeners.
-   Synthesized oscillator beeps stay disabled; effects are short filtered-noise impacts. */
+/* 99% IMPOSSIBLE — Safari-reliable SFX bank
+   HTMLAudioElement pool with tiny generated WAV blobs.
+   Mirrors the proven blob-URL playback path used by character voices.
+   No new gesture listeners. No Web Audio SFX. No high-pitched synthesized beeps. */
 (()=>{
 'use strict';
 
-let noiseBuffer=null;
-function ctx(){
-  try{return typeof audio==='function'?audio():null}catch{return null}
+const SR=22050,POOL_SIZE=3,banks={},urls={};
+let unlocked=false,seed=99;
+
+function rnd(){seed=(seed*1664525+1013904223)>>>0;return(seed/4294967296)*2-1}
+function expEnv(t,d,k=7){return Math.exp(-k*t/Math.max(d,.000001))}
+function clamp(v){return Math.max(-1,Math.min(1,v))}
+function pcm(dur,fn){
+  const n=Math.max(1,Math.floor(SR*dur)),a=new Float32Array(n);let peak=.000001;
+  for(let i=0;i<n;i++){const v=fn(i/SR,dur);a[i]=v;peak=Math.max(peak,Math.abs(v))}
+  const s=.78/peak;for(let i=0;i<n;i++)a[i]=clamp(a[i]*s);return a;
 }
-function ensureNoise(c){
-  if(noiseBuffer&&noiseBuffer.sampleRate===c.sampleRate)return noiseBuffer;
-  const len=Math.max(1,Math.floor(c.sampleRate*.35));
-  const b=c.createBuffer(1,len,c.sampleRate),d=b.getChannelData(0);
-  for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);
-  noiseBuffer=b;return b;
+function wavBlob(samples){
+  const bytes=44+samples.length*2,b=new ArrayBuffer(bytes),v=new DataView(b);
+  const str=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  str(0,'RIFF');v.setUint32(4,bytes-8,true);str(8,'WAVE');str(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,SR,true);
+  v.setUint32(28,SR*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,samples.length*2,true);
+  let o=44;for(let i=0;i<samples.length;i++,o+=2)v.setInt16(o,Math.round(samples[i]*32767),true);
+  return new Blob([b],{type:'audio/wav'});
 }
-function burst(c,{type='bandpass',freq=900,q=.7,vol=.05,dur=.055,delay=0}={}){
-  const src=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
-  src.buffer=ensureNoise(c);f.type=type;f.frequency.value=freq;f.Q.value=q;
-  const t=c.currentTime+delay;
-  g.gain.setValueAtTime(.0001,t);
-  g.gain.exponentialRampToValueAtTime(Math.max(.001,vol),t+.004);
-  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-  src.connect(f).connect(g).connect(c.destination);src.start(t);src.stop(t+dur+.02);
-}
-function render(c,name){
-  switch(name){
-    case 'tick': burst(c,{type:'highpass',freq:2600,vol:.012,dur:.018}); break;
-    case 'blind': burst(c,{type:'bandpass',freq:1500,q:.55,vol:.035,dur:.06}); break;
-    case 'start': burst(c,{type:'bandpass',freq:1050,q:.5,vol:.03,dur:.04}); break;
-    case 'go':
-      burst(c,{type:'highpass',freq:1900,vol:.065,dur:.055});
-      burst(c,{type:'bandpass',freq:900,q:.45,vol:.035,dur:.08,delay:.018});
-      break;
-    case 'tap': burst(c,{type:'highpass',freq:3200,vol:.035,dur:.022}); break;
-    case 'fail':
-      burst(c,{type:'lowpass',freq:420,q:.4,vol:.09,dur:.13});
-      burst(c,{type:'bandpass',freq:260,q:.6,vol:.055,dur:.16,delay:.025});
-      break;
-    case 'win':
-      burst(c,{type:'highpass',freq:2100,vol:.04,dur:.055});
-      burst(c,{type:'bandpass',freq:1450,q:.5,vol:.045,dur:.075,delay:.055});
-      break;
-    case 'perfect':
-      burst(c,{type:'highpass',freq:1800,vol:.055,dur:.06});
-      burst(c,{type:'bandpass',freq:2400,q:.45,vol:.05,dur:.07,delay:.055});
-      burst(c,{type:'highpass',freq:3300,vol:.045,dur:.08,delay:.12});
-      break;
-    default:return false;
+function makeUrl(name,samples){urls[name]=URL.createObjectURL(wavBlob(samples));return urls[name]}
+
+const sources={
+  tap:makeUrl('tap',pcm(.12,(t,d)=>rnd()*expEnv(t,d,16)*.60)),
+  tick:makeUrl('tick',pcm(.11,(t,d)=>rnd()*expEnv(t,d,20)*.42)),
+  start:makeUrl('start',pcm(.22,(t,d)=>Math.sin(2*Math.PI*(120-30*t/d)*t)*expEnv(t,d,8)*.50+rnd()*expEnv(t,d,15)*.25)),
+  go:makeUrl('go',pcm(.28,(t,d)=>Math.sin(2*Math.PI*(170+180*t/d)*t)*expEnv(t,d,6)*.28+rnd()*expEnv(t,d,9)*.45)),
+  blind:makeUrl('blind',pcm(.30,(t,d)=>rnd()*Math.min(1,t/.04)*expEnv(t,d,6)*.42+Math.sin(2*Math.PI*300*t)*expEnv(t,d,8)*.12)),
+  fail:makeUrl('fail',pcm(.42,(t,d)=>Math.sin(2*Math.PI*(110-45*t/d)*t)*expEnv(t,d,5)*.70+rnd()*expEnv(t,d,11)*.20)),
+  win:makeUrl('win',pcm(.42,(t,d)=>{const a=Math.sin(2*Math.PI*392*t)*expEnv(t,d,6)*.30,u=t-.10,b=u>=0?Math.sin(2*Math.PI*523.25*u)*Math.exp(-7*u/Math.max(d-.1,.01))*.35:0;return a+b+rnd()*expEnv(t,d,16)*.06})),
+  perfect:makeUrl('perfect',pcm(.55,(t,d)=>{let out=0;for(const [delay,freq,amp] of [[0,392,.25],[.09,523.25,.30],[.18,659.25,.32]])if(t>=delay){const u=t-delay;out+=Math.sin(2*Math.PI*freq*u)*Math.exp(-7*u/Math.max(d-delay,.01))*amp}return out+rnd()*expEnv(t,d,18)*.05}))
+};
+
+function build(name,url){
+  const pool=[];
+  for(let i=0;i<POOL_SIZE;i++){
+    const a=new Audio(url);a.preload='auto';a.volume=name==='tick'?.22:.62;pool.push(a);
   }
+  banks[name]=pool;
+}
+Object.keys(sources).forEach(n=>build(n,sources[n]));
+
+function unlock(){
+  if(unlocked)return true;
+  unlocked=true;
+  Object.values(banks).flat().forEach(el=>{
+    try{
+      const p=el.play();if(p&&p.catch)p.catch(()=>{});
+      el.pause();el.currentTime=0;
+    }catch{}
+  });
   return true;
 }
+
 function play(name){
-  const c=ctx();if(!c)return false;
-  const run=()=>{try{render(c,name)}catch{}};
-  if(c.state==='running')run();
-  else if(c.resume)c.resume().then(run).catch(()=>{});
-  // Known SFX are handled here even if Safari finishes resume asynchronously.
-  return ['tick','blind','start','go','tap','fail','win','perfect'].includes(name);
-}
-function prime(){
-  const c=ctx();if(!c)return false;
-  try{if(c.state==='suspended')c.resume().catch?.(()=>{})}catch{}
-  return true;
+  const pool=banks[name];if(!pool)return false;
+  if(!unlocked)unlock();
+  const el=pool.find(a=>a.paused||a.ended)||pool[0];
+  try{
+    el.currentTime=0;
+    const p=el.play();if(p&&p.catch)p.catch(()=>{});
+    return true;
+  }catch{return false}
 }
 
-window.N99SFX={play,prime,bank:{tick:1,blind:1,start:1,go:1,tap:1,fail:1,win:1,perfect:1}};
+window.N99SFX={play,prime:unlock,bank:sources};
 
-// Replace only legacy synthesized result/tick sounds. Gameplay/scoring stays untouched.
-window.ticks=function(){
-  try{untick()}catch{}
-  try{window.N99SFX?.play?.('tick')}catch{}
-};
-window.failSound=function(){
-  try{untick()}catch{}
-  try{window.N99SFX?.play?.('fail')}catch{}
-};
-window.win=function(t){
-  try{untick()}catch{}
-  try{window.N99SFX?.play?.(t==='perfect'?'perfect':'win')}catch{}
-};
+// Preserve the existing anti-beep overrides so old Web Audio tones never come back.
+window.ticks=function(){try{untick()}catch{}try{window.N99SFX.play('tick')}catch{}};
+window.failSound=function(){try{untick()}catch{}try{window.N99SFX.play('fail')}catch{}};
+window.win=function(t){try{untick()}catch{}try{window.N99SFX.play(t==='perfect'?'perfect':'win')}catch{}};
 })();
