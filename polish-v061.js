@@ -1,12 +1,12 @@
-/* 99% IMPOSSIBLE — v0.6.1 polish
-   - Result card shows Petty's line only (keeps progress delta)
+/* 99% IMPOSSIBLE — v0.6.2 polish
+   - Result card shows the active cast line only (keeps progress delta)
    - Ads wait for a natural break and protect hot streaks
-   - Petty gets more opportunities to comment without overlapping speech
+   - Petty-only retry extras stay Petty-only so Daisy/Mick never request missing Petty-text MP3s
 */
 (()=>{
   const q=s=>document.querySelector(s);
 
-  // Keep the result card clean: once Petty's aside arrives, remove the older
+  // Keep the result card clean: once the personality aside arrives, remove the older
   // duplicate roast sentence but preserve useful CLOSER / LAST TIME delta text.
   const mr=q('#mr');
   if(mr){
@@ -23,11 +23,12 @@
     new MutationObserver(()=>queueMicrotask(clean)).observe(mr,{childList:true,subtree:true,characterData:true});
   }
 
-  // More Petty: occasional retry commentary. Uses the existing personality
-  // engine, so on-screen text and spoken text stay identical.
+  // Occasional retry commentary remains Petty-only. Daisy/Mick already have their
+  // own generated cast pools and should never be asked to speak Petty-only text.
   let retries=0,lastExtra=0;
   document.addEventListener('click',e=>{
     if(!(e.target?.matches?.('#retry,#primary')))return;
+    if((window.N99Character?.get?.()||'petty')!=='petty')return;
     if(!window.PettyPersonality?.speak)return;
     retries++;
     const now=Date.now();
