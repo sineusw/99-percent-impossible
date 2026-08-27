@@ -1,4 +1,4 @@
-/* 99% IMPOSSIBLE — Daisy/Mick static HTMLAudio transport v1
+/* 99% IMPOSSIBLE — Daisy/Mick static HTMLAudio transport v1.1
    Petty stays on the proven Petty transport. Daisy/Mick use their own
    pre-generated MP3 assets keyed by the same FNV-1a text hash used by
    scripts/generate-cast-audio.mjs. No WebAudio and no gameplay SFX changes. */
@@ -39,6 +39,7 @@ function finish(type,extra={}){
 }
 
 function stopCast(cancelled=false){
+  seq++;
   const a=activeAudio;
   if(a){
     try{a.pause();a.currentTime=0}catch{}
@@ -49,18 +50,49 @@ function stopCast(cancelled=false){
   activeUtterance=null;
 }
 
-synth.cancel=function(){
+function stopAll(){
   stopCast(true);
   try{return priorCancel()}catch{}
-};
+}
+
+function playText(character,text,handlers={}){
+  if(character!=='daisy'&&character!=='mick')return false;
+  text=String(text||'').trim();
+  if(!text)return false;
+  stopCast(true);
+  const my=++seq;
+  const file=`/assets/${character}-audio/${hashText(text)}.mp3`;
+  const a=new Audio(file);
+  a.preload='auto';
+  a.playsInline=true;
+  a.setAttribute('playsinline','');
+  activeAudio=a;
+  activeUtterance=null;
+  a.onplay=()=>{if(my===seq)try{handlers.onstart?.({type:'start',engine:'cast-static-audio',character,file})}catch{}};
+  a.onended=()=>{if(my!==seq)return;activeAudio=null;try{handlers.onend?.({type:'end',engine:'cast-static-audio',character,file})}catch{}};
+  a.onerror=()=>{if(my!==seq)return;activeAudio=null;try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file})}catch{}};
+  try{
+    const p=a.play();
+    if(p&&typeof p.catch==='function')p.catch(()=>{
+      if(my!==seq)return;
+      activeAudio=null;
+      try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file,blocked:true})}catch{}
+    });
+    return true;
+  }catch{
+    activeAudio=null;
+    try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file,blocked:true})}catch{}
+    return false;
+  }
+}
+
+synth.cancel=function(){return stopAll()};
 
 synth.speak=function(utterance){
   const character=currentCharacter();
   if(character==='petty')return priorSpeak(utterance);
-
   const text=String(utterance?.text||'').trim();
   if(!text)return;
-
   stopCast(true);
   const my=++seq;
   const file=`/assets/${character}-audio/${hashText(text)}.mp3`;
@@ -70,26 +102,15 @@ synth.speak=function(utterance){
   a.setAttribute('playsinline','');
   activeAudio=a;
   activeUtterance=utterance;
-
-  a.onplay=()=>{
-    if(my!==seq)return;
-    try{utterance.onstart?.({type:'start',engine:'cast-static-audio',character})}catch{}
-  };
-  a.onended=()=>{
-    if(my!==seq)return;
-    finish('end',{character});
-  };
-  a.onerror=()=>{
-    if(my!==seq)return;
-    finish('error',{character,file});
-  };
-
-  const p=a.play();
-  if(p&&typeof p.catch==='function')p.catch(()=>{
-    if(my===seq)finish('error',{character,file,blocked:true});
-  });
+  a.onplay=()=>{if(my===seq)try{utterance.onstart?.({type:'start',engine:'cast-static-audio',character})}catch{}};
+  a.onended=()=>{if(my===seq)finish('end',{character})};
+  a.onerror=()=>{if(my===seq)finish('error',{character,file})};
+  try{
+    const p=a.play();
+    if(p&&typeof p.catch==='function')p.catch(()=>{if(my===seq)finish('error',{character,file,blocked:true})});
+  }catch{if(my===seq)finish('error',{character,file,blocked:true})}
 };
 
 synth.__n99CastStaticPatched=true;
-window.N99CastStaticAudio={hashText,currentCharacter};
+window.N99CastStaticAudio={hashText,currentCharacter,playText,stop:stopAll};
 })();
