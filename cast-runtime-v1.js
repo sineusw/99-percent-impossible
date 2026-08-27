@@ -1,6 +1,7 @@
-/* 99% IMPOSSIBLE — Cast picker v1.2
+/* 99% IMPOSSIBLE — Cast picker v1.2.1
    - Bounded retry if N99Character is not ready yet (Android-safe init).
    - Immediate selected-voice preview on the same user gesture.
+   - Uses verified generated intro assets; no new preview MP3 dependency.
    - No gameplay SFX changes. */
 (()=>{
 'use strict';
@@ -10,7 +11,6 @@ const chars=['petty','daisy','mick'];
 const labels={petty:'😈 PETTY',daisy:'🌼 DAISY',mick:'🇦🇺 MICK'};
 const PETTY_PREVIEW='Alright. Show me something.';
 const voiceEnabled=()=>localStorage.getItem('n99_petty_voice')!=='0';
-const shortest=pool=>Array.isArray(pool)&&pool.length?pool.reduce((a,b)=>String(b?.text||'').length<String(a?.text||'').length?b:a):null;
 
 function initCastPicker(){
   if(window.__N99_CAST_V1)return;
@@ -49,12 +49,13 @@ function initCastPicker(){
     if(!voiceEnabled())return false;
     stopVoice();
     if(c==='daisy'||c==='mick'){
-      const line=shortest(window.N99CastLines?.[c]?.intro||[]);
+      const line=window.N99CastLines?.[c]?.intro?.[0];
       if(!line?.text)return false;
       window.__N99_CAST_WELCOME_SAID=true;
       return !!window.N99CastStaticAudio?.playText?.(c,line.text);
     }
     if(c==='petty'){
+      try{window.unlockPettyAudio?.()}catch{}
       try{return !!window.PettyPersonality?.speak?.(PETTY_PREVIEW,true,'preview')}catch{return false}
     }
     return false;
