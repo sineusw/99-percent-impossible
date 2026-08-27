@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises';import path from 'node:path';import crypto from 'node:crypto';import {createRequire} from 'node:module';
-const require=createRequire(import.meta.url);const lib=require('../cast-phrases-v1.js');
+import fs from 'node:fs/promises';import path from 'node:path';import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);const lib=require('../cast-lines.js');
 const KEY=process.env.ELEVENLABS_API_KEY;if(!KEY)throw new Error('ELEVENLABS_API_KEY is required');
 const CFG={daisy:{voiceId:'9QPzUjm1evjwY2ENQBKU',settings:{stability:.66,similarity_boost:.76,style:.43,use_speaker_boost:true,speed:1}},mick:{voiceId:'YLbQE9U7P1K6rBNJWNSv',settings:{stability:.50,similarity_boost:.64,style:.85,use_speaker_boost:true,speed:1.01}}};
 function hashText(text){let h=0x811c9dc5;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(16).padStart(8,'0')}
