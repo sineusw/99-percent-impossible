@@ -45,9 +45,9 @@ function initCastPicker(){
     try{if(window.N99CastStaticAudio?.stop)return window.N99CastStaticAudio.stop()}catch{}
     try{window.speechSynthesis?.cancel?.()}catch{}
   }
-  function preview(c){
+  function preview(c,alreadyStopped=false){
     if(!voiceEnabled())return false;
-    stopVoice();
+    if(!alreadyStopped)stopVoice();
     if(c==='daisy'||c==='mick'){
       const line=window.N99CastLines?.[c]?.intro?.[0];
       if(!line?.text)return false;
@@ -65,7 +65,7 @@ function initCastPicker(){
     stopVoice();
     state.set(c);
     sync();
-    if(announce)preview(c);
+    if(announce)preview(c,true);
   }
 
   btn.addEventListener('click',()=>{
