@@ -1,4 +1,4 @@
-/* v0.6.3 — one button, one tap, one Petty voice state */
+/* v0.6.4 — one button, one tap, one voice state; re-arm selected cast on unmute */
 (()=>{
   const KEY='n99_petty_voice';
   const old=document.querySelector('.petty-voice');
@@ -26,8 +26,16 @@
     e.stopPropagation();
     const enabled=!on();
     localStorage.setItem(KEY,enabled?'1':'0');
-    if(enabled){try{window.unlockPettyVoice?.()}catch{}}
-    else{try{window.speechSynthesis?.cancel?.()}catch{}}
+    if(enabled){
+      const cast=window.N99Character?.get?.()||'petty';
+      if(cast==='daisy'||cast==='mick'){
+        try{window.N99CastStaticAudio?.unlock?.(cast)}catch{}
+      }else{
+        try{window.unlockPettyVoice?.()}catch{}
+      }
+    }else{
+      try{window.speechSynthesis?.cancel?.()}catch{}
+    }
     sync();
   });
   sync();

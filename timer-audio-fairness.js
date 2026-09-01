@@ -1,13 +1,11 @@
 /* 99% IMPOSSIBLE — Perfect Timer hidden-phase audio fairness
-   Keep one subtle start/tick cue and one blind cue at 0.500s.
-   The cues route through the Safari-safe non-beep SFX layer.
+   Keep the hidden timer behavior while leaving gameplay outcome SFX to the strict 3-asset engine.
 */
 (()=>{
   'use strict';
 
   timerStart=function(){
     audio();
-    window.N99SFX?.prime?.();
     st.run=1;
     st.start=performance.now();
     primary.textContent='STOP';
@@ -25,7 +23,6 @@
         if(!blindCuePlayed){
           blindCuePlayed=true;
           untick();
-          window.N99SFX?.play?.('blind');
         }
         n.textContent='???';
         n.classList.add('green');
