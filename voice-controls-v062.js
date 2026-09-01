@@ -1,4 +1,4 @@
-/* v0.6.4 — one button, one tap, one voice state; re-arm selected cast on unmute */
+/* v0.6.5 — one button, one tap, one voice state; re-arm selected cast + gameplay SFX on unmute */
 (()=>{
   const KEY='n99_petty_voice';
   const old=document.querySelector('.petty-voice');
@@ -27,6 +27,8 @@
     const enabled=!on();
     localStorage.setItem(KEY,enabled?'1':'0');
     if(enabled){
+      // Re-arm gameplay outcome sounds on this user gesture for iOS Safari.
+      try{window.N99SFX?.rearm?.()}catch{}
       const cast=window.N99Character?.get?.()||'petty';
       if(cast==='daisy'||cast==='mick'){
         try{window.N99CastStaticAudio?.unlock?.(cast)}catch{}
