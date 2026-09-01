@@ -1,7 +1,7 @@
-/* 99% IMPOSSIBLE — Daisy/Mick static HTMLAudio transport v1.1
+/* 99% IMPOSSIBLE — Daisy/Mick static HTMLAudio transport v1.2
    Petty stays on the proven Petty transport. Daisy/Mick use their own
    pre-generated MP3 assets keyed by the same FNV-1a text hash used by
-   scripts/generate-cast-audio.mjs. No WebAudio and no gameplay SFX changes. */
+   scripts/generate-cast-audio.mjs. Adds selected-cast re-arm on unmute. */
 (()=>{
 'use strict';
 const synth=window.speechSynthesis;
@@ -86,6 +86,26 @@ function playText(character,text,handlers={}){
   }
 }
 
+// Re-arm Safari/iOS media permission from the user's unmute gesture without
+// audibly replaying a line. This keeps Daisy/Mick interruption replies alive
+// after toggling voice off and back on.
+function unlock(character=currentCharacter()){
+  if(character!=='daisy'&&character!=='mick')return false;
+  const text=window.N99CastLines?.[character]?.intro?.[0]?.text;
+  if(!text)return false;
+  try{
+    const a=new Audio(`/assets/${character}-audio/${hashText(text)}.mp3`);
+    a.preload='auto';
+    a.playsInline=true;
+    a.setAttribute('playsinline','');
+    a.muted=true;
+    const stop=()=>{try{a.pause();a.currentTime=0}catch{}};
+    const p=a.play();
+    if(p&&typeof p.then==='function')p.then(stop).catch(()=>{});else stop();
+    return true;
+  }catch{return false}
+}
+
 synth.cancel=function(){return stopAll()};
 
 synth.speak=function(utterance){
@@ -112,5 +132,5 @@ synth.speak=function(utterance){
 };
 
 synth.__n99CastStaticPatched=true;
-window.N99CastStaticAudio={hashText,currentCharacter,playText,stop:stopAll};
+window.N99CastStaticAudio={hashText,currentCharacter,playText,stop:stopAll,unlock};
 })();
