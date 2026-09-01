@@ -15,6 +15,11 @@ function hashBuyerKey(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
 }
 
+function entitlementSecret() {
+  const source = process.env.ENTITLEMENT_SECRET || process.env.STRIPE_SECRET_KEY;
+  return crypto.createHmac('sha256', source).update('n99-entitlements-v1').digest();
+}
+
 function signEntitlement(payload, secret) {
   const encoded = b64url(JSON.stringify(payload));
   const signature = crypto.createHmac('sha256', secret).update(encoded).digest('base64url');
@@ -23,9 +28,7 @@ function signEntitlement(payload, secret) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.ENTITLEMENT_SECRET) {
-    return json(res, 503, { error: 'payments_not_configured' });
-  }
+  if (!process.env.STRIPE_SECRET_KEY) return json(res, 503, { error: 'payments_not_configured' });
 
   const { session_id: sessionId, buyerKey } = req.body || {};
   if (typeof sessionId !== 'string' || !sessionId.startsWith('cs_') ||
@@ -56,7 +59,7 @@ module.exports = async function handler(req, res) {
       purchase: session.id,
       iat: Math.floor(Date.now() / 1000)
     };
-    const token = signEntitlement(payload, process.env.ENTITLEMENT_SECRET);
+    const token = signEntitlement(payload, entitlementSecret());
     return json(res, 200, { ok: true, cast, token });
   } catch (err) {
     console.error('[N99 PAYMENTS] verify purchase error', err?.message || err);
