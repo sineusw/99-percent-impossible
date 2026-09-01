@@ -18,14 +18,14 @@ body:has(#home.on) #home>h1{font-size:clamp(46px,12vw,62px);line-height:.88;marg
 body:has(#home.on) #home>.sub{margin-left:auto;margin-right:auto;}
 
 /* Voice selector: same control, different placement by screen. */
-body:has(#home.on) .cast-picker{position:absolute!important;left:auto!important;right:18px!important;top:max(28px,env(safe-area-inset-top))!important;transform:none!important;width:min(210px,49vw)!important;min-width:0!important;padding:10px 13px 11px!important;}
+body:has(#home.on) .cast-picker{position:absolute!important;left:auto!important;right:18px!important;top:max(28px,env(safe-area-inset-top))!important;transform:none!important;width:min(185px,44vw)!important;min-width:0!important;padding:10px 13px 11px!important;}
 body:has(#home.on) .cast-picker:active{transform:translateY(1px)!important;}
 body:has(#home.on) .cast-picker .cast-current{justify-content:center!important;gap:10px!important;font-size:14px!important;}
 body:has(#home.on) .cast-picker .cast-hint{text-align:center!important;margin-bottom:6px!important;}
 body:has(#home.on) .cast-picker .cast-arrow{position:absolute;right:12px;bottom:12px;}
 
 body:has(#game.on) .brand{display:none!important;}
-body:has(#game.on) .cast-picker{position:absolute!important;left:auto!important;right:18px!important;top:max(18px,env(safe-area-inset-top))!important;transform:none!important;width:min(170px,42vw)!important;min-width:0!important;padding:8px 11px 9px!important;}
+body:has(#game.on) .cast-picker{position:absolute!important;left:auto!important;right:18px!important;top:max(18px,env(safe-area-inset-top))!important;transform:none!important;width:min(156px,38vw)!important;min-width:0!important;padding:8px 11px 9px!important;}
 body:has(#game.on) .cast-picker:active{transform:translateY(1px)!important;}
 body:has(#game.on) .cast-picker .cast-current{justify-content:center!important;gap:8px!important;font-size:13px!important;}
 body:has(#game.on) .cast-picker .cast-hint{text-align:center!important;font-size:8px!important;margin-bottom:5px!important;}
@@ -40,16 +40,16 @@ body:has(#game.on) .n99-utility-dock{position:static!important;top:auto!importan
 
 /* Give game heading enough room for the upper-right voice selector without moving gameplay. */
 body:has(#game.on) #game{padding-top:6px;}
-body:has(#game.on) #game .head{padding-left:48px;padding-right:min(172px,43vw);min-height:76px;}
+body:has(#game.on) #game .head{padding-left:48px;padding-right:min(160px,40vw);min-height:76px;}
 body:has(#game.on) #game .head h2{margin-top:7px;}
 
 @media(max-width:390px){
   body:has(#home.on) .brand{width:43%;font-size:17px;letter-spacing:3px;}
   body:has(#home.on) .brand b{font-size:61px;}
-  body:has(#home.on) .cast-picker{right:14px!important;width:48vw!important;top:max(24px,env(safe-area-inset-top))!important;}
+  body:has(#home.on) .cast-picker{right:14px!important;width:43vw!important;top:max(24px,env(safe-area-inset-top))!important;}
   body:has(#home.on) #home>h1{font-size:46px;}
-  body:has(#game.on) .cast-picker{right:14px!important;width:43vw!important;}
-  body:has(#game.on) #game .head{padding-left:44px;padding-right:44vw;}
+  body:has(#game.on) .cast-picker{right:14px!important;width:38vw!important;}
+  body:has(#game.on) #game .head{padding-left:44px;padding-right:40vw;}
   .n99-utility-dock{gap:8px!important;}
 }
 
