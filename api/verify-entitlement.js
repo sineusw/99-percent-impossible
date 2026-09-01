@@ -11,6 +11,11 @@ function hashBuyerKey(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
 }
 
+function entitlementSecret() {
+  const source = process.env.ENTITLEMENT_SECRET || process.env.STRIPE_SECRET_KEY;
+  return crypto.createHmac('sha256', source).update('n99-entitlements-v1').digest();
+}
+
 function safeEqual(a, b) {
   const left = Buffer.from(String(a || ''));
   const right = Buffer.from(String(b || ''));
@@ -33,14 +38,14 @@ function verifyToken(token, secret) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
-  if (!process.env.ENTITLEMENT_SECRET) return json(res, 503, { error: 'payments_not_configured' });
+  if (!process.env.STRIPE_SECRET_KEY) return json(res, 503, { error: 'payments_not_configured' });
 
   const { token, buyerKey } = req.body || {};
   if (typeof buyerKey !== 'string' || buyerKey.length < 20 || buyerKey.length > 200) {
     return json(res, 400, { error: 'invalid_request' });
   }
 
-  const payload = verifyToken(token, process.env.ENTITLEMENT_SECRET);
+  const payload = verifyToken(token, entitlementSecret());
   const expectedBuyerHash = hashBuyerKey(buyerKey);
   if (!payload || payload.v !== 1 || !ALLOWED_CAST.has(payload.cast) || payload.buyerKeyHash !== expectedBuyerHash) {
     return json(res, 403, { ok: false, error: 'invalid_entitlement' });
