@@ -33,8 +33,8 @@ body:has(#game.on) .cast-picker{position:absolute!important;left:auto!important;
 body:has(#game.on) .cast-picker:active{transform:translateY(1px)!important;}
 body:has(#game.on) .cast-picker .cast-current{position:relative!important;justify-content:center!important;gap:0!important;font-size:14px!important;padding-left:0!important;padding-right:0!important;width:100%!important;}
 body:has(#game.on) .cast-picker .cast-current>span:first-child{display:block!important;width:100%!important;text-align:center!important;}
-body:has(#game.on) .cast-picker .cast-hint{font-size:0!important;text-align:center!important;margin-bottom:5px!important;white-space:nowrap!important;}
-body:has(#game.on) .cast-picker .cast-hint:after{content:'🎙 VOICE · TAP TO CHANGE';font-size:8px!important;letter-spacing:1px!important;white-space:nowrap!important;}
+body:has(#game.on) .cast-picker .cast-hint{font-size:0!important;text-align:center!important;margin:0 auto 5px!important;white-space:nowrap!important;width:100%!important;}
+body:has(#game.on) .cast-picker .cast-hint:after{content:'🎙 VOICE · TAP TO CHANGE';display:block!important;width:100%!important;text-align:center!important;font-size:9px!important;letter-spacing:.65px!important;white-space:nowrap!important;}
 body:has(#game.on) .cast-picker .cast-arrow{position:absolute;right:0!important;bottom:auto!important;top:50%!important;transform:translateY(-50%)!important;}
 body:has(#game.on) #game .head{padding:72px 56px 0!important;min-height:0!important;text-align:center!important;}
 body:has(#game.on) #game .head .lvl{font-size:11px!important;letter-spacing:2px!important;margin-bottom:4px!important;}
@@ -59,7 +59,7 @@ body:has(#game.on) .n99-utility-dock{position:static!important;top:auto!importan
   body:has(#home.on) #home>h1{font-size:46px;}
   body:has(#game.on) #game .back{left:14px!important;}
   body:has(#game.on) .cast-picker{right:14px!important;width:min(180px,46vw)!important;}
-  body:has(#game.on) .cast-picker .cast-hint:after{font-size:7.5px!important;letter-spacing:.75px!important;}
+  body:has(#game.on) .cast-picker .cast-hint:after{font-size:8.5px!important;letter-spacing:.45px!important;}
   body:has(#game.on) #game .head{padding:72px 28px 0!important;}
   body:has(#game.on) #game .head h2{font-size:34px!important;}
   body:has(#game.on) #game .head p{font-size:13px!important;max-width:340px!important;}
