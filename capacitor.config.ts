@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.sineusw.ninetynineimpossible',
+  appId: 'com.pettygamesstudios.ninetynineimpossible',
   appName: '99% Impossible',
   webDir: 'www',
   server: { androidScheme: 'https' }
