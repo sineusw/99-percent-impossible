@@ -30,5 +30,12 @@ if(!gradle.includes('com.android.billingclient:billing:9.1.0')){
 if(!gradle.includes('signingConfigs.n99Release')){
   gradle+=`\nandroid {\n    signingConfigs {\n        n99Release {\n            def ks = System.getenv("ANDROID_KEYSTORE_PATH")\n            if (ks) {\n                storeFile file(ks)\n                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")\n                keyAlias System.getenv("ANDROID_KEY_ALIAS")\n                keyPassword System.getenv("ANDROID_KEY_PASSWORD")\n            }\n        }\n    }\n    buildTypes {\n        release {\n            if (System.getenv("ANDROID_KEYSTORE_PATH")) {\n                signingConfig signingConfigs.n99Release\n            }\n        }\n    }\n}\n`;
 }
+gradle=gradle.replace(/versionCode\s+\d+/,'versionCode 2').replace(/versionName\s+"[^"]+"/,'versionName "1.0.1"');
 await writeFile(gradlePath,gradle);
-console.log('Android billing configured for com.pettygamesstudios.ninetynineimpossible: BILLING permission + Play Billing 9.1.0 + N99Billing plugin');
+
+const variablesPath=path.join(root,'android','variables.gradle');
+let variables=await readFile(variablesPath,'utf8');
+variables=variables.replace(/compileSdkVersion\s*=\s*\d+/,'compileSdkVersion = 36').replace(/targetSdkVersion\s*=\s*\d+/,'targetSdkVersion = 36');
+await writeFile(variablesPath,variables);
+
+console.log('Android billing configured for com.pettygamesstudios.ninetynineimpossible: API 36 + versionCode 2 + BILLING permission + Play Billing 9.1.0 + N99Billing plugin');
