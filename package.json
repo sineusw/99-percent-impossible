@@ -3,13 +3,17 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "native:prepare": "node scripts/prepare-native-web.mjs",
     "native:add:ios": "cap add ios",
     "native:add:android": "cap add android",
+    "native:configure:android": "node scripts/configure-android-billing.mjs",
     "native:sync": "cap sync",
     "native:open:ios": "cap open ios",
     "native:open:android": "cap open android"
   },
-  "dependencies": { "@capacitor/core": "^7.4.3" },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3"
+  },
   "devDependencies": {
     "@capacitor/android": "^7.4.3",
     "@capacitor/cli": "^7.4.3",
