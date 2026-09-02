@@ -2,6 +2,9 @@ name: Build Android Billing AAB
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - monetization/remove-ads-native
 
 jobs:
   build:
