@@ -31,7 +31,7 @@ body:has(#game.on) #game{padding-top:0!important;}
 body:has(#game.on) #game .back{position:absolute!important;left:18px!important;top:max(18px,env(safe-area-inset-top))!important;z-index:45!important;}
 body:has(#game.on) .cast-picker{position:absolute!important;left:auto!important;right:18px!important;top:max(18px,env(safe-area-inset-top))!important;transform:none!important;width:min(188px,46vw)!important;min-width:0!important;padding:9px 14px 10px!important;z-index:45!important;}
 body:has(#game.on) .cast-picker:active{transform:translateY(1px)!important;}
-body:has(#game.on) .cast-picker .cast-current{justify-content:center!important;gap:9px!important;font-size:14px!important;}
+body:has(#game.on) .cast-picker .cast-current{justify-content:center!important;gap:9px!important;font-size:14px!important;padding-left:12px!important;padding-right:12px!important;}
 body:has(#game.on) .cast-picker .cast-hint{font-size:0!important;text-align:center!important;margin-bottom:5px!important;white-space:nowrap!important;}
 body:has(#game.on) .cast-picker .cast-hint:after{content:'VOICE';font-size:9px!important;letter-spacing:1.5px;}
 body:has(#game.on) .cast-picker .cast-arrow{position:absolute;right:11px;bottom:11px;}
