@@ -1,6 +1,6 @@
 # 99% Impossible native billing
 
-App/package ID: `com.sineusw.ninetynineimpossible`
+App/package ID: `com.pettygamesstudios.ninetynineimpossible`
 
 Lifetime ad-removal product: `remove_ads_forever` (durable one-time product, launch price $7.99 USD).
 
@@ -12,6 +12,8 @@ The Play Console requires an uploaded build containing the Google Play BILLING p
 - Google Play Billing Library 9.1.0
 - the `N99Billing` Capacitor plugin
 - release-signing hooks driven only by environment variables
+
+`capacitor.config.ts` uses `webDir: 'www'`. `npm run native:prepare` populates that directory directly from the existing web game before Capacitor generates/syncs the Android shell.
 
 The `Build Android Billing AAB` GitHub Action creates a signed `.aab` when these repository secrets exist:
 
