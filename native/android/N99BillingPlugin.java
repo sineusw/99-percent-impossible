@@ -1,4 +1,4 @@
-package com.sineusw.ninetynineimpossible;
+package com.pettygamesstudios.ninetynineimpossible;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.BillingClient;
@@ -10,7 +10,6 @@ import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.QueryProductDetailsParams;
-import com.android.billingclient.api.QueryProductDetailsResult;
 import com.android.billingclient.api.QueryPurchasesParams;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
