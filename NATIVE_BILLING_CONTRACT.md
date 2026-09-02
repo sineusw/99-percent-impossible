@@ -1,6 +1,6 @@
 # 99% Impossible — native billing contract
 
-Permanent app ID: `com.sineusw.ninetynineimpossible`
+Permanent app ID: `com.pettygamesstudios.ninetynineimpossible`
 
 Lifetime non-consumable product ID: `remove_ads_forever`
 Launch price: **$7.99 USD** (storefront may localize the displayed price).
@@ -18,6 +18,7 @@ No web/localStorage flag may grant this entitlement. StoreKit / Google Play is a
 
 ```sh
 npm install
+npm run native:prepare
 npx cap add ios
 npx cap add android
 npx cap sync
