@@ -31,10 +31,11 @@ body:has(#game.on) #game{padding-top:0!important;}
 body:has(#game.on) #game .back{position:absolute!important;left:18px!important;top:max(18px,env(safe-area-inset-top))!important;z-index:45!important;}
 body:has(#game.on) .cast-picker{position:absolute!important;left:auto!important;right:18px!important;top:max(18px,env(safe-area-inset-top))!important;transform:none!important;width:min(188px,46vw)!important;min-width:0!important;padding:9px 14px 10px!important;z-index:45!important;}
 body:has(#game.on) .cast-picker:active{transform:translateY(1px)!important;}
-body:has(#game.on) .cast-picker .cast-current{justify-content:center!important;gap:9px!important;font-size:14px!important;padding-left:12px!important;padding-right:12px!important;}
+body:has(#game.on) .cast-picker .cast-current{position:relative!important;justify-content:center!important;gap:0!important;font-size:14px!important;padding-left:0!important;padding-right:0!important;width:100%!important;}
+body:has(#game.on) .cast-picker .cast-current>span:first-child{display:block!important;width:100%!important;text-align:center!important;}
 body:has(#game.on) .cast-picker .cast-hint{font-size:0!important;text-align:center!important;margin-bottom:5px!important;white-space:nowrap!important;}
 body:has(#game.on) .cast-picker .cast-hint:after{content:'VOICE';font-size:9px!important;letter-spacing:1.5px;}
-body:has(#game.on) .cast-picker .cast-arrow{position:absolute;right:11px;bottom:11px;}
+body:has(#game.on) .cast-picker .cast-arrow{position:absolute;right:0!important;bottom:auto!important;top:50%!important;transform:translateY(-50%)!important;}
 body:has(#game.on) #game .head{padding:72px 56px 0!important;min-height:0!important;text-align:center!important;}
 body:has(#game.on) #game .head .lvl{font-size:11px!important;letter-spacing:2px!important;margin-bottom:4px!important;}
 body:has(#game.on) #game .head h2{font-size:clamp(34px,9.2vw,42px)!important;line-height:.92!important;margin:4px auto 8px!important;white-space:nowrap!important;letter-spacing:.5px!important;}
