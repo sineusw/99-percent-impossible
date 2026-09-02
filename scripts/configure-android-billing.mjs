@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root=process.cwd();
 const appDir=path.join(root,'android','app');
-const pkgDir=path.join(appDir,'src','main','java','com','sineusw','ninetynineimpossible');
+const pkgDir=path.join(appDir,'src','main','java','com','pettygamesstudios','ninetynineimpossible');
 await mkdir(pkgDir,{recursive:true});
 await copyFile(path.join(root,'native','android','N99BillingPlugin.java'),path.join(pkgDir,'N99BillingPlugin.java'));
 
@@ -31,4 +31,4 @@ if(!gradle.includes('signingConfigs.n99Release')){
   gradle+=`\nandroid {\n    signingConfigs {\n        n99Release {\n            def ks = System.getenv("ANDROID_KEYSTORE_PATH")\n            if (ks) {\n                storeFile file(ks)\n                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")\n                keyAlias System.getenv("ANDROID_KEY_ALIAS")\n                keyPassword System.getenv("ANDROID_KEY_PASSWORD")\n            }\n        }\n    }\n    buildTypes {\n        release {\n            if (System.getenv("ANDROID_KEYSTORE_PATH")) {\n                signingConfig signingConfigs.n99Release\n            }\n        }\n    }\n}\n`;
 }
 await writeFile(gradlePath,gradle);
-console.log('Android billing configured: BILLING permission + Play Billing 9.1.0 + N99Billing plugin');
+console.log('Android billing configured for com.pettygamesstudios.ninetynineimpossible: BILLING permission + Play Billing 9.1.0 + N99Billing plugin');
