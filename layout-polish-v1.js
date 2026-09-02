@@ -34,7 +34,7 @@ body:has(#game.on) .cast-picker:active{transform:translateY(1px)!important;}
 body:has(#game.on) .cast-picker .cast-current{position:relative!important;justify-content:center!important;gap:0!important;font-size:14px!important;padding-left:0!important;padding-right:0!important;width:100%!important;}
 body:has(#game.on) .cast-picker .cast-current>span:first-child{display:block!important;width:100%!important;text-align:center!important;}
 body:has(#game.on) .cast-picker .cast-hint{font-size:0!important;text-align:center!important;margin-bottom:5px!important;white-space:nowrap!important;}
-body:has(#game.on) .cast-picker .cast-hint:after{content:'VOICE';font-size:9px!important;letter-spacing:1.5px;}
+body:has(#game.on) .cast-picker .cast-hint:after{content:'🎙 VOICE · TAP TO CHANGE';font-size:9px!important;letter-spacing:1.5px;}
 body:has(#game.on) .cast-picker .cast-arrow{position:absolute;right:0!important;bottom:auto!important;top:50%!important;transform:translateY(-50%)!important;}
 body:has(#game.on) #game .head{padding:72px 56px 0!important;min-height:0!important;text-align:center!important;}
 body:has(#game.on) #game .head .lvl{font-size:11px!important;letter-spacing:2px!important;margin-bottom:4px!important;}
