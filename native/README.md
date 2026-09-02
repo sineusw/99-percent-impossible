@@ -24,7 +24,9 @@ The `Build Android Billing AAB` GitHub Action creates a signed `.aab` when these
 
 Never commit the upload keystore or its passwords to the repository.
 
-After uploading the AAB to an internal testing release, return to Monetize with Play → Products → One-time products and create `remove_ads_forever` as a durable Buy product.
+A signed AAB build completed successfully on 2026-09-02. The built bundle was inspected and confirmed to use `com.pettygamesstudios.ninetynineimpossible` and to include `com.android.vending.BILLING`.
+
+After uploading the AAB to an internal testing release in the fresh matching Play Console app, return to Monetize with Play → Products → One-time products and create `remove_ads_forever` as a durable Buy product.
 
 ## iOS
 
