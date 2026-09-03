@@ -16,6 +16,4 @@ window.fetch=(input,init)=>{
   return nativeFetch(input,init);
 };
 window.N99_API_ORIGIN=API_ORIGIN;
-// Temporary v8 diagnostics load synchronously before the voice transports initialize.
-document.write('<script src="voice-diagnostic-v1.js?v=1.0.0"><\/script>');
 })();
