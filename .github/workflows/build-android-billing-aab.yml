@@ -38,8 +38,8 @@ jobs:
         run: |
           grep -E "compileSdkVersion\s*=\s*36" android/variables.gradle
           grep -E "targetSdkVersion\s*=\s*36" android/variables.gradle
-          grep -E "versionCode\s+4" android/app/build.gradle
-          grep -E "versionName\s+\"1.0.3\"" android/app/build.gradle
+          grep -E "versionCode\s+5" android/app/build.gradle
+          grep -E "versionName\s+\"1.0.4\"" android/app/build.gradle
 
       - name: Validate signing secrets
         env:
@@ -66,6 +66,6 @@ jobs:
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 99-percent-impossible-android-aab-api36-v4
+          name: 99-percent-impossible-android-aab-api36-v5
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
