@@ -26,7 +26,12 @@ import java.util.Set;
 @CapacitorPlugin(name = "N99Billing")
 public class N99BillingPlugin extends Plugin implements PurchasesUpdatedListener {
     private static final Set<String> ALLOWED_PRODUCTS = new HashSet<>(Arrays.asList(
-        "remove_ads_forever", "daisy", "mick", "cyberpunk", "goldonly", "synthwave", "ragepass"
+        "remove_ads_forever",
+        "unlock_daisy",
+        "unlock_mick",
+        "unlock_neon_palette",
+        "unlock_sunset_palette",
+        "unlock_midnight_palette"
     ));
     private BillingClient billingClient;
     private PluginCall pendingPurchaseCall;
