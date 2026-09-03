@@ -26,28 +26,39 @@ jobs:
         run: npx cap add android
       - name: Sync Capacitor Android plugins
         run: npx cap sync android
-      - name: Add Google Play Billing and API 36 config
+      - name: Add native billing, SoundPool SFX, and API 36 config
         run: npm run native:configure:android
       - name: Install Android API 36
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
-      - name: Verify Android v12 isolation config
+      - name: Verify Android v13 release config
         run: |
           grep -E "compileSdkVersion\s*=\s*36" android/variables.gradle
           grep -E "targetSdkVersion\s*=\s*36" android/variables.gradle
-          grep -E "versionCode\s+12" android/app/build.gradle
-          grep -E "versionName\s+\"1.0.11\"" android/app/build.gradle
-          grep -F "registerPlugin(N99BillingPlugin.class);" android/app/src/main/java/com/pettygamesstudios/ninetynineimpossible/MainActivity.java
-          grep -F "setMediaPlaybackRequiresUserGesture(false);" android/app/src/main/java/com/pettygamesstudios/ninetynineimpossible/MainActivity.java
+          grep -E "versionCode\s+13" android/app/build.gradle
+          grep -E "versionName\s+\"1.0.12\"" android/app/build.gradle
+          MAIN=android/app/src/main/java/com/pettygamesstudios/ninetynineimpossible/MainActivity.java
+          SFXJAVA=android/app/src/main/java/com/pettygamesstudios/ninetynineimpossible/N99SfxPlugin.java
+          grep -F "registerPlugin(N99BillingPlugin.class);" "$MAIN"
+          grep -F "registerPlugin(N99SfxPlugin.class);" "$MAIN"
+          grep -F "setMediaPlaybackRequiresUserGesture(false);" "$MAIN"
+          grep -F '@CapacitorPlugin(name = "N99Sfx")' "$SFXJAVA"
+          grep -F "new SoundPool.Builder()" "$SFXJAVA"
+          grep -F "AudioAttributes.USAGE_GAME" "$SFXJAVA"
           grep -F -- "-keep classes com.pettygamesstudios.ninetynineimpossible.** { *; }" android/app/proguard-rules.pro
+          test -s android/app/src/main/res/raw/n99_fail.mp3
+          test -s android/app/src/main/res/raw/n99_win.mp3
+          test -s android/app/src/main/res/raw/n99_perfect.mp3
           test -d node_modules/@capacitor/share
           grep -R "capacitor-share" android/capacitor.settings.gradle android/app/capacitor.build.gradle
           test -s android/app/src/main/assets/public/native-speech-shim.js
           test -s android/app/src/main/assets/public/native-api-bridge.js
           test -s android/app/src/main/assets/public/share-result-v1.js
+          test -s android/app/src/main/assets/public/static-sfx-v1.js
           grep -F "Capacitor?.Plugins?.Share" android/app/src/main/assets/public/share-result-v1.js
-          grep -F "fetch:blob" android/app/src/main/assets/public/native-api-bridge.js
+          grep -F "Capacitor?.Plugins?.N99Sfx" android/app/src/main/assets/public/static-sfx-v1.js
+          grep -F "native:play:resolved" android/app/src/main/assets/public/static-sfx-v1.js
+          ! grep -F "playFresh" android/app/src/main/assets/public/static-sfx-v1.js
           ! grep -F "HTMLMediaElement" android/app/src/main/assets/public/native-api-bridge.js
-          ! grep -F "native-audio-coexist-v11.js" android/app/src/main/assets/public/native-speech-shim.js
           test -s android/app/src/main/assets/public/assets/sfx/fail.mp3
           test -s android/app/src/main/assets/public/assets/sfx/win.mp3
           test -s android/app/src/main/assets/public/assets/sfx/perfect.mp3
@@ -56,10 +67,14 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           s=Path('android/app/src/main/java/com/pettygamesstudios/ninetynineimpossible/MainActivity.java').read_text()
-          assert s.index('registerPlugin(N99BillingPlugin.class);') < s.index('super.onCreate(savedInstanceState);') < s.index('setMediaPlaybackRequiresUserGesture(false);')
+          billing=s.index('registerPlugin(N99BillingPlugin.class);')
+          sfx=s.index('registerPlugin(N99SfxPlugin.class);')
+          sup=s.index('super.onCreate(savedInstanceState);')
+          media=s.index('setMediaPlaybackRequiresUserGesture(false);')
+          assert billing < sup and sfx < sup < media
           html=Path('android/app/src/main/assets/public/index.html').read_text()
           assert html.index('native-speech-shim.js') < html.index('petty.js') < html.index('petty-static-audio.js')
-          print('Verified v12: billing + Share + Petty preserved; global media play instrumentation and v11 coexistence hook absent')
+          print('Verified v13: billing/Share/Petty preserved; all Android gameplay SFX use preloaded native SoundPool resources')
           PY
       - name: Validate signing secrets
         env:
@@ -84,6 +99,6 @@ jobs:
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 99-percent-impossible-android-aab-api36-v12-sfx-isolation
+          name: 99-percent-impossible-android-aab-api36-v13-native-sfx
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
