@@ -1,19 +1,26 @@
 const VOICE_ID = 'qxePw1S1QmBgjlU3GIy5';
 
 module.exports = async function handler(req, res) {
+  const origin = req.headers.origin || '';
+  const host = req.headers.host || '';
+  const nativeOrigins = new Set(['capacitor://localhost','http://localhost','https://localhost']);
+
+  if (origin) {
+    let allowed = false;
+    try {
+      allowed = new URL(origin).host === host || nativeOrigins.has(origin);
+    } catch {}
+    if (!allowed) return res.status(403).json({ error: 'Forbidden' });
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  }
+
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const origin = req.headers.origin || '';
-  const host = req.headers.host || '';
-  if (origin) {
-    try {
-      if (new URL(origin).host !== host) return res.status(403).json({ error: 'Forbidden' });
-    } catch {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
   }
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -23,8 +30,6 @@ module.exports = async function handler(req, res) {
   if (!text || text.length > 420) return res.status(400).json({ error: 'Invalid text' });
 
   try {
-    // Flash + maximum streaming optimization + a smaller MP3 payload.
-    // This keeps Older Joe while cutting transfer/decode time for short reactions.
     const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_22050_32&optimize_streaming_latency=4`, {
       method: 'POST',
       headers: {
