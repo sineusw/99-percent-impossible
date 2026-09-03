@@ -41,7 +41,7 @@ jobs:
           grep -E "versionCode\s+6" android/app/build.gradle
           grep -E "versionName\s+\"1.0.5\"" android/app/build.gradle
           grep -F "registerPlugin(N99BillingPlugin.class);" android/app/src/main/java/com/pettygamesstudios/ninetynineimpossible/MainActivity.java
-          grep -F "-keep classes com.pettygamesstudios.ninetynineimpossible.** { *; }" android/app/proguard-rules.pro
+          grep -F -- "-keep classes com.pettygamesstudios.ninetynineimpossible.** { *; }" android/app/proguard-rules.pro
           python - <<'PY'
           from pathlib import Path
           p=Path('android/app/src/main/java/com/pettygamesstudios/ninetynineimpossible/MainActivity.java')
