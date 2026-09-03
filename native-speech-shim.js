@@ -36,4 +36,15 @@ if(!window.speechSynthesis){
     try{Object.defineProperty(window,'speechSynthesis',{value:shim,configurable:true})}catch(err){console.error('[N99 PETTY VOICE] unable to install native speech shim',err)}
   }
 }
+
+// v11: after all normal game scripts are installed, disable only the legacy
+// continuous silent-MP3 unlock loop that became active when this shim made Petty
+// functional on Android. The actual ElevenLabs fetch/blob/HTMLAudio voice path
+// remains untouched. Also prime the existing SFX bank from the first real gesture.
+addEventListener('DOMContentLoaded',()=>{
+  const s=document.createElement('script');
+  s.src='native-audio-coexist-v11.js?v=1.0.0';
+  s.onerror=()=>console.error('[N99 AUDIO] failed to load Android voice/SFX coexistence patch');
+  document.head.appendChild(s);
+},{once:true});
 })();
