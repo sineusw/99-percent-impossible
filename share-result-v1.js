@@ -30,6 +30,7 @@
       letter-spacing:1px;
       touch-action:manipulation;
     }
+    #copy.n99-share-result[hidden]{display:none!important}
     #copy.n99-share-result:active{transform:translateY(1px);filter:brightness(1.16)}
   `;
   document.head.appendChild(style);
