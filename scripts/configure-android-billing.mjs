@@ -33,11 +33,11 @@ const gradlePath=path.join(appDir,'build.gradle');
 let gradle=await readFile(gradlePath,'utf8');
 if(!gradle.includes('com.android.billingclient:billing:9.1.0'))gradle+=`\n\n// 99% Impossible native billing\ndependencies {\n    implementation "com.android.billingclient:billing:9.1.0"\n}\n`;
 if(!gradle.includes('signingConfigs.n99Release'))gradle+=`\nandroid {\n    signingConfigs {\n        n99Release {\n            def ks = System.getenv("ANDROID_KEYSTORE_PATH")\n            if (ks) {\n                storeFile file(ks)\n                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")\n                keyAlias System.getenv("ANDROID_KEY_ALIAS")\n                keyPassword System.getenv("ANDROID_KEY_PASSWORD")\n            }\n        }\n    }\n    buildTypes {\n        release {\n            if (System.getenv("ANDROID_KEYSTORE_PATH")) signingConfig signingConfigs.n99Release\n        }\n    }\n}\n`;
-gradle=gradle.replace(/versionCode\s+\d+/,'versionCode 11').replace(/versionName\s+"[^"]+"/,'versionName "1.0.10"');
+gradle=gradle.replace(/versionCode\s+\d+/,'versionCode 12').replace(/versionName\s+"[^"]+"/,'versionName "1.0.11"');
 await writeFile(gradlePath,gradle);
 
 const variablesPath=path.join(root,'android','variables.gradle');
 let variables=await readFile(variablesPath,'utf8');
 variables=variables.replace(/compileSdkVersion\s*=\s*\d+/,'compileSdkVersion = 36').replace(/targetSdkVersion\s*=\s*\d+/,'targetSdkVersion = 36');
 await writeFile(variablesPath,variables);
-console.log('Android configured: API 36 + versionCode 11 + billing + WebView audio playback + Petty + native Share + SFX coexistence');
+console.log('Android configured: API 36 + versionCode 12 + billing + Petty + native Share + SFX isolation');
