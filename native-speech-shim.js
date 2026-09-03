@@ -1,7 +1,8 @@
 /* 99% IMPOSSIBLE — native-only Web Speech compatibility shim.
    Petty's existing ElevenLabs HTMLAudio transport patches speechSynthesis.speak().
    Some Android WebViews omit Web Speech entirely, so provide only the tiny
-   interface the existing transport expects. No device TTS is used. */
+   interface the existing transport expects. No device TTS is used.
+   v12 intentionally contains no SFX/unlock monkey-patches. */
 (()=>{
 'use strict';
 if(!window.Capacitor?.isNativePlatform?.()||window.__N99_NATIVE_SPEECH_SHIM)return;
@@ -36,15 +37,4 @@ if(!window.speechSynthesis){
     try{Object.defineProperty(window,'speechSynthesis',{value:shim,configurable:true})}catch(err){console.error('[N99 PETTY VOICE] unable to install native speech shim',err)}
   }
 }
-
-// v11: after all normal game scripts are installed, disable only the legacy
-// continuous silent-MP3 unlock loop that became active when this shim made Petty
-// functional on Android. The actual ElevenLabs fetch/blob/HTMLAudio voice path
-// remains untouched. Also prime the existing SFX bank from the first real gesture.
-addEventListener('DOMContentLoaded',()=>{
-  const s=document.createElement('script');
-  s.src='native-audio-coexist-v11.js?v=1.0.0';
-  s.onerror=()=>console.error('[N99 AUDIO] failed to load Android voice/SFX coexistence patch');
-  document.head.appendChild(s);
-},{once:true});
 })();
