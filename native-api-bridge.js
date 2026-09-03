@@ -1,6 +1,7 @@
 /* 99% IMPOSSIBLE — native API bridge.
    Capacitor bundles run from a local origin, so selected server APIs are routed to the stable billing-branch API alias.
-   v1.2 also records lightweight Petty transport evidence for physical-device acceptance. */
+   v12 keeps Petty fetch/blob evidence scoped to the Petty API only; it intentionally
+   does NOT monkey-patch HTMLMediaElement.prototype.play(), so normal game SFX are untouched. */
 (()=>{
 'use strict';
 if(!window.Capacitor?.isNativePlatform?.()||window.__N99_NATIVE_API_BRIDGE)return;
@@ -49,24 +50,5 @@ if(nativeCreateObjectURL){
     if(value instanceof Blob&&/^audio\//i.test(value.type||''))note('object-url',{url,size:value.size,type:value.type||''});
     return url;
   };
-}
-
-const mediaProto=window.HTMLMediaElement?.prototype;
-if(mediaProto&&!mediaProto.__n99PettyEvidencePatched){
-  const nativePlay=mediaProto.play;
-  mediaProto.play=function(...args){
-    const src=this.currentSrc||this.src||'';
-    const track=/^blob:/i.test(src);
-    if(track)note('audio:play',{src});
-    try{
-      const p=nativePlay.apply(this,args);
-      if(track&&p?.then)p.then(()=>note('audio:play:resolved',{src:this.currentSrc||src})).catch(err=>note('audio:play:rejected',{src:this.currentSrc||src,name:err?.name||'',message:err?.message||String(err)}));
-      return p;
-    }catch(err){
-      if(track)note('audio:play:threw',{src,name:err?.name||'',message:err?.message||String(err)});
-      throw err;
-    }
-  };
-  mediaProto.__n99PettyEvidencePatched=true;
 }
 })();
