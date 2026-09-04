@@ -1,0 +1,24 @@
+{
+  "name": "99-percent-impossible",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "native:prepare": "node scripts/prepare-native-web.mjs",
+    "native:add:ios": "cap add ios",
+    "native:add:android": "cap add android",
+    "native:configure:android": "node scripts/configure-android-billing.mjs",
+    "native:sync": "cap sync",
+    "native:open:ios": "cap open ios",
+    "native:open:android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/share": "^7.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/ios": "^7.4.3",
+    "typescript": "^5.9.2"
+  }
+}

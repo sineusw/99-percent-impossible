@@ -1,14 +1,12 @@
-/* 99% IMPOSSIBLE — Daisy/Mick static HTMLAudio transport v1.2
-   Petty stays on the proven Petty transport. Daisy/Mick use their own
-   pre-generated MP3 assets keyed by the same FNV-1a text hash used by
-   scripts/generate-cast-audio.mjs. Adds selected-cast re-arm on unmute. */
+/* 99% IMPOSSIBLE — Daisy/Mick static HTMLAudio transport v1.3
+   Daisy/Mick use pre-generated MP3 assets and no longer require the native
+   speechSynthesis object just to expose direct HTMLAudio playback. */
 (()=>{
 'use strict';
-const synth=window.speechSynthesis;
-if(!synth||synth.__n99CastStaticPatched)return;
-
-const priorSpeak=synth.speak.bind(synth);
-const priorCancel=synth.cancel.bind(synth);
+if(window.N99CastStaticAudio)return;
+const synth=window.speechSynthesis||null;
+const priorSpeak=synth?.speak?.bind(synth)||null;
+const priorCancel=synth?.cancel?.bind(synth)||null;
 let activeAudio=null;
 let activeUtterance=null;
 let seq=0;
@@ -23,7 +21,7 @@ function hashText(text){
 }
 
 function currentCharacter(){
-  const c=window.N99Character?.get?.()||'petty';
+  const c=String(window.N99Character?.get?.()||'petty').toLowerCase();
   return c==='daisy'||c==='mick'?c:'petty';
 }
 
@@ -52,10 +50,11 @@ function stopCast(cancelled=false){
 
 function stopAll(){
   stopCast(true);
-  try{return priorCancel()}catch{}
+  try{return priorCancel?.()}catch{}
 }
 
 function playText(character,text,handlers={}){
+  character=String(character||'').toLowerCase();
   if(character!=='daisy'&&character!=='mick')return false;
   text=String(text||'').trim();
   if(!text)return false;
@@ -70,26 +69,24 @@ function playText(character,text,handlers={}){
   activeUtterance=null;
   a.onplay=()=>{if(my===seq)try{handlers.onstart?.({type:'start',engine:'cast-static-audio',character,file})}catch{}};
   a.onended=()=>{if(my!==seq)return;activeAudio=null;try{handlers.onend?.({type:'end',engine:'cast-static-audio',character,file})}catch{}};
-  a.onerror=()=>{if(my!==seq)return;activeAudio=null;try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file})}catch{}};
+  a.onerror=()=>{if(my!==seq)return;activeAudio=null;try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file,error:a.error})}catch{}};
   try{
     const p=a.play();
-    if(p&&typeof p.catch==='function')p.catch(()=>{
+    if(p&&typeof p.catch==='function')p.catch(err=>{
       if(my!==seq)return;
       activeAudio=null;
-      try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file,blocked:true})}catch{}
+      try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file,blocked:true,error:err})}catch{}
     });
     return true;
-  }catch{
+  }catch(err){
     activeAudio=null;
-    try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file,blocked:true})}catch{}
+    try{handlers.onerror?.({type:'error',engine:'cast-static-audio',character,file,blocked:true,error:err})}catch{}
     return false;
   }
 }
 
-// Re-arm Safari/iOS media permission from the user's unmute gesture without
-// audibly replaying a line. This keeps Daisy/Mick interruption replies alive
-// after toggling voice off and back on.
 function unlock(character=currentCharacter()){
+  character=String(character||'').toLowerCase();
   if(character!=='daisy'&&character!=='mick')return false;
   const text=window.N99CastLines?.[character]?.intro?.[0]?.text;
   if(!text)return false;
@@ -106,31 +103,20 @@ function unlock(character=currentCharacter()){
   }catch{return false}
 }
 
-synth.cancel=function(){return stopAll()};
-
-synth.speak=function(utterance){
-  const character=currentCharacter();
-  if(character==='petty')return priorSpeak(utterance);
-  const text=String(utterance?.text||'').trim();
-  if(!text)return;
-  stopCast(true);
-  const my=++seq;
-  const file=`/assets/${character}-audio/${hashText(text)}.mp3`;
-  const a=new Audio(file);
-  a.preload='auto';
-  a.playsInline=true;
-  a.setAttribute('playsinline','');
-  activeAudio=a;
-  activeUtterance=utterance;
-  a.onplay=()=>{if(my===seq)try{utterance.onstart?.({type:'start',engine:'cast-static-audio',character})}catch{}};
-  a.onended=()=>{if(my===seq)finish('end',{character})};
-  a.onerror=()=>{if(my===seq)finish('error',{character,file})};
-  try{
-    const p=a.play();
-    if(p&&typeof p.catch==='function')p.catch(()=>{if(my===seq)finish('error',{character,file,blocked:true})});
-  }catch{if(my===seq)finish('error',{character,file,blocked:true})}
-};
-
-synth.__n99CastStaticPatched=true;
+if(synth&&priorSpeak){
+  synth.cancel=function(){return stopAll()};
+  synth.speak=function(utterance){
+    const character=currentCharacter();
+    if(character==='petty')return priorSpeak(utterance);
+    const text=String(utterance?.text||'').trim();
+    if(!text)return;
+    playText(character,text,{
+      onstart:e=>{try{utterance.onstart?.(e)}catch{}},
+      onend:e=>{try{utterance.onend?.(e)}catch{}},
+      onerror:e=>{try{utterance.onerror?.(e)}catch{}}
+    });
+  };
+  synth.__n99CastStaticPatched=true;
+}
 window.N99CastStaticAudio={hashText,currentCharacter,playText,stop:stopAll,unlock};
 })();
