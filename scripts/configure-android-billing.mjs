@@ -8,8 +8,6 @@ await mkdir(pkgDir,{recursive:true});
 await copyFile(path.join(root,'native','android','N99BillingPlugin.java'),path.join(pkgDir,'N99BillingPlugin.java'));
 await copyFile(path.join(root,'native','android','N99SfxPlugin.java'),path.join(pkgDir,'N99SfxPlugin.java'));
 
-// Package the three gameplay outcome sounds as Android raw resources so SoundPool
-// never competes with WebView/HTMLMediaElement decoders used by Petty voices.
 const rawDir=path.join(appDir,'src','main','res','raw');
 await mkdir(rawDir,{recursive:true});
 await copyFile(path.join(root,'assets','sfx','fail.mp3'),path.join(rawDir,'n99_fail.mp3'));
@@ -42,11 +40,11 @@ const gradlePath=path.join(appDir,'build.gradle');
 let gradle=await readFile(gradlePath,'utf8');
 if(!gradle.includes('com.android.billingclient:billing:9.1.0'))gradle+=`\n\n// 99% Impossible native billing\ndependencies {\n    implementation "com.android.billingclient:billing:9.1.0"\n}\n`;
 if(!gradle.includes('signingConfigs.n99Release'))gradle+=`\nandroid {\n    signingConfigs {\n        n99Release {\n            def ks = System.getenv("ANDROID_KEYSTORE_PATH")\n            if (ks) {\n                storeFile file(ks)\n                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")\n                keyAlias System.getenv("ANDROID_KEY_ALIAS")\n                keyPassword System.getenv("ANDROID_KEY_PASSWORD")\n            }\n        }\n    }\n    buildTypes {\n        release {\n            if (System.getenv("ANDROID_KEYSTORE_PATH")) signingConfig signingConfigs.n99Release\n        }\n    }\n}\n`;
-gradle=gradle.replace(/versionCode\s+\d+/,'versionCode 13').replace(/versionName\s+"[^"]+"/,'versionName "1.0.12"');
+gradle=gradle.replace(/versionCode\s+\d+/,'versionCode 14').replace(/versionName\s+"[^"]+"/,'versionName "1.0.13"');
 await writeFile(gradlePath,gradle);
 
 const variablesPath=path.join(root,'android','variables.gradle');
 let variables=await readFile(variablesPath,'utf8');
 variables=variables.replace(/compileSdkVersion\s*=\s*\d+/,'compileSdkVersion = 36').replace(/targetSdkVersion\s*=\s*\d+/,'targetSdkVersion = 36');
 await writeFile(variablesPath,variables);
-console.log('Android configured: API 36 + versionCode 13 + billing + Petty + native Share + native SoundPool SFX');
+console.log('Android configured: API 36 + versionCode 14 + billing + Petty + native Share + native SoundPool SFX diagnostics');
