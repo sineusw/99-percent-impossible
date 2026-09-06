@@ -120,9 +120,14 @@
   show=function(score,roast,meta,share,t,isPB,fail,delta=''){
     roast=memoryRoast(roast,isPB,fail);
     // Red result visuals are reserved only for a Reaction Test false start.
-    // Timer/Stop misses still fail and roast normally without turning the whole modal red.
+    // Preserve the real logical fail so core fx() still chooses fail SFX,
+    // then strip only the Timer/Stop red/shake presentation synchronously.
     const visualFail=st.g==='reaction' && score==='TOO EARLY';
-    baseShow(score,roast,meta,share,t,isPB,visualFail,delta);
+    baseShow(score,roast,meta,share,t,isPB,fail,delta);
+    if(fail&&!visualFail){
+      play.classList.remove('shake');
+      document.body.classList.remove('red');
+    }
     if(lastStreakDeath){
       const tag='<div class="streak-dead">STREAK DEAD 💀</div>';
       const result=q('#res');
