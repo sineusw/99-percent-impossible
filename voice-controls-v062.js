@@ -1,4 +1,4 @@
-/* v0.6.5 — explicit SOUND ON/OFF utility control; re-arm selected cast on unmute */
+/* v0.6.6 — explicit SOUND ON/OFF utility control; re-arm selected cast on unmute */
 (()=>{
   const KEY='n99_petty_voice';
   const old=document.querySelector('.petty-voice');
@@ -19,7 +19,18 @@
   btn.addEventListener('click',e=>{
     e.preventDefault();e.stopPropagation();
     const enabled=!on();localStorage.setItem(KEY,enabled?'1':'0');
-    if(enabled){const cast=window.N99Character?.get?.()||'petty';if(cast==='daisy'||cast==='mick'){try{window.N99CastStaticAudio?.unlock?.(cast)}catch{}}else{try{window.unlockPettyVoice?.()}catch{}}}else{try{window.speechSynthesis?.cancel?.()}catch{}}
+    if(enabled){
+      const cast=window.N99Character?.get?.()||'petty';
+      if(cast==='daisy'||cast==='mick'){
+        try{window.N99CastStaticAudio?.unlock?.(cast)}catch{}
+      }else{
+        // Petty's actual transport exposes unlockPettyAudio; the previous
+        // unlockPettyVoice name did not exist, so Petty was never re-armed here.
+        try{window.unlockPettyAudio?.()}catch{}
+      }
+    }else{
+      try{window.speechSynthesis?.cancel?.()}catch{}
+    }
     sync();
   });
   sync();
