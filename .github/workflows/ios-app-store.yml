@@ -1,0 +1,53 @@
+name: iOS App Store Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'capacitor.config.json'
+      - 'scripts/stage-web.sh'
+      - '.github/workflows/ios-app-store.yml'
+      - '.ios-build-trigger'
+
+jobs:
+  validate-ios-build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Capacitor iOS project
+        run: npm run ios:prepare
+
+      - name: Set version and build number
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" ios/App/App/Info.plist || true
+
+      - name: Validate iOS compilation
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Upload generated iOS project
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-generated-project
+          path: ios
+          if-no-files-found: error
