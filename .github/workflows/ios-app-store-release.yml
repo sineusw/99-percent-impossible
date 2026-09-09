@@ -18,6 +18,7 @@ jobs:
     env:
       BUNDLE_ID: com.pettygamesstudios.ninetynineimpossible
       TEAM_ID: FHGP486J8U
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,6 +78,7 @@ jobs:
           SIGNING_DIR="$RUNNER_TEMP/signing"
           mkdir -p "$SIGNING_DIR"
           echo "SIGNING_DIR=$SIGNING_DIR" >> "$GITHUB_ENV"
+          echo "CREATED_CERT_ID_PATH=$RUNNER_TEMP/created-distribution-cert-id.txt" >> "$GITHUB_ENV"
 
       - name: Create temporary keychain
         run: |
@@ -103,8 +105,25 @@ jobs:
               )
             end
 
+            private_lane :remove_known_stale_distribution_certs do
+              api_token
+              stale_ids = ENV.fetch("STALE_DISTRIBUTION_CERT_IDS", "").split(",").map(&:strip).reject(&:empty?)
+              stale_ids.each do |cert_id|
+                begin
+                  cert = Spaceship::ConnectAPI::Certificate.get(certificate_id: cert_id)
+                  if cert && ["DISTRIBUTION", "IOS_DISTRIBUTION"].include?(cert.certificate_type)
+                    UI.message("Revoking known stale CI distribution certificate #{cert_id}")
+                    cert.delete!
+                  end
+                rescue => e
+                  UI.message("Stale certificate #{cert_id} is already absent or unavailable: #{e.message}")
+                end
+              end
+            end
+
             lane :create_signing do
               token = api_token
+              remove_known_stale_distribution_certs
               cert(
                 api_key: token,
                 team_id: ENV.fetch("TEAM_ID"),
@@ -113,14 +132,32 @@ jobs:
                 keychain_password: "actions",
                 generate_apple_certs: true
               )
+              created_cert_id = lane_context[SharedValues::CERT_CERTIFICATE_ID]
+              File.write(ENV.fetch("CREATED_CERT_ID_PATH"), created_cert_id.to_s) unless created_cert_id.to_s.empty?
               sigh(
                 api_key: token,
                 app_identifier: ENV.fetch("BUNDLE_ID"),
                 team_id: ENV.fetch("TEAM_ID"),
                 output_path: ENV.fetch("SIGNING_DIR"),
                 filename: "99PercentImpossible.mobileprovision",
-                force: true
+                force: true,
+                cert_id: created_cert_id
               )
+            end
+
+            lane :revoke_ci_cert do
+              api_token
+              cert_id = ENV.fetch("CI_CERT_ID", "").strip
+              next if cert_id.empty?
+              begin
+                cert = Spaceship::ConnectAPI::Certificate.get(certificate_id: cert_id)
+                if cert
+                  UI.message("Revoking ephemeral CI distribution certificate #{cert_id}")
+                  cert.delete!
+                end
+              rescue => e
+                UI.message("CI distribution certificate #{cert_id} is already absent or unavailable: #{e.message}")
+              end
             end
 
             lane :upload_build do
@@ -215,3 +252,12 @@ jobs:
           IPA=$(find "$RUNNER_TEMP/export" -name '*.ipa' -print -quit)
           test -n "$IPA"
           IPA_PATH="$IPA" fastlane ios upload_build
+
+      - name: Revoke ephemeral CI distribution certificate
+        if: always()
+        run: |
+          if [ -s "$CREATED_CERT_ID_PATH" ]; then
+            CI_CERT_ID=$(cat "$CREATED_CERT_ID_PATH") fastlane ios revoke_ci_cert
+          else
+            echo "No CI distribution certificate was created; nothing to revoke."
+          fi
