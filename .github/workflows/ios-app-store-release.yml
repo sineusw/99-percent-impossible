@@ -148,10 +148,12 @@ jobs:
           cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
           echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
 
-      - name: Set version and build number
+      - name: Set version and unique build number
         run: |
+          BUILD_NUMBER="${GITHUB_RUN_ID}${GITHUB_RUN_ATTEMPT}"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0" ios/App/App/Info.plist || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" ios/App/App/Info.plist || true
+          echo "Using iOS build number ${BUILD_NUMBER}"
 
       - name: Configure App target signing
         run: |
