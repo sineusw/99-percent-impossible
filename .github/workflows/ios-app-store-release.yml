@@ -41,7 +41,7 @@ jobs:
           test -n "$ASC_PRIVATE_KEY"
           mkdir -p "$HOME/.appstoreconnect/private_keys"
           KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          printf '%s' "$ASC_PRIVATE_KEY" > "$KEY_PATH"
+          printf '%s' "$ASC_PRIVATE_KEY" | base64 --decode > "$KEY_PATH"
           openssl pkey -in "$KEY_PATH" -noout
           echo "ASC_KEY_ID=$ASC_KEY_ID" >> "$GITHUB_ENV"
           echo "ASC_ISSUER_ID=$ASC_ISSUER_ID" >> "$GITHUB_ENV"
