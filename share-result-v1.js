@@ -64,7 +64,8 @@
     let pct=numericPercent(title==='PERFECT STOP'?scoreText:meta.textContent);
     const pctText=Number.isFinite(pct)&&!scoreText.includes('%')?` (${pct.toFixed(1)}%)`:'';
     const text=`I got ${scoreText}${pctText} on ${title} in 99% IMPOSSIBLE. Beat me.`;
-    const url=location.origin+location.pathname;
+    const isNative=!!window.Capacitor?.isNativePlatform?.()||location.protocol==='capacitor:';
+    const url=isNative?'https://99-percent-impossible.vercel.app/':location.origin+location.pathname;
     return {title:'99% IMPOSSIBLE',text,url};
   }
 
