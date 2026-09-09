@@ -94,7 +94,6 @@ jobs:
           mkdir -p fastlane
           cat > fastlane/Fastfile <<'RUBY'
           default_platform(:ios)
-
           platform :ios do
             private_lane :api_token do
               app_store_connect_api_key(
@@ -104,7 +103,6 @@ jobs:
                 in_house: false
               )
             end
-
             private_lane :remove_known_stale_distribution_certs do
               api_token
               stale_ids = ENV.fetch("STALE_DISTRIBUTION_CERT_IDS", "").split(",").map(&:strip).reject(&:empty?)
@@ -120,7 +118,6 @@ jobs:
                 end
               end
             end
-
             lane :create_signing do
               token = api_token
               remove_known_stale_distribution_certs
@@ -144,7 +141,6 @@ jobs:
                 cert_id: created_cert_id
               )
             end
-
             lane :revoke_ci_cert do
               api_token
               cert_id = ENV.fetch("CI_CERT_ID", "").strip
@@ -158,15 +154,6 @@ jobs:
               rescue => e
                 UI.message("CI distribution certificate #{cert_id} is already absent or unavailable: #{e.message}")
               end
-            end
-
-            lane :upload_build do
-              token = api_token
-              pilot(
-                api_key: token,
-                ipa: ENV.fetch("IPA_PATH"),
-                skip_waiting_for_build_processing: true
-              )
             end
           end
           RUBY
@@ -251,7 +238,11 @@ jobs:
         run: |
           IPA=$(find "$RUNNER_TEMP/export" -name '*.ipa' -print -quit)
           test -n "$IPA"
-          IPA_PATH="$IPA" fastlane ios upload_build
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA" \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
 
       - name: Revoke ephemeral CI distribution certificate
         if: always()
