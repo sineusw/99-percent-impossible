@@ -79,29 +79,65 @@ jobs:
       - name: Generate Capacitor iOS project
         run: npm run ios:prepare
 
-      - name: Install signing certificate
+      - name: Install fastlane
+        run: gem install fastlane --no-document
+
+      - name: Prepare App Store Connect API key
         env:
-          P12_BASE64: ${{ secrets.IOS_DISTRIBUTION_P12_BASE64 }}
-          P12_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_P12_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
         run: |
-          test -n "$P12_BASE64"
+          test -n "$ASC_KEY_ID"
+          test -n "$ASC_ISSUER_ID"
+          test -n "$ASC_PRIVATE_KEY"
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          printf '%s' "$ASC_PRIVATE_KEY" > "$KEY_PATH"
+          python3 - <<'PY'
+          import json, os, pathlib
+          payload = {
+              "key_id": os.environ["ASC_KEY_ID"],
+              "issuer_id": os.environ["ASC_ISSUER_ID"],
+              "key": os.environ["ASC_PRIVATE_KEY"],
+              "in_house": False,
+          }
+          pathlib.Path(os.environ["RUNNER_TEMP"], "api_key.json").write_text(json.dumps(payload))
+          PY
+
+      - name: Create temporary keychain
+        run: |
           KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
-          CERT_PATH="$RUNNER_TEMP/distribution.p12"
-          echo "$P12_BASE64" | base64 --decode > "$CERT_PATH"
           security create-keychain -p actions "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p actions "$KEYCHAIN"
-          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
           security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
-          security set-key-partition-list -S apple-tool:,apple: -s -k actions "$KEYCHAIN"
+          echo "KEYCHAIN_PATH=$KEYCHAIN" >> "$GITHUB_ENV"
 
-      - name: Install provisioning profile
-        env:
-          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+      - name: Create Apple Distribution certificate in CI
         run: |
-          test -n "$PROFILE_BASE64"
-          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
-          echo "$PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+          mkdir -p "$RUNNER_TEMP/signing"
+          fastlane cert \
+            --api_key_path "$RUNNER_TEMP/api_key.json" \
+            --team_id "$TEAM_ID" \
+            --output_path "$RUNNER_TEMP/signing" \
+            --keychain_path "$KEYCHAIN_PATH" \
+            --keychain_password actions \
+            --generate_apple_certs true
+          security set-key-partition-list -S apple-tool:,apple: -s -k actions "$KEYCHAIN_PATH"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+      - name: Create App Store provisioning profile in CI
+        run: |
+          fastlane sigh \
+            --api_key_path "$RUNNER_TEMP/api_key.json" \
+            --app_identifier "$BUNDLE_ID" \
+            --team_id "$TEAM_ID" \
+            --output_path "$RUNNER_TEMP/signing" \
+            --filename "99PercentImpossible.mobileprovision" \
+            --force
+          PROFILE_PATH="$RUNNER_TEMP/signing/99PercentImpossible.mobileprovision"
+          test -f "$PROFILE_PATH"
           security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$RUNNER_TEMP/profile.plist")
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$RUNNER_TEMP/profile.plist")
@@ -127,6 +163,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             CODE_SIGN_IDENTITY='Apple Distribution' \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             archive
 
       - name: Export IPA
@@ -158,28 +195,10 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to App Store Connect
-        env:
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
         run: |
-          test -n "$ASC_KEY_ID"
-          test -n "$ASC_ISSUER_ID"
-          test -n "$ASC_PRIVATE_KEY"
-          mkdir -p "$HOME/.appstoreconnect/private_keys"
-          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          printf '%s' "$ASC_PRIVATE_KEY" > "$KEY_PATH"
-          gem install fastlane --no-document
-          cat > "$RUNNER_TEMP/api_key.json" <<EOF
-          {
-            "key_id": "${ASC_KEY_ID}",
-            "issuer_id": "${ASC_ISSUER_ID}",
-            "key": "$(python3 - <<'PY'
-          import json, os
-          print(json.dumps(os.environ['ASC_PRIVATE_KEY'])[1:-1])
-          PY
-          )"
-          }
-          EOF
           IPA=$(find "$RUNNER_TEMP/export" -name '*.ipa' -print -quit)
-          fastlane pilot upload --ipa "$IPA" --api_key_path "$RUNNER_TEMP/api_key.json" --skip_waiting_for_build_processing true
+          test -n "$IPA"
+          fastlane pilot upload \
+            --ipa "$IPA" \
+            --api_key_path "$RUNNER_TEMP/api_key.json" \
+            --skip_waiting_for_build_processing true
