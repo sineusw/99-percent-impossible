@@ -141,6 +141,16 @@ jobs:
                 cert_id: created_cert_id
               )
             end
+            lane :upload_build do
+              token = api_token
+              upload_to_app_store(
+                api_key: token,
+                ipa: ENV.fetch("IPA_PATH"),
+                skip_metadata: true,
+                skip_screenshots: true,
+                run_precheck_before_submit: false
+              )
+            end
             lane :revoke_ci_cert do
               api_token
               cert_id = ENV.fetch("CI_CERT_ID", "").strip
@@ -238,11 +248,7 @@ jobs:
         run: |
           IPA=$(find "$RUNNER_TEMP/export" -name '*.ipa' -print -quit)
           test -n "$IPA"
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA" \
-            --apiKey "$ASC_KEY_ID" \
-            --apiIssuer "$ASC_ISSUER_ID"
+          IPA_PATH="$IPA" fastlane ios upload_build
 
       - name: Revoke ephemeral CI distribution certificate
         if: always()
