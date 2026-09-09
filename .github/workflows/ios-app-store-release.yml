@@ -5,6 +5,12 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/ios-app-store-release.yml'
+      - 'release-assets/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'www/**'
+      - 'assets/**'
+      - 'src/**'
 
 jobs:
   release:
@@ -26,6 +32,28 @@ jobs:
 
       - name: Generate Capacitor iOS project
         run: npm run ios:prepare
+
+      - name: Install official app icon
+        run: |
+          ICON_SOURCE="release-assets/IMG_3826(1).png"
+          ICON_SET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
+          CONTENTS="$ICON_SET/Contents.json"
+          test -f "$ICON_SOURCE"
+          test -f "$CONTENTS"
+          TARGET_ICON=$(python3 - <<'PY'
+          import json
+          path = "ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json"
+          with open(path, "r", encoding="utf-8") as f:
+              data = json.load(f)
+          names = [item.get("filename") for item in data.get("images", []) if item.get("filename")]
+          if not names:
+              raise SystemExit("No icon filename found in AppIcon Contents.json")
+          print(names[0])
+          PY
+          )
+          /usr/bin/sips -s format png -z 1024 1024 "$ICON_SOURCE" --out "$ICON_SET/$TARGET_ICON"
+          test -s "$ICON_SET/$TARGET_ICON"
+          echo "Installed official icon as $TARGET_ICON"
 
       - name: Install fastlane
         run: gem install fastlane --no-document
