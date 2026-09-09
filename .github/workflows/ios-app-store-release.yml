@@ -42,16 +42,13 @@ jobs:
           mkdir -p "$HOME/.appstoreconnect/private_keys"
           KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           printf '%s' "$ASC_PRIVATE_KEY" > "$KEY_PATH"
-          python3 - <<'PY'
-          import json, os, pathlib
-          payload = {
-              "key_id": os.environ["ASC_KEY_ID"],
-              "issuer_id": os.environ["ASC_ISSUER_ID"],
-              "key": os.environ["ASC_PRIVATE_KEY"],
-              "in_house": False,
-          }
-          pathlib.Path(os.environ["RUNNER_TEMP"], "api_key.json").write_text(json.dumps(payload))
-          PY
+          openssl pkey -in "$KEY_PATH" -noout
+          echo "ASC_KEY_ID=$ASC_KEY_ID" >> "$GITHUB_ENV"
+          echo "ASC_ISSUER_ID=$ASC_ISSUER_ID" >> "$GITHUB_ENV"
+          echo "ASC_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+          SIGNING_DIR="$RUNNER_TEMP/signing"
+          mkdir -p "$SIGNING_DIR"
+          echo "SIGNING_DIR=$SIGNING_DIR" >> "$GITHUB_ENV"
 
       - name: Create temporary keychain
         run: |
@@ -62,29 +59,59 @@ jobs:
           security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
           echo "KEYCHAIN_PATH=$KEYCHAIN" >> "$GITHUB_ENV"
 
-      - name: Create Apple Distribution certificate in CI
+      - name: Configure fastlane signing lanes
         run: |
-          mkdir -p "$RUNNER_TEMP/signing"
-          fastlane cert \
-            --api_key_path "$RUNNER_TEMP/api_key.json" \
-            --team_id "$TEAM_ID" \
-            --output_path "$RUNNER_TEMP/signing" \
-            --keychain_path "$KEYCHAIN_PATH" \
-            --keychain_password actions \
-            --generate_apple_certs true
+          mkdir -p fastlane
+          cat > fastlane/Fastfile <<'RUBY'
+          default_platform(:ios)
+
+          platform :ios do
+            private_lane :api_token do
+              app_store_connect_api_key(
+                key_id: ENV.fetch("ASC_KEY_ID"),
+                issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+                key_filepath: ENV.fetch("ASC_KEY_PATH"),
+                in_house: false
+              )
+            end
+
+            lane :create_signing do
+              token = api_token
+              cert(
+                api_key: token,
+                team_id: ENV.fetch("TEAM_ID"),
+                output_path: ENV.fetch("SIGNING_DIR"),
+                keychain_path: ENV.fetch("KEYCHAIN_PATH"),
+                keychain_password: "actions",
+                generate_apple_certs: true
+              )
+              sigh(
+                api_key: token,
+                app_identifier: ENV.fetch("BUNDLE_ID"),
+                team_id: ENV.fetch("TEAM_ID"),
+                output_path: ENV.fetch("SIGNING_DIR"),
+                filename: "99PercentImpossible.mobileprovision",
+                force: true
+              )
+            end
+
+            lane :upload_build do
+              token = api_token
+              pilot(
+                api_key: token,
+                ipa: ENV.fetch("IPA_PATH"),
+                skip_waiting_for_build_processing: true
+              )
+            end
+          end
+          RUBY
+
+      - name: Create signing assets in CI
+        run: |
+          fastlane ios create_signing
           security set-key-partition-list -S apple-tool:,apple: -s -k actions "$KEYCHAIN_PATH"
           security find-identity -v -p codesigning "$KEYCHAIN_PATH"
-
-      - name: Create App Store provisioning profile in CI
-        run: |
-          fastlane sigh \
-            --api_key_path "$RUNNER_TEMP/api_key.json" \
-            --app_identifier "$BUNDLE_ID" \
-            --team_id "$TEAM_ID" \
-            --output_path "$RUNNER_TEMP/signing" \
-            --filename "99PercentImpossible.mobileprovision" \
-            --force
-          PROFILE_PATH="$RUNNER_TEMP/signing/99PercentImpossible.mobileprovision"
+          PROFILE_PATH="$SIGNING_DIR/99PercentImpossible.mobileprovision"
           test -f "$PROFILE_PATH"
           security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$RUNNER_TEMP/profile.plist")
@@ -145,7 +172,4 @@ jobs:
         run: |
           IPA=$(find "$RUNNER_TEMP/export" -name '*.ipa' -print -quit)
           test -n "$IPA"
-          fastlane pilot upload \
-            --ipa "$IPA" \
-            --api_key_path "$RUNNER_TEMP/api_key.json" \
-            --skip_waiting_for_build_processing true
+          IPA_PATH="$IPA" fastlane ios upload_build
