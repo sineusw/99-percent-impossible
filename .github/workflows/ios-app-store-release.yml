@@ -54,7 +54,8 @@ jobs:
           )
           /usr/bin/sips -s format png -z 1024 1024 "$ICON_SOURCE" --out "$ICON_SET/$TARGET_ICON"
           test -s "$ICON_SET/$TARGET_ICON"
-          echo "Installed official icon as $TARGET_ICON"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleIconName AppIcon' ios/App/App/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c 'Add :CFBundleIconName string AppIcon' ios/App/App/Info.plist
+          echo "Installed official icon as $TARGET_ICON and set CFBundleIconName=AppIcon"
 
       - name: Install fastlane
         run: gem install fastlane --no-document
