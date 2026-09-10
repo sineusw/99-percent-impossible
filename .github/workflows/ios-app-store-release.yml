@@ -152,20 +152,6 @@ jobs:
                 run_precheck_before_submit: false
               )
             end
-            lane :revoke_ci_cert do
-              api_token
-              cert_id = ENV.fetch("CI_CERT_ID", "").strip
-              next if cert_id.empty?
-              begin
-                cert = Spaceship::ConnectAPI::Certificate.get(certificate_id: cert_id)
-                if cert
-                  UI.message("Revoking ephemeral CI distribution certificate #{cert_id}")
-                  cert.delete!
-                end
-              rescue => e
-                UI.message("CI distribution certificate #{cert_id} is already absent or unavailable: #{e.message}")
-              end
-            end
           end
           RUBY
 
@@ -250,12 +236,3 @@ jobs:
           IPA=$(find "$RUNNER_TEMP/export" -name '*.ipa' -print -quit)
           test -n "$IPA"
           IPA_PATH="$IPA" fastlane ios upload_build
-
-      - name: Revoke ephemeral CI distribution certificate
-        if: always()
-        run: |
-          if [ -s "$CREATED_CERT_ID_PATH" ]; then
-            CI_CERT_ID=$(cat "$CREATED_CERT_ID_PATH") fastlane ios revoke_ci_cert
-          else
-            echo "No CI distribution certificate was created; nothing to revoke."
-          fi
