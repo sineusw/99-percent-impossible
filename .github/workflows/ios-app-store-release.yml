@@ -14,7 +14,7 @@ on:
 
 jobs:
   release:
-    runs-on: macos-15
+    runs-on: macos-26
     env:
       BUNDLE_ID: com.pettygamesstudios.ninetynineimpossible
       TEAM_ID: FHGP486J8U
