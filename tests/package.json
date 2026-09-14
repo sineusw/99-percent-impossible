@@ -1,0 +1,1 @@
+{"private":true,"type":"module","scripts":{"test":"node mobile-regression.mjs"},"devDependencies":{"happy-dom":"20.14.5"}}

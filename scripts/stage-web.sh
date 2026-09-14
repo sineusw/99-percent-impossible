@@ -7,7 +7,7 @@ mkdir -p dist
 # folders out of the payload.
 for item in *; do
   case "$item" in
-    api|dist|ios|node_modules|scripts|package.json|package-lock.json|capacitor.config.json|vercel.json)
+    api|dist|ios|node_modules|scripts|tests|package.json|package-lock.json|capacitor.config.json|vercel.json)
       continue
       ;;
   esac

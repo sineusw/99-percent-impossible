@@ -109,7 +109,7 @@
   }
 
   function cancelInterruptedAttempt(){
-    if(typeof st==='undefined'||!st.run)return;
+    if(typeof st==='undefined'||(!st.run&&!st.locked))return;
     stopGestureActive=false;
     touchHandled=false;
     // reset() already owns RAF/timeout/tick cleanup and does not bump attempts
@@ -118,6 +118,7 @@
   }
 
   primary.addEventListener('touchstart',e=>{
+    stopGestureActive=false;
     if(scoreStopFromPress(e)){
       touchHandled=true;
       setTimeout(()=>{touchHandled=false},140);
@@ -125,22 +126,28 @@
   },{passive:false,capture:true});
 
   primary.addEventListener('pointerdown',e=>{
-    if(touchHandled||e.pointerType==='touch')return;
+    if(e.pointerType==='touch')return;
+    stopGestureActive=false;
     scoreStopFromPress(e);
   },{passive:false,capture:true});
 
-  // Replace the old release-driven gameplay handler. Release still starts a
+  // Use native click activation for touch, mouse and keyboard. Click starts a
   // challenge or retries; a release belonging to an already-scored STOP is eaten.
-  primary.onpointerup=e=>{
+  primary.onpointerup=null;
+  primary.onclick=e=>{
     e.preventDefault();
     if(stopGestureActive){stopGestureActive=false;return}
     if(st.locked)return;
+    if(isPrecisionStop()){scoreStopFromPress(e);stopGestureActive=false;return}
     audio();
     if(primary.textContent==='TRY AGAIN')return reset();
     if(st.g==='timer'&&!st.run)return timerStart();
     if(st.g==='stop'&&!st.run)return stopStart();
     if(st.g==='reaction'&&!st.run)return rxStart();
   };
+
+  const baseReset=reset;
+  reset=function(...args){stopGestureActive=false;touchHandled=false;return baseReset(...args)};
 
   primary.addEventListener('pointercancel',()=>{stopGestureActive=false},{capture:true});
   primary.addEventListener('touchcancel',()=>{stopGestureActive=false;touchHandled=false},{capture:true});
