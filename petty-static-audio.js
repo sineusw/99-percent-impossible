@@ -7,6 +7,8 @@ const synth=window.speechSynthesis;
 if(!synth||synth.__pettyHtmlAudioPatched)return;
 const nativeCancel=synth.cancel.bind(synth);
 const cache=new Map();
+const nativeApp=window.Capacitor?.isNativePlatform?.()||location.protocol==='capacitor:';
+const voiceEndpoint=nativeApp?'https://99-percent-impossible.vercel.app/api/petty-voice':'/api/petty-voice';
 let audioEl=null,activeUrl=null,activeUtterance=null,seq=0,unlocked=false,unlocking=false,silentLoopRunning=false;
 const log=(...a)=>console.log('[PETTY AUDIO LOG]',...a);
 const errlog=(...a)=>console.error('[PETTY AUDIO LOG]',...a);
@@ -40,9 +42,11 @@ function fetchVoice(text){
   text=String(text||'').trim();
   if(!text)return Promise.reject(new Error('empty voice text'));
   if(cache.has(text))return cache.get(text);
-  const p=fetch('/api/petty-voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})})
-    .then(async r=>{if(!r.ok)throw new Error('voice '+r.status);return r.blob()})
-    .catch(e=>{cache.delete(text);throw e});
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),10000);
+  const p=fetch(voiceEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:controller.signal})
+    .then(async r=>{if(!r.ok)throw new Error('voice '+r.status);const blob=await r.blob();if(!blob.size||!blob.type.startsWith('audio/'))throw new Error('Invalid voice audio');return blob})
+    .catch(e=>{cache.delete(text);throw e}).finally(()=>clearTimeout(timeout));
   cache.set(text,p);return p;
 }
 window.preloadPettyVoice=text=>fetchVoice(text).then(()=>true).catch(()=>false);

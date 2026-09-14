@@ -1,19 +1,24 @@
 const VOICE_ID = 'qxePw1S1QmBgjlU3GIy5';
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+  // Capacitor iOS serves bundled assets from this origin, not the web API host.
   const origin = req.headers.origin || '';
   const host = req.headers.host || '';
-  if (origin) {
-    try {
-      if (new URL(origin).host !== host) return res.status(403).json({ error: 'Forbidden' });
-    } catch {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+  let allowed = !origin || origin === 'capacitor://localhost';
+  if (origin && !allowed) {
+    try { allowed = new URL(origin).host === host; } catch {}
+  }
+  res.setHeader('Vary', 'Origin');
+  if (!allowed) return res.status(403).json({ error: 'Forbidden' });
+  if (origin === 'capacitor://localhost') {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST, OPTIONS');
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
