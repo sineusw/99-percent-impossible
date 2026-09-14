@@ -1,6 +1,7 @@
 name: iOS App Store Release
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -11,6 +12,11 @@ on:
       - 'www/**'
       - 'assets/**'
       - 'src/**'
+      - '*.js'
+      - '*.css'
+      - '*.html'
+      - 'capacitor.config.json'
+      - 'scripts/stage-web.sh'
 
 jobs:
   release:
@@ -27,6 +33,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Run gameplay and voice regression tests
+        run: npm install --prefix tests && npm test --prefix tests
 
       - name: Install dependencies
         run: npm install
