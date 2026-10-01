@@ -46,7 +46,7 @@
         isPB=hit&&(old===null||sc>old),
         edgeDist=hit?0:Math.min(Math.abs(st.pos-st.tgt.x),Math.abs(st.pos-(st.tgt.x+st.tgt.w)));
 
-    bump();if(isPB)S('stop_best',sc);
+    bump();recordResult({rawScore:sc,percentage:sc,isPB,hadPreviousPB:old!==null,isPerfect:hit&&sc>=99.95});if(isPB)S('stop_best',sc);
 
     // Difficulty quality uses the same one-decimal score shown to the player.
     const outcome=D.evaluatePerfectStopAttempt({

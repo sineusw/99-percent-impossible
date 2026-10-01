@@ -35,4 +35,34 @@ run(`openGame('reaction');rxStart()`);
 check('Reaction has no misleading active START button',run('primary.disabled'));
 run(`rxHit(performance.now())`);
 check('False start restores retry control',run('!primary.disabled&&primary.textContent==="TRY AGAIN"'));
+// Integrity regressions run through the full production script stack.
+const reactionAt=ms=>run(`openGame('reaction');rxStart();clearTimeout(st.to);st.ready=1;st.start=performance.now();rxHit(st.start+${ms})`);
+run("S('reaction_best',200);S('currentStreak',3)");
+reactionAt(80);
+check('Suspicious reaction preserves PB and cannot advance streak',run("G('reaction_best')===200&&G('currentStreak')===0&&!N99Result.isPB&&N99Result.isSuspicious"));
+check('Suspicious 100 percent has no earned share or NEW PB',run("copyBtn.hidden&&!res.querySelector('.new')"));
+reactionAt(100);
+check('100ms boundary remains a legitimate elite PB',run("G('reaction_best')===100&&N99Result.isPB&&!N99Result.isSuspicious&&!copyBtn.hidden"));
+run("localStorage.removeItem(K('reaction_best'));S('reaction_attempts',7)");
+reactionAt(300);
+check('First stored PB after earlier attempts does not earn sharing',run("N99Result.isPB&&!N99Result.hadPreviousPB&&copyBtn.hidden"));
+reactionAt(280);
+check('Improved existing PB earns sharing below 99 percent immediately',run("N99Result.isPB&&N99Result.hadPreviousPB&&!copyBtn.hidden"));
+run("openGame('timer');timerStart();st.start=performance.now()-1000;timerStop()");
+check('Timer perfect publishes explicit metadata and earns sharing',run("N99Result.game==='timer'&&N99Result.percentage>=99&&!copyBtn.hidden"));
+run("openGame('stop');stopStart();st.pos=st.tgt.x+st.tgt.w/2;stopStop()");
+check('Stop center hit publishes perfect result and earns sharing',run("N99Result.game==='stop'&&N99Result.isPerfect&&N99Result.percentage===100&&!copyBtn.hidden"));
+for(const mode of ['timer','stop','reaction']){
+  run(`openGame('${mode}');${mode==='reaction'?'rx':mode}Start();window.beforeInterrupt=localStorage.getItem('n99_total');dispatchEvent(new Event('pagehide'))`);
+  check(`${mode} background cancellation clears active state neutrally`,run("!st.run&&!st.ready&&!st.locked&&N99Result===null&&localStorage.getItem('n99_total')===beforeInterrupt"));
+}
+for(const mode of ['timer','stop','reaction']){
+  run(`openGame('${mode}');${mode==='reaction'?'rx':mode}Start();window.beforeInterrupt=G('total');Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))`);
+  check(`${mode} hidden document cancels without counting`,run("!st.run&&G('total')===beforeInterrupt"));
+  run("Object.defineProperty(document,'hidden',{configurable:true,value:false})");
+}
+reactionAt(200);
+w.navigator.share=async data=>{w.sharedPayload=data};
+await run('copyBtn.onclick()');
+check('Share payload uses explicit result metadata',w.sharedPayload?.text==='I got 200ms (99.0%) on REACTION TEST in 99% IMPOSSIBLE. Beat me.');
 console.log(JSON.stringify(results));await w.happyDOM.abort();w.close();process.exit(results.some(r=>!r.passed)?1:0);
