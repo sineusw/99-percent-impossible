@@ -6,12 +6,7 @@
   const modal=document.querySelector('#modal');
   const button=document.querySelector('#copy');
   const retry=document.querySelector('#retry');
-  const result=document.querySelector('#res');
-  const game=document.querySelector('#mg');
-  const score=document.querySelector('#ms');
-  const meta=document.querySelector('#mm');
-  const attempts=document.querySelector('#att');
-  if(!modal||!button||!retry||!result||!game||!score||!meta)return;
+  if(!modal||!button||!retry)return;
 
   const style=document.createElement('style');
   style.textContent=`
@@ -37,32 +32,20 @@
   button.classList.add('n99-share-result');
   retry.insertAdjacentElement('afterend',button);
 
-  const numericPercent=text=>{
-    const m=String(text||'').match(/([0-9]+(?:\.[0-9]+)?)\s*%/);
-    return m?Number(m[1]):null;
-  };
-
   function qualifies(){
     if(modal.classList.contains('hide'))return false;
-    const title=(game.textContent||'').trim();
-    const scoreText=(score.textContent||'').trim();
-    if(!title||!scoreText||/TOO EARLY/i.test(scoreText))return false;
-
-    const isPB=!!result.querySelector('.new');
-    const attemptCount=Number.parseInt(attempts.textContent||'0',10)||0;
-    let pct=null;
-    if(title==='PERFECT STOP')pct=numericPercent(scoreText);
-    else pct=numericPercent(meta.textContent);
-
-    const notable=Number.isFinite(pct)&&pct>=99;
-    return notable||(isPB&&attemptCount>1);
+    const result=window.N99Result;
+    if(!result||result.isSuspicious||!Number.isFinite(result.rawScore))return false;
+    return (Number.isFinite(result.percentage)&&result.percentage>=99)||
+      (result.isPB&&result.hadPreviousPB);
   }
 
   function payload(){
-    const title=(game.textContent||'99% IMPOSSIBLE').trim();
-    const scoreText=(score.textContent||'').trim();
-    let pct=numericPercent(title==='PERFECT STOP'?scoreText:meta.textContent);
-    const pctText=Number.isFinite(pct)&&!scoreText.includes('%')?` (${pct.toFixed(1)}%)`:'';
+    const result=window.N99Result;
+    const title={timer:'PERFECT TIMER',stop:'PERFECT STOP',reaction:'REACTION TEST'}[result.game];
+    const scoreText=result.game==='timer'?result.rawScore.toFixed(3)+'s':
+      result.game==='stop'?result.rawScore.toFixed(1)+'%':Math.round(result.rawScore)+'ms';
+    const pctText=result.game==='stop'?'':` (${result.percentage.toFixed(1)}%)`;
     const text=`I got ${scoreText}${pctText} on ${title} in 99% IMPOSSIBLE. Beat me.`;
     const isNative=!!window.Capacitor?.isNativePlatform?.()||location.protocol==='capacitor:';
     const url=isNative?'https://99-percent-impossible.vercel.app/':location.origin+location.pathname;
@@ -115,6 +98,6 @@
   };
 
   new MutationObserver(sync).observe(modal,{attributes:true,attributeFilter:['class']});
-  new MutationObserver(sync).observe(result,{childList:true,subtree:true});
+  window.addEventListener('n99:result',sync);
   sync();
 })();
