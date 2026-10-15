@@ -1,0 +1,46 @@
+name: iOS Menu Screenshots
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/ios-review-purchase-gates]
+    paths: [.github/workflows/ios-menu-screenshots.yml]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare bundled app
+        run: npm install && npm run ios:prepare
+      - name: Build actual simulator app without UI test runner
+        run: |
+          xcodebuild build -workspace ios/App/App.xcworkspace -scheme App \
+            -configuration Debug -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/MenuBuild" CODE_SIGNING_ALLOWED=NO
+      - name: Launch and capture each device
+        run: |
+          mkdir -p "$RUNNER_TEMP/menu-captures"
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x.get("isAvailable") and x["identifier"].startswith("com.apple.CoreSimulator.SimRuntime.iOS-")]; print(sorted(r,key=lambda x:tuple(map(int,x["version"].split("."))))[-1]["identifier"])')
+          for SPEC in 'iphone:com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus' 'ipad:com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB'; do
+            LABEL=${SPEC%%:*}
+            DEVICE_TYPE=${SPEC#*:}
+            DEVICE_ID=$(xcrun simctl create MenuCapture "$DEVICE_TYPE" "$RUNTIME")
+            xcrun simctl boot "$DEVICE_ID"
+            xcrun simctl bootstatus "$DEVICE_ID" -b
+            xcrun simctl install "$DEVICE_ID" "$RUNNER_TEMP/MenuBuild/Build/Products/Debug-iphonesimulator/App.app"
+            xcrun simctl launch "$DEVICE_ID" com.pettygamesstudios.ninetynineimpossible
+            sleep 12
+            xcrun simctl io "$DEVICE_ID" screenshot "$RUNNER_TEMP/menu-captures/$LABEL-menu.png"
+            xcrun simctl shutdown "$DEVICE_ID"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genuine-ios-menu-screenshots
+          path: ${{ runner.temp }}/menu-captures/*.png
+          if-no-files-found: warn
