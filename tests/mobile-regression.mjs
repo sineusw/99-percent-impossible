@@ -6,7 +6,8 @@ const ctx=vm.createContext(w);const evaluate=s=>vm.runInContext(s,ctx);
 w.document.write(fs.readFileSync(path.join(root,'index.html'),'utf8'));
 w.localStorage.setItem('n99_petty_voice','0');
 evaluate('var speechSynthesis={cancel(){},speak(){},getVoices(){return []},addEventListener(){}};var SpeechSynthesisUtterance=function(text){this.text=text}');
-w.Capacitor={isNativePlatform:()=>true,registerPlugin:name=>({addListener:async (event,handler)=>{if(name==='App'&&event==='appStateChange')w.nativeStateHandler=handler;}})};
+// Match Capacitor iOS's injected JSExport surface; this app has no JS bundler.
+w.Capacitor={isNativePlatform:()=>true,Plugins:{App:{addListener:(event,handler)=>{if(event==='appStateChange')w.nativeStateHandler=handler;return {remove(){}};}}}};
 for(const s of w.document.querySelectorAll('script[src]')){const name=s.getAttribute('src').split('?')[0];try{evaluate(fs.readFileSync(path.join(root,name),'utf8'))}catch(e){throw new Error('Failed to load '+name,{cause:e})}}
 const results=[];const check=(name,value)=>{results.push({name,passed:!!value});console.log(value?'PASS':'FAIL',name)};
 const run=s=>evaluate(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
