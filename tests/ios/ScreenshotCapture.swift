@@ -7,13 +7,19 @@ final class ScreenshotCapture: XCTestCase {
         continueAfterFailure = false
         app.terminate()
         app.launch()
+        // HTML accessibility can appear before the unbundled scripts finish.
+        // The cast picker is installed after the core game's event handlers.
+        let ready = app.buttons["Change game voice"]
+        XCTAssertTrue(ready.waitForExistence(timeout: 45), "App controls did not finish loading")
     }
 
     func press(_ text: String) {
         let button = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", text)).firstMatch
         XCTAssertTrue(button.waitForExistence(timeout: 20), "Missing button: \(text)")
         XCTAssertTrue(button.isHittable, "Inaccessible button: \(text)")
-        button.tap()
+        // Use the physical center: WebKit's suggested accessibility hit point
+        // can be stale on the first interaction after a cold simulator launch.
+        button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     func visibleButton(_ text: String) -> XCUIElement {
