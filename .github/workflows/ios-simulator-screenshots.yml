@@ -33,7 +33,7 @@ jobs:
       - name: Gameplay and review regression tests
         run: npm ci --prefix tests && npm test --prefix tests
       - name: Prepare real Capacitor iOS app
-        run: npm ci && npm run ios:prepare
+        run: npm install && npm run ios:prepare
       - name: Add simulator UI capture target
         run: |
           gem install xcodeproj --no-document
