@@ -3,7 +3,7 @@
    Daisy/Mick use verified generated ad assets for launch reliability. */
 (()=>{
 const AK=n=>'n99_ads_'+n,CK=n=>'n99_cos_'+n,hasPass=()=>localStorage.getItem(CK('ragepass'))==='1';
-const QS=new URLSearchParams(location.search),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1';
+const QS=new URLSearchParams(location.search),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1'||!AD_TEST;
 let adOpen=false,adBoundaryClaimed=false,adOpened=false,pending=false,boundaryLocked=false,deferredRetry=null,boundaryFinished=false;
 let adFailsafeTimer=0,preAdTimer=0,lastAdAttempt=+(localStorage.getItem(AK('lastAttempt'))||0);
 const PRE_AD_PAUSE=AD_TEST?350:850,SIM_AD_SECONDS=5,HARD_CAP=7,AD_FAILSAFE_MS=4000;
