@@ -156,4 +156,15 @@
     if(document.hidden)cancelInterruptedAttempt();
   });
   window.addEventListener('pagehide',cancelInterruptedAttempt);
+
+  // WKWebView does not reliably emit the browser visibility events on iOS.
+  // Capacitor's App plugin forwards the native resign-active notification.
+  const capacitor=window.Capacitor;
+  if(capacitor?.isNativePlatform?.()&&capacitor.registerPlugin){
+    const nativeApp=capacitor.registerPlugin('App');
+    nativeApp.addListener('appStateChange',({isActive})=>{
+      if(!isActive)cancelInterruptedAttempt();
+    }).catch(error=>console.error('Native app state listener unavailable',error));
+  }
+
 })();

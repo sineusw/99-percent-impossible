@@ -6,6 +6,7 @@ const ctx=vm.createContext(w);const evaluate=s=>vm.runInContext(s,ctx);
 w.document.write(fs.readFileSync(path.join(root,'index.html'),'utf8'));
 w.localStorage.setItem('n99_petty_voice','0');
 evaluate('var speechSynthesis={cancel(){},speak(){},getVoices(){return []},addEventListener(){}};var SpeechSynthesisUtterance=function(text){this.text=text}');
+w.Capacitor={isNativePlatform:()=>true,registerPlugin:name=>({addListener:async (event,handler)=>{if(name==='App'&&event==='appStateChange')w.nativeStateHandler=handler;}})};
 for(const s of w.document.querySelectorAll('script[src]')){const name=s.getAttribute('src').split('?')[0];try{evaluate(fs.readFileSync(path.join(root,name),'utf8'))}catch(e){throw new Error('Failed to load '+name,{cause:e})}}
 const results=[];const check=(name,value)=>{results.push({name,passed:!!value});console.log(value?'PASS':'FAIL',name)};
 const run=s=>evaluate(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -60,6 +61,13 @@ for(const mode of ['timer','stop','reaction']){
   run(`openGame('${mode}');${mode==='reaction'?'rx':mode}Start();window.beforeInterrupt=G('total');Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))`);
   check(`${mode} hidden document cancels without counting`,run("!st.run&&G('total')===beforeInterrupt"));
   run("Object.defineProperty(document,'hidden',{configurable:true,value:false})");
+}
+for(const mode of ['timer','stop','reaction']){
+  run(`openGame('${mode}');${mode==='reaction'?'rx':mode}Start();window.beforeInterrupt=G('total')`);
+  w.nativeStateHandler({isActive:true});
+  check(`${mode} native active notification keeps current run`,run('!!st.run'));
+  w.nativeStateHandler({isActive:false});
+  check(`${mode} native background cancels neutrally`,run("!st.run&&!st.ready&&!st.locked&&G('total')===beforeInterrupt"));
 }
 reactionAt(200);
 w.navigator.share=async data=>{w.sharedPayload=data};

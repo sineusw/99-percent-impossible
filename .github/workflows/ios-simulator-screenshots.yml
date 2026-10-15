@@ -9,6 +9,8 @@ on:
       - .github/workflows/ios-simulator-screenshots.yml
       - scripts/prepare-screenshot-tests.rb
       - tests/ios/**
+      - gameplay-input-fairness.js
+      - package.json
 
 concurrency:
   group: ios-simulator-screenshots-${{ github.ref }}
