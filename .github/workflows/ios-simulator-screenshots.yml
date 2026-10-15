@@ -10,6 +10,10 @@ on:
       - scripts/prepare-screenshot-tests.rb
       - tests/ios/**
 
+concurrency:
+  group: ios-simulator-screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

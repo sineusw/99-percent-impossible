@@ -9,6 +9,8 @@ tests.add_dependency(app)
 source = project.main_group.new_file('../../tests/ios/ScreenshotCapture.swift')
 tests.source_build_phase.add_file_reference(source)
 tests.build_configurations.each do |config|
+  config.build_settings['PRODUCT_NAME'] = 'ScreenshotCapture'
+  config.build_settings['PRODUCT_MODULE_NAME'] = 'ScreenshotCapture'
   config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.pettygamesstudios.ninetynineimpossible.screenshots'
   config.build_settings['TEST_TARGET_NAME'] = 'App'
   config.build_settings['SWIFT_VERSION'] = '5.0'
