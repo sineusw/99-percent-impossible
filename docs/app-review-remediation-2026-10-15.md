@@ -58,3 +58,16 @@ The updated license agreement's acceptance status was not verified. Account Hold
 6. Check agreements, disclosures, all required fields and matching review notes. Submit an accurate response and resubmit only after fixes are complete. Obtain required authorization for consequential actions.
 
 The confirmed rejection is metadata-related. New screenshots can address that complaint without inherently requiring a binary; including the ad and purchase fixes requires a new binary.
+
+
+## Simulator capture completion — later October 15
+
+PR #31 was published with purchase gates, then extended with capture workflows. Both jobs in iOS Simulator Screenshots run 38816653276 completed successfully from commit 2e2b89f07c2e197905348915da8ba124e6be0b66. This supersedes the earlier lack of simulator access: GitHub-hosted macOS runners provided actual iOS simulator builds.
+
+XCTest captured seven iPad Pro 13-inch (M4) screenshots at 2064 × 2752, plus seven iPhone 14 Plus screenshots at 1284 × 2778. Visual QA accepted all seven iPad images and six iPhone images; the phone reaction-result image still showed GO and was excluded. Result-existence assertions in the capture smoke tests should be strengthened to wait for a visible, hittable result control before future capture runs. A passing smoke test does not establish full reaction input correctness.
+
+The delivered ZIP contains 13 unchanged original PNGs, source provenance, and limitations. It shows genuine menu, all three game modes, and real results. No fabricated scores, pixel edits, or stretched phone-to-tablet imagery were used. The simulator images come from the PR #31 release candidate; include those code changes in the final binary or verify asset parity before Apple submission.
+
+All 55 DOM/audio/review checks also passed on both capture runners. Simulator UI smoke tests passed on both devices; audible output, actual purchase and restoration, sharing, background/resume, and full device coverage are not proven by these capture tests.
+
+No fixes have been merged into main, no new signed binary uploaded, and no Apple screenshots, metadata, review reply, or submission changed. The earlier branch-push approval blocker was resolved by the user's explicit confirmation. Agreement and signing checks remain pending.
