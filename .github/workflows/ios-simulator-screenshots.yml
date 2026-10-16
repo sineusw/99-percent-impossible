@@ -1,0 +1,80 @@
+name: iOS Simulator Screenshots
+
+# Capture only: never sign, upload to Apple, or submit a release.
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/ios-review-purchase-gates]
+    paths:
+      - .github/workflows/ios-simulator-screenshots.yml
+      - scripts/prepare-screenshot-tests.rb
+      - tests/ios/**
+      - gameplay-input-fairness.js
+      - package.json
+
+concurrency:
+  group: ios-simulator-screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: macos-26
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: iphone
+            device_type: com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus
+          - label: ipad
+            device_type: com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gameplay and review regression tests
+        run: npm ci --prefix tests && npm test --prefix tests
+      - name: Prepare real Capacitor iOS app
+        run: npm install && npm run ios:prepare
+      - name: Add simulator UI capture target
+        run: |
+          gem install xcodeproj --no-document
+          ruby scripts/prepare-screenshot-tests.rb
+      - name: Create simulator
+        env:
+          DEVICE_TYPE: ${{ matrix.device_type }}
+        run: |
+          xcrun simctl list devices available
+          xcrun simctl list devicetypes
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x.get("isAvailable") and x["identifier"].startswith("com.apple.CoreSimulator.SimRuntime.iOS-")]; print(sorted(r,key=lambda x:tuple(map(int,x["version"].split("."))))[-1]["identifier"])')
+          DEVICE_ID=$(xcrun simctl create ReviewCapture "$DEVICE_TYPE" "$RUNTIME")
+          echo "CAPTURE_DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$DEVICE_ID"
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+      - name: Capture genuine app screens through XCTest
+        run: |
+          xcodebuild test \
+            -workspace ios/App/App.xcworkspace \
+            -scheme ScreenshotCapture \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$CAPTURE_DEVICE_ID" \
+            -resultBundlePath "$RUNNER_TEMP/screenshots.xcresult" \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Export test attachments
+        if: always()
+        run: |
+          if test -d "$RUNNER_TEMP/screenshots.xcresult"; then
+            xcrun xcresulttool export attachments --path "$RUNNER_TEMP/screenshots.xcresult" --output-path "$RUNNER_TEMP/captured-screens"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-simulator-${{ matrix.label }}
+          path: |
+            ${{ runner.temp }}/captured-screens
+            ${{ runner.temp }}/screenshots.xcresult
+          if-no-files-found: warn

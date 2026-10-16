@@ -233,6 +233,20 @@ jobs:
             -exportPath "$RUNNER_TEMP/export" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
 
+      - name: Verify exported signature and provisioning before upload
+        run: |
+          IPA=$(find "$RUNNER_TEMP/export" -name '*.ipa' -print -quit)
+          test -n "$IPA"
+          mkdir -p "$RUNNER_TEMP/verified-export"
+          unzip -q "$IPA" -d "$RUNNER_TEMP/verified-export"
+          RELEASE_APP_PATH=$(find "$RUNNER_TEMP/verified-export/Payload" -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$RELEASE_APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$RELEASE_APP_PATH"
+          codesign -d --extract-certificates "$RUNNER_TEMP/release-cert-" "$RELEASE_APP_PATH"
+          openssl x509 -inform DER -in "$RUNNER_TEMP/release-cert-0" -checkend 0 -noout
+          security cms -D -i "$RELEASE_APP_PATH/embedded.mobileprovision" > "$RUNNER_TEMP/export-profile.plist"
+          RELEASE_APP_PATH="$RELEASE_APP_PATH" RELEASE_PROFILE_PATH="$RUNNER_TEMP/export-profile.plist" RELEASE_CERTIFICATE_PATH="$RUNNER_TEMP/release-cert-0" python3 scripts/verify-ios-export.py
+
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
