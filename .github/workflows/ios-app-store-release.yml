@@ -26,7 +26,9 @@ jobs:
       TEAM_ID: FHGP486J8U
       # 8LDD86ULMQ was generated in this repo's ephemeral keychain by run
       # 36848855130 (2026-10-01); that job retained only its IPA, not the key.
-      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ
+      # ZSZ95M9BQB belongs to failed pre-upload run 38827334945; its
+      # temporary private key was also discarded when that runner ended.
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -244,7 +246,7 @@ jobs:
           RELEASE_APP_PATH=$(find "$RUNNER_TEMP/verified-export/Payload" -maxdepth 1 -name '*.app' -print -quit)
           test -n "$RELEASE_APP_PATH"
           codesign --verify --deep --strict --verbose=2 "$RELEASE_APP_PATH"
-          codesign -d --extract-certificates "$RUNNER_TEMP/release-cert-" "$RELEASE_APP_PATH"
+          codesign -d --extract-certificates="$RUNNER_TEMP/release-cert-" "$RELEASE_APP_PATH"
           openssl x509 -inform DER -in "$RUNNER_TEMP/release-cert-0" -checkend 0 -noout
           security cms -D -i "$RELEASE_APP_PATH/embedded.mobileprovision" > "$RUNNER_TEMP/export-profile.plist"
           RELEASE_APP_PATH="$RELEASE_APP_PATH" RELEASE_PROFILE_PATH="$RUNNER_TEMP/export-profile.plist" RELEASE_CERTIFICATE_PATH="$RUNNER_TEMP/release-cert-0" python3 scripts/verify-ios-export.py
