@@ -1,4 +1,6 @@
-# App Review remediation — October 15, 2026
+# App Review remediation — completed October 16, 2026
+
+Version 1.0, build **388277062691**, was successfully resubmitted on October 16, 2026 at 9:17 AM PDT. App Store Connect visibly confirmed **Waiting for Review** for both the submission and its selected build. Approval is pending. Manual release remains selected.
 
 ## Confirmed rejection
 
@@ -35,11 +37,37 @@ The tests do not prove audible output on physical hardware or live StoreKit purc
 
 Free Apps Agreement and Digital Services Act status are Active. Paid Apps Agreement is New and would need legal-entity updates before paid features; it does not block the current free app without IAP. Current price schedule is free. Privacy label is Published, Data Not Collected; policy URL and support URL respond successfully. No legal agreements or pricing were changed.
 
-PR #31 was merged into #30 (983cf0cb73b8e6ae589689d9b380c285863cbede), then #30 into main (9855e03220b2efc73bb2c860a7d2fc126ff4ab73). The live privacy page now serves the iOS description. Release run 38827068836 stopped before archive/upload because Apple's three-distribution-certificate quota was full and none of the private keys was available on the fresh runner.
+PR #31 was merged into #30 (983cf0cb73b8e6ae589689d9b380c285863cbede), then #30 into main (9855e03220b2efc73bb2c860a7d2fc126ff4ab73). The live privacy page serves the updated iOS description. Release simulator compile run 38827068720 succeeded.
 
-Historical run 36848855130 logs show certificate 8LDD86ULMQ was generated on October 1 in this repository's temporary CI keychain. That workflow retained only the IPA; it did not retain/export the private key. The retry adds only this proven CI-owned certificate to the existing stale-certificate rotation list. Other active certificates H8KPLMRHQH and T987323A82 are untouched. Revoking the superseded CI certificate may invalidate its unsubmitted October 1 build 368488551301; the new signed build will replace it. The currently selected September build remains selected until the new upload is processed.
+## Signed binary and upload
 
-Version 1.0 is still Rejected at this checkpoint. No new signed release upload or resubmission has occurred. Manual release remains selected. Remaining work: validate the retry's signing/upload and Apple processing, select the new build, update obsolete review notes, and resubmit. A successful workflow/upload is not App Review approval.
+Release source: 022ce7d80f37a569b15e60c17051aefb5a4d3738. Release run [38827706269](https://github.com/sineusw/99-percent-impossible/actions/runs/38827706269) succeeded. Apple Distribution certificate PXZ7735A4A and its matching store profile passed strict deep signature and export verification. Fastlane confirmed upload on October 16 at 00:11:26 UTC. Version 1.0, build 388277062691, bundle com.pettygamesstudios.ninetynineimpossible, team FHGP486J8U.
 
+The downloaded exported IPA's index.html, ads.js, voice-payments.js, cast-runtime-v1.js, cosmetics.js, gameplay-input-fairness.js, and privacy.html exactly match verified source bytes. CapacitorApp.framework is embedded. IPA SHA-256: 166c3df4f041b685cc64b0da6a0f9f1f1f872e4e2fd0ddbfeecddbb32f1f4298.
 
-Signing retry run 38827334945 created certificate ZSZ95M9BQB and a matching profile, archived/exported successfully, and passed strict deep signature verification. The new certificate-extraction check then failed because its optional prefix argument needed the equals form (`--extract-certificates=PREFIX`). No IPA artifact or Apple upload occurred. The command was corrected, and that run's CI-only certificate was added to targeted rotation for the next fresh runner; unrelated certificates remain untouched.
+Earlier pre-upload attempts encountered a full distribution-certificate quota and a certificate-extraction argument error. Targeted rotation covered only certificates proven to belong to this repository's discarded temporary CI keys. Unrelated active certificates were untouched. The extraction argument was corrected before the successful run. Do not revoke PXZ7735A4A while this submission is pending.
+
+## App Store Connect resubmission
+
+Apple confirmed build processing Complete. Export compliance was saved as None of the algorithms mentioned above: the bundled app implements no custom encryption, using OS-provided HTTPS and randomness. The processed build became Ready to Submit.
+
+On October 16, build 388277062691 replaced old selected build 348825794361. Updated review notes describe current gameplay, neutral background cancellation, absence of native purchases/external checkout, retained entitlement tokens, current services, simulator verification, and genuine screenshots. Obsolete Stripe-offer and old-build claims were removed from the notes. Sign-in required remains unchecked. Existing private review recording was retained. The six current required iPhone screenshots and seven 13-inch iPad screenshots were rechecked before submission; the explicit large Face ID set and inherited sizes were previously audited.
+
+Update Review successfully placed the new build in Ready for Review. A response to Apple's Guideline 2.3.3 message explained the genuine screenshot replacements, corrected device assignments, current binary changes, and completed simulator testing. Resubmit to App Review was then executed. Fresh visible Apple evidence confirmed:
+
+- Submission: Waiting for Review.
+- Item: iOS App 1.0, build 388277062691, Waiting for Review.
+- Date Submitted: October 16, 2026 at 9:17 AM PDT.
+- Submission ID: 3ff5a2a3-4e7c-47ab-ae0a-3215970bf2fa.
+
+This confirms successful resubmission, not Apple approval or publication.
+
+## References and remaining actions
+
+- [PR #30](https://github.com/sineusw/99-percent-impossible/pull/30): existing production simulated-ad fix, reviewed, tested and merged.
+- [PR #31](https://github.com/sineusw/99-percent-impossible/pull/31): native remediation, test and signing verification changes, merged through #30.
+- Release commit: 022ce7d80f37a569b15e60c17051aefb5a4d3738.
+- Native verification: [run 38825706268](https://github.com/sineusw/99-percent-impossible/actions/runs/38825706268), fourteen checks passed across two simulators.
+- [App Store Connect submission](https://appstoreconnect.apple.com/apps/6809299092/distribution/reviewsubmissions/details/3ff5a2a3-4e7c-47ab-ae0a-3215970bf2fa).
+
+No account-holder action was blocking this free-app submission. Wait for Apple's decision and address any new feedback. After approval, the existing manual-release setting requires publishing the version. Future paid features need a complete Apple-compliant purchase/restore implementation and the relevant account agreements before being exposed. No new binary is needed for this report-only update.
