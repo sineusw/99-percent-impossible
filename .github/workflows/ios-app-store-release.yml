@@ -24,7 +24,9 @@ jobs:
     env:
       BUNDLE_ID: com.pettygamesstudios.ninetynineimpossible
       TEAM_ID: FHGP486J8U
-      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4
+      # 8LDD86ULMQ was generated in this repo's ephemeral keychain by run
+      # 36848855130 (2026-10-01); that job retained only its IPA, not the key.
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ
     steps:
       - name: Checkout
         uses: actions/checkout@v4
