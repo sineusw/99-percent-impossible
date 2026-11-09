@@ -146,8 +146,8 @@
   };
 
   const baseStopStop=stopStop;
-  stopStop=function(){
-    const result=baseStopStop();
+  stopStop=function(...args){
+    const result=baseStopStop(...args);
     if(result?.hit&&result.isPB)S('stop_bestD',result.distance);
     return result;
   };

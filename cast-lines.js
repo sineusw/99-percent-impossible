@@ -1,5 +1,12 @@
 /* 99% IMPOSSIBLE — Daisy + Mick phrase pools only. Mirrors Petty category names. */
-(function(root,factory){const x=factory();if(typeof module==='object'&&module.exports)module.exports=x;else root.N99CastLines=x})(typeof globalThis!=='undefined'?globalThis:this,function(){
+(function(root,factory){const x=factory();if(typeof module==='object'&&module.exports)module.exports=x;else{
+// Phrase edits can precede asset generation. Never request an unshipped hash.
+for(const character of ['daisy','mick']){
+ const available=new Set(root.N99CastAudioAvailable?.[character]||[]);
+ for(const category of Object.keys(x[character]))x[character][category]=x[character][category].filter(line=>available.has(line.id));
+}
+root.N99CastLines=x;
+}})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const line=(who,key,i,text)=>({id:`${who}_${key}_${String(i+1).padStart(2,'0')}`,text});
 const list=(who,key,a)=>a.map((text,i)=>line(who,key,i,text));

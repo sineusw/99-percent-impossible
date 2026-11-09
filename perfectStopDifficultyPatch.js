@@ -26,18 +26,26 @@
         ss=difficultyIndex(),w=Math.max(9,22-ss*1.6),x=12+Math.random()*(76-w);
     tg.style.left=x+'%';tg.style.width=w+'%';sl.textContent='TAP STOP WHEN WHITE HITS GREEN';
     st.pos=1;st.dir=1;m.style.left='1%';
-    let last=performance.now(),speed=62+ss*8;
+    const startedAt=performance.now(),speed=62+ss*8;
+    // Rendering and scoring share one reflected trajectory. A queued press can
+    // predate the latest frame, so integrating from that frame is insufficient.
+    st.stopPositionAt=at=>{
+      const phase=(Math.max(0,at-startedAt)*speed/1000)%194;
+      return phase<=97?1+phase:195-phase;
+    };
     let loop=now=>{
-      let dt=Math.min((now-last)/1000,.05);last=now;st.pos+=st.dir*speed*dt;
-      if(st.pos>=98)st.pos=98,st.dir=-1;
-      if(st.pos<=1)st.pos=1,st.dir=1;
+      st.pos=st.stopPositionAt(now);
       m.style.left=st.pos+'%';st.raf=requestAnimationFrame(loop)
     };
     st.tgt={x,w};st.raf=requestAnimationFrame(loop)
   };
 
-  stopStop=function(){
-    if(!st.tgt)return;
+  stopStop=function(pressTime){
+    if(!st.run||st.locked||!st.tgt)return;
+    if(Number.isFinite(pressTime)&&st.stopPositionAt){
+      st.pos=st.stopPositionAt(pressTime);
+      play.querySelector('.marker').style.left=st.pos+'%';
+    }
     cancelAnimationFrame(st.raf);untick();st.run=0;
     let c=st.tgt.x+st.tgt.w/2,d=Math.abs(st.pos-c),sc=Math.max(0,100-d/50*100),
         visibleSc=Math.round((sc+Number.EPSILON)*10)/10,

@@ -20,6 +20,7 @@
     e.preventDefault();e.stopPropagation();
     const enabled=!on();localStorage.setItem(KEY,enabled?'1':'0');
     if(enabled){
+      try{window.N99SFX?.prime?.()}catch{}
       const cast=window.N99Character?.get?.()||'petty';
       if(cast==='daisy'||cast==='mick'){
         try{window.N99CastStaticAudio?.unlock?.(cast)}catch{}
@@ -30,6 +31,7 @@
       }
     }else{
       try{window.speechSynthesis?.cancel?.()}catch{}
+      try{window.N99SFX?.stop?.()}catch{}
     }
     sync();
   });
