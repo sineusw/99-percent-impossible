@@ -11,9 +11,12 @@
   let protectedInterrupt=false;
   let guardTimer=0;
 
-  const interruptTexts=()=>new Set(
-    (window.PettyPersonality?.pools?.interrupt||[]).map(x=>String(x?.text||''))
-  );
+  const interruptTexts=()=>{
+    const character=window.N99Character?.get?.()||'petty';
+    const lines=character==='petty'?window.PettyPersonality?.pools?.interrupt:
+      window.N99CastLines?.[character]?.interrupt;
+    return new Set((lines||[]).map(x=>String(x?.text||'')));
+  };
 
   function clearProtection(){
     protectedInterrupt=false;
@@ -45,6 +48,10 @@
   };
 
   synth.cancel=function(){
+    if(localStorage.getItem('n99_petty_voice')==='0'){
+      clearProtection();
+      return baseCancel();
+    }
     // Only an ad may cancel Petty once he has started complaining about
     // being interrupted. Player taps/normal result speech are ignored.
     if(protectedInterrupt&&!window.__PETTY_AD_BANTER_LOCK)return;
