@@ -4,6 +4,10 @@ name: iOS Simulator Screenshots
 on:
   workflow_dispatch:
     inputs:
+      configure_apple_products:
+        description: 'Prepare only the six authorized non-consumable products; no submission or legal acceptance'
+        type: boolean
+        default: false
       inspect_apple_only:
         description: 'Read existing Apple app and product metadata without building or changing the account'
         type: boolean
@@ -18,13 +22,25 @@ on:
       - package.json
 
 concurrency:
-  group: ios-simulator-screenshots-${{ github.ref }}-${{ inputs.inspect_apple_only && 'inspect' || 'capture' }}
+  group: ios-simulator-screenshots-${{ github.ref }}-${{ (inputs.inspect_apple_only || inputs.configure_apple_products) && 'catalog' || 'capture' }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  configure-apple-products:
+    if: github.event_name == 'workflow_dispatch' && inputs.configure_apple_products == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare the six authorized Apple products
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+        run: python3 scripts/configure-apple-products.py
   inspect-apple:
     if: github.event_name == 'workflow_dispatch' && inputs.inspect_apple_only == true
     runs-on: ubuntu-latest
@@ -38,7 +54,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
         run: python3 scripts/inspect-apple-products.py
   capture:
-    if: inputs.inspect_apple_only != true
+    if: inputs.inspect_apple_only != true && inputs.configure_apple_products != true
     runs-on: macos-26
     timeout-minutes: 30
     strategy:
