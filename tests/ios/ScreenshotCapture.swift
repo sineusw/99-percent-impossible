@@ -1,11 +1,17 @@
 import XCTest
+import StoreKitTest
 
 final class ScreenshotCapture: XCTestCase {
     let app = XCUIApplication(bundleIdentifier: "com.pettygamesstudios.ninetynineimpossible")
 
+    private var store: SKTestSession!
+
     override func setUpWithError() throws {
         continueAfterFailure = false
         app.terminate()
+        store = try SKTestSession(configurationFileNamed: "Monetization")
+        store.disableDialogs = true
+        store.clearTransactions()
         app.launch()
         // HTML accessibility can appear before the unbundled scripts finish.
         // The cast picker is installed after the core game's event handlers.
@@ -118,6 +124,58 @@ final class ScreenshotCapture: XCTestCase {
         XCTAssertTrue(visibleButton("PETTY").isEnabled)
         // Paid catalog availability requires Apple sandbox/device verification;
         // the DOM suite separately checks purchase gating and all six mappings.
+    }
+
+    func voiceOwned(_ voice: String) -> XCUIElement {
+        return app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@ AND label CONTAINS[c] 'OWNED'", voice)).firstMatch
+    }
+
+    func testAppleVoicePurchasesAndRestore() {
+        press("Change game voice")
+        _ = visibleButton("DAISY")
+        _ = visibleButton("MICK")
+        capture("10-native-voice-products")
+        press("DAISY")
+        press("Change game voice")
+        XCTAssertTrue(voiceOwned("DAISY").waitForExistence(timeout: 20))
+        press("MICK")
+        press("Change game voice")
+        XCTAssertTrue(voiceOwned("MICK").waitForExistence(timeout: 20))
+        press("PETTY")
+        // A fresh JS process must recover ownership from StoreKit, without web tokens.
+        app.terminate(); app.launch()
+        press("Change game voice")
+        XCTAssertTrue(voiceOwned("DAISY").waitForExistence(timeout: 20))
+        XCTAssertTrue(voiceOwned("MICK").waitForExistence(timeout: 20))
+        press("PETTY")
+        press("Change color palette")
+        press("RESTORE APPLE PURCHASES")
+        let restored = app.alerts.staticTexts["Apple purchases restored."]
+        XCTAssertTrue(restored.waitForExistence(timeout: 20))
+        app.alerts.buttons["OK"].tap()
+    }
+
+    func testAppleIndividualPalettePurchases() {
+        press("Change color palette")
+        _ = visibleButton("Buy CYBERPUNK")
+        _ = visibleButton("Buy GOLD ONLY")
+        _ = visibleButton("Buy SYNTHWAVE")
+        capture("11-native-palette-products")
+        for name in ["CYBERPUNK", "GOLD ONLY", "SYNTHWAVE"] {
+            press("Buy " + name)
+            press("Use " + name)
+            XCTAssertTrue(visibleButton(name + " ACTIVE").isEnabled)
+        }
+    }
+
+    func testAppleRagePassUnlocksAllPalettes() {
+        press("Change color palette")
+        press("Buy RAGE PASS")
+        _ = visibleButton("RAGE PASS OWNED")
+        for name in ["CYBERPUNK", "GOLD ONLY", "SYNTHWAVE"] {
+            press("Use " + name)
+            XCTAssertTrue(visibleButton(name + " ACTIVE").isEnabled)
+        }
     }
 
 }

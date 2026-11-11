@@ -8,6 +8,8 @@ tests = project.new_target(:ui_test_bundle, 'ScreenshotCapture', :ios, '15.0')
 tests.add_dependency(app)
 source = project.main_group.new_file('../../tests/ios/ScreenshotCapture.swift')
 tests.source_build_phase.add_file_reference(source)
+storekit = project.main_group.new_file('../../tests/ios/Monetization.storekit')
+tests.resources_build_phase.add_file_reference(storekit)
 tests.build_configurations.each do |config|
   config.build_settings['PRODUCT_NAME'] = 'ScreenshotCapture'
   config.build_settings['PRODUCT_MODULE_NAME'] = 'ScreenshotCapture'
