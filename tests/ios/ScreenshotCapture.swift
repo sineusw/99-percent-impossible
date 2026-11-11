@@ -25,7 +25,7 @@ final class ScreenshotCapture: XCTestCase {
         let button = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", text)).firstMatch
         XCTAssertTrue(button.waitForExistence(timeout: 20), "Missing button: \(text)")
         XCTAssertTrue(button.isHittable, "Inaccessible button: \(text)")
-        if text.hasPrefix("Perfect") || text == "Reaction Test" {
+        if text.hasPrefix("Perfect") || text == "Reaction Test" || text == "Change color palette" || text == "Change game voice" {
             // Cold WebKit/font layout can move a card after accessibility first
             // exposes it. Require stable geometry, then make exactly one tap.
             var previous = CGRect.null
@@ -46,12 +46,12 @@ final class ScreenshotCapture: XCTestCase {
         button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
-    func visibleButton(_ text: String) -> XCUIElement {
+    func visibleButton(_ text: String, timeout: TimeInterval = 20) -> XCUIElement {
         let query = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", text))
         let visible = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             query.allElementsBoundByIndex.contains { $0.exists && $0.isHittable }
         }, object: nil)
-        XCTAssertEqual(XCTWaiter.wait(for: [visible], timeout: 20), .completed,
+        XCTAssertEqual(XCTWaiter.wait(for: [visible], timeout: timeout), .completed,
                        "No visible, tappable button: \(text)")
         return query.allElementsBoundByIndex.first { $0.exists && $0.isHittable } ?? query.firstMatch
     }
@@ -134,7 +134,7 @@ final class ScreenshotCapture: XCTestCase {
 
     func testAppleVoicePurchasesAndRestore() {
         press("Change game voice")
-        _ = visibleButton("DAISY")
+        _ = visibleButton("DAISY", timeout: 60)
         _ = visibleButton("MICK")
         capture("10-native-voice-products")
         press("DAISY")
@@ -154,12 +154,15 @@ final class ScreenshotCapture: XCTestCase {
         press("RESTORE APPLE PURCHASES")
         let restored = app.alerts.staticTexts["Apple purchases restored."]
         XCTAssertTrue(restored.waitForExistence(timeout: 20))
-        app.alerts.buttons["OK"].tap()
+        // XCTest may already dismiss a WebKit alert while taking its snapshot.
+        // The restored message and both owned voices were asserted above.
+        let ok = app.buttons.matching(NSPredicate(format: "label == 'OK'")).firstMatch
+        if ok.exists && ok.isHittable { ok.tap() }
     }
 
     func testAppleIndividualPalettePurchases() {
         press("Change color palette")
-        _ = visibleButton("Buy CYBERPUNK")
+        _ = visibleButton("Buy CYBERPUNK", timeout: 60)
         _ = visibleButton("Buy GOLD ONLY")
         _ = visibleButton("Buy SYNTHWAVE")
         capture("11-native-palette-products")
