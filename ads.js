@@ -2,7 +2,7 @@
    v0.10.5: preserve atomic retry/ad boundary; only voice routing is cast-aware.
    Daisy/Mick use verified generated ad assets for launch reliability. */
 (()=>{
-const AK=n=>'n99_ads_'+n,CK=n=>'n99_cos_'+n,hasPass=()=>localStorage.getItem(CK('ragepass'))==='1';
+const AK=n=>'n99_ads_'+n,hasPass=()=>!!window.N99Entitlements?.isOwned?.('ragepass');
 const QS=new URLSearchParams(location.search),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1'||!AD_TEST;
 let adOpen=false,adBoundaryClaimed=false,adOpened=false,pending=false,boundaryLocked=false,deferredRetry=null,boundaryFinished=false;
 let adFailsafeTimer=0,preAdTimer=0,lastAdAttempt=+(localStorage.getItem(AK('lastAttempt'))||0);
