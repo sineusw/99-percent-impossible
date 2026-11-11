@@ -12,7 +12,9 @@ function canUse(c){
 let stored=localStorage.getItem(KEY)||'petty';
 if(!chars.includes(stored))stored='petty';
 let current=canUse(stored)?stored:'petty';
-if(current!==stored)localStorage.setItem(KEY,current);
+// Preserve the requested premium voice until signed entitlements finish loading.
+// Otherwise an async verification turns a previously purchased voice into Petty.
+if(current!==stored && !premium.has(stored))localStorage.setItem(KEY,current);
 
 window.N99Character={
   get:()=>current,
