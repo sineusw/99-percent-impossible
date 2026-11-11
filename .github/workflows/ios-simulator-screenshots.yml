@@ -4,6 +4,22 @@ name: iOS Simulator Screenshots
 on:
   workflow_dispatch:
     inputs:
+      upload_iap_screenshots:
+        description: 'Upload only visually reviewed native IAP screenshots with exact hashes'
+        type: boolean
+        default: false
+      screenshots_run_id:
+        description: 'Exact successful iPhone capture run'
+        type: string
+        default: ''
+      review_voice_sha256:
+        description: 'SHA256 of the visually reviewed voice capture'
+        type: string
+        default: ''
+      review_palette_sha256:
+        description: 'SHA256 of the visually reviewed palette capture'
+        type: string
+        default: ''
       prepare_testflight_only:
         description: 'Prepare one uploaded test build for external beta review; never publish the app'
         type: boolean
@@ -30,13 +46,36 @@ on:
       - package.json
 
 concurrency:
-  group: ios-simulator-screenshots-${{ github.ref }}-${{ (inputs.inspect_apple_only || inputs.configure_apple_products || inputs.prepare_testflight_only) && 'catalog' || 'capture' }}
+  group: ios-simulator-screenshots-${{ github.ref }}-${{ (inputs.inspect_apple_only || inputs.configure_apple_products || inputs.prepare_testflight_only || inputs.upload_iap_screenshots) && 'catalog' || 'capture' }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  upload-iap-screenshots:
+    if: github.event_name == 'workflow_dispatch' && inputs.upload_iap_screenshots == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-simulator-iphone
+          run-id: ${{ inputs.screenshots_run_id }}
+          github-token: ${{ github.token }}
+          path: work/review-captures
+      - name: Upload exact visually reviewed images to existing Apple products
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+          REVIEW_VOICE_SHA256: ${{ inputs.review_voice_sha256 }}
+          REVIEW_PALETTE_SHA256: ${{ inputs.review_palette_sha256 }}
+        run: python3 scripts/upload-apple-review-screenshots.py
   prepare-testflight:
     if: github.event_name == 'workflow_dispatch' && inputs.prepare_testflight_only == true
     runs-on: ubuntu-latest
@@ -75,7 +114,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
         run: python3 scripts/inspect-apple-products.py
   capture:
-    if: inputs.inspect_apple_only != true && inputs.configure_apple_products != true && inputs.prepare_testflight_only != true
+    if: inputs.inspect_apple_only != true && inputs.configure_apple_products != true && inputs.prepare_testflight_only != true && inputs.upload_iap_screenshots != true
     runs-on: macos-26
     timeout-minutes: 30
     strategy:
