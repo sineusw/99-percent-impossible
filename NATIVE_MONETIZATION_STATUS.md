@@ -41,3 +41,5 @@ A local Capacitor StoreKit 2 plugin verifies transactions/current entitlements, 
 - TestFlight-only upload support uses marketing version 1.0.1 and does not submit to App Review or notify testers. No signed candidate has yet been uploaded by this work.
 - No physical iPhone ad, audio, purchase, reinstall restoration, or gameplay result is claimed. No direct TestFlight link exists yet.
 - No main merge, production app release, legal agreement acceptance, or production IAP submission has occurred. The main workflow still automatically uploads matching changes; do not merge an unfinished candidate.
+
+TestFlight upload attempt 42945563842 stopped at the distribution certificate quota before archiving/uploading. Existing certificates H8KPLMRHQH and T987323A82 were not touched. PXZ7735A4A is proven by the October release record and workflow to belong to this repository's discarded temporary keychain; its app is now READY_FOR_SALE rather than awaiting review. Targeted rotation of that stale CI certificate is authorized by the user's instruction to complete the fixes. No unknown developer certificate is selected for revocation.

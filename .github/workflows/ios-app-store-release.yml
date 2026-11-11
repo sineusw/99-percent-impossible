@@ -39,7 +39,10 @@ jobs:
       # 36848855130 (2026-10-01); that job retained only its IPA, not the key.
       # ZSZ95M9BQB belongs to failed pre-upload run 38827334945; its
       # temporary private key was also discarded when that runner ended.
-      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB
+      # PXZ7735A4A signed published build 388277062691 in this repo's
+      # discarded CI keychain. The app is now READY_FOR_SALE (API verified);
+      # its old submission is no longer pending and its private key was not retained.
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A
     steps:
       - name: Checkout
         uses: actions/checkout@v4
