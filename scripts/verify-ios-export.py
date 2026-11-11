@@ -14,7 +14,7 @@ with profile_path.open('rb') as f:
 bundle = os.environ['BUNDLE_ID']
 team = os.environ['TEAM_ID']
 assert info['CFBundleIdentifier'] == bundle, 'Exported bundle identifier mismatch'
-assert info['CFBundleShortVersionString'] == '1.0', 'Exported version mismatch'
+assert info['CFBundleShortVersionString'] == os.environ.get('RELEASE_VERSION', '1.0'), 'Exported version mismatch'
 assert info['CFBundleVersion'] == os.environ['GITHUB_RUN_ID'] + os.environ['GITHUB_RUN_ATTEMPT'], 'Build number mismatch'
 assert team in profile['TeamIdentifier'], 'Provisioning team mismatch'
 assert profile['Entitlements']['application-identifier'] == team + '.' + bundle, 'Profile application identifier mismatch'
