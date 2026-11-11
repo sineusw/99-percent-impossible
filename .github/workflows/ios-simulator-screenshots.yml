@@ -18,7 +18,7 @@ on:
       - package.json
 
 concurrency:
-  group: ios-simulator-screenshots-${{ github.ref }}
+  group: ios-simulator-screenshots-${{ github.ref }}-${{ inputs.inspect_apple_only && 'inspect' || 'capture' }}
   cancel-in-progress: true
 
 permissions:
