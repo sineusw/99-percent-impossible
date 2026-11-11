@@ -8,10 +8,10 @@
     "ios:prepare": "npm run stage:web && node scripts/prepare-ios.mjs"
   },
   "dependencies": {
+    "@capacitor-community/admob": "7.2.0",
     "@capacitor/app": "7.1.2",
     "@capacitor/core": "^7.4.3",
     "@capacitor/ios": "^7.4.3",
-    "@capacitor-community/admob": "7.0.0",
     "@n99/storekit": "file:native/storekit"
   },
   "devDependencies": {
