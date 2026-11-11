@@ -1,6 +1,7 @@
 import Capacitor
 import StoreKit
 
+@available(iOS 15.0, *)
 @objc(N99StoreKitPlugin)
 public class N99StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "N99StoreKitPlugin"

@@ -7,7 +7,8 @@ Pod::Spec.new do |s|
   s.author = 'Petty Games Studios'
   s.source = { :git => 'https://github.com/sineusw/99-percent-impossible.git', :tag => s.version.to_s }
   s.source_files = 'ios/Plugin/**/*.{swift,h,m}'
-  s.ios.deployment_target = '15.0'
+  # Capacitor generates iOS 14 before project configuration raises the app to 15.
+  s.ios.deployment_target = '14.0'
   s.dependency 'Capacitor'
   s.swift_version = '5.1'
 end
