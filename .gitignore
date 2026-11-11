@@ -4,4 +4,4 @@ dist/
 .env*
 
 # Generated native project; sources and build configuration are versioned separately.
-ios/
+/ios/
