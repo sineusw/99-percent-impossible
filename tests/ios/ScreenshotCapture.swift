@@ -17,6 +17,22 @@ final class ScreenshotCapture: XCTestCase {
         let button = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", text)).firstMatch
         XCTAssertTrue(button.waitForExistence(timeout: 20), "Missing button: \(text)")
         XCTAssertTrue(button.isHittable, "Inaccessible button: \(text)")
+        if text.hasPrefix("Perfect") || text == "Reaction Test" {
+            // Cold WebKit/font layout can move a card after accessibility first
+            // exposes it. Require stable geometry, then make exactly one tap.
+            var previous = CGRect.null
+            var stableSince = Date()
+            let stable = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                let frame = button.frame
+                guard button.exists && button.isHittable && !frame.isEmpty else {
+                    stableSince = Date(); return false
+                }
+                if frame != previous { previous = frame; stableSince = Date(); return false }
+                return Date().timeIntervalSince(stableSince) >= 1.0
+            }, object: nil)
+            XCTAssertEqual(XCTWaiter.wait(for: [stable], timeout: 20), .completed,
+                           "Menu card layout did not stabilize: \(text)")
+        }
         // Use the physical center: WebKit's suggested accessibility hit point
         // can be stale on the first interaction after a cold simulator launch.
         button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
@@ -82,7 +98,9 @@ final class ScreenshotCapture: XCTestCase {
     }
 
     func testBackgroundResume() {
+        capture("08-background-before-menu-tap")
         press("Perfect Timer")
+        capture("09-background-after-menu-tap")
         press("START")
         XCUIDevice.shared.press(.home)
         app.activate()

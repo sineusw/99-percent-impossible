@@ -29,3 +29,7 @@ Populate `appleProducts` with exactly the existing logical keys `daisy`, `mick`,
 ## Native build follow-up
 
 Mac simulator run 42934474366 reached compilation and found the AdMob 7.0.0 consent API incompatible with the resolved Google UMP framework. Upgraded within Capacitor 7 to AdMob 7.2.0, which uses the renamed consent APIs and pins Google Mobile Ads 12.12.0 / UMP 3.0.0. All 121 automated checks still pass. A new Mac build is required; no successful native compilation is claimed.
+
+Mac run 42940014677 at 33667be successfully compiled the native app and both plugins. All seven iPad UI tests and six iPhone UI tests passed. The iPhone background/resume test failed before starting gameplay: the first cold-launch menu tap left the home screen visible. Artifact accessibility data confirms the home menu remained present, so this was not a demonstrated background/resume failure. The harness now waits for menu-card geometry to stabilize, still uses exactly one tap, and captures before/after evidence. The next run must establish whether this resolves a layout timing issue. Physical-device behavior remains unverified.
+
+AdMob publisher verification was recovered from the user's screenshot. The website-only app-ads.txt patch at 0a1e102 was published with explicit user approval and verified at the App Store-listed developer domain. It contains publisher pub-3321938987480073. This is a publisher ID, not the AdMob app ID or an ad unit. Account-side verification and recovery of those remaining identifiers still require authenticated account access.
