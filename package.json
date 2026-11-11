@@ -3,14 +3,15 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "stage:web": "bash scripts/stage-web.sh",
+    "test": "npm test --prefix tests && node scripts/check-cast-audio.mjs",
+    "stage:web": "node scripts/check-cast-audio.mjs && bash scripts/stage-web.sh",
     "ios:prepare": "npm run stage:web && npx cap add ios && npx cap sync ios"
   },
   "dependencies": {
     "@capacitor/app": "7.1.2",
     "@capacitor/core": "^7.4.3",
     "@capacitor/ios": "^7.4.3",
-    "@capacitor-community/admob": "^7.0.0"
+    "@capacitor-community/admob": "7.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.3"
