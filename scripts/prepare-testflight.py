@@ -97,7 +97,7 @@ def main():
     if group is None:
         group = api('/v1/betaGroups', {'data': {'type': 'betaGroups',
             'attributes': {'name': GROUP, 'isInternalGroup': False, 'publicLinkEnabled': False,
-                'publicLinkLimitEnabled': True, 'publicLinkLimit': 10, 'hasAccessToAllBuilds': False},
+                'hasAccessToAllBuilds': False},
             'relationships': {'app': rel('apps', APP)}}})['data']
     detail = api('/v1/builds/' + identifier + '/buildBetaDetail')['data']
     api('/v1/buildBetaDetails/' + detail['id'], {'data': {'type': 'buildBetaDetails', 'id': detail['id'],
@@ -114,7 +114,7 @@ def main():
             api('/v1/betaGroups/' + group['id'] + '/relationships/builds',
                 {'data': [{'type': 'builds', 'id': identifier}]}, 'POST')
         group = api('/v1/betaGroups/' + group['id'], {'data': {'type': 'betaGroups', 'id': group['id'],
-            'attributes': {'publicLinkEnabled': True}}}, 'PATCH')['data']
+            'attributes': {'publicLinkEnabled': True, 'publicLinkLimitEnabled': True, 'publicLinkLimit': 10}}}, 'PATCH')['data']
         print(json.dumps({'testFlightLink': group['attributes'].get('publicLink'), 'buildNumber': number}), flush=True)
     else:
         print(json.dumps({'buildNumber': number, 'externalBetaState': state,
