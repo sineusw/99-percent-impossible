@@ -3,7 +3,7 @@
    Daisy/Mick use verified generated ad assets for launch reliability. */
 (()=>{
 const AK=n=>'n99_ads_'+n,hasPass=()=>!!window.N99Entitlements?.isOwned?.('ragepass');
-const QS=new URLSearchParams(location.search),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1'||!AD_TEST;
+const QS=new URLSearchParams(location.search),NATIVE=!!window.Capacitor?.isNativePlatform?.(),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1'||(!NATIVE&&!AD_TEST);
 let adOpen=false,adBoundaryClaimed=false,adOpened=false,pending=false,boundaryLocked=false,deferredRetry=null,boundaryFinished=false;
 let adFailsafeTimer=0,preAdTimer=0,lastAdAttempt=+(localStorage.getItem(AK('lastAttempt'))||0);
 const PRE_AD_PAUSE=AD_TEST?350:850,SIM_AD_SECONDS=5,HARD_CAP=7,AD_FAILSAFE_MS=4000;
@@ -28,9 +28,26 @@ function lockControls(locked){for(const id of ['retry','close']){const el=docume
 function buildOverlay(){let overlay=document.querySelector('#n99-ad-overlay');if(overlay)return overlay;overlay=document.createElement('div');overlay.id='n99-ad-overlay';overlay.style.cssText='position:fixed;inset:0;background:#000;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:Chakra Petch,system-ui,sans-serif;text-align:center;padding:24px;touch-action:none;user-select:none;-webkit-user-select:none';overlay.innerHTML='<div style="font-size:12px;letter-spacing:2px;color:#9c9ca8;margin-bottom:10px">AD BREAK</div><div id="adTitle" style="font-family:Teko,Arial Black,sans-serif;font-size:28px;margin-bottom:18px">'+castName()+' HAS A WORD…</div><div id="adSub" style="font-size:11px;color:#7a7a86;max-width:280px">Next round is paused safely.</div>';document.body.appendChild(overlay);return overlay}
 function finishAdBoundary(overlay){if(boundaryFinished)return;boundaryFinished=true;clearAdTimers();overlay?.remove?.();adOpen=false;adBoundaryClaimed=false;adOpened=false;boundaryLocked=false;const retry=deferredRetry;deferredRetry=null;try{retry?.()}finally{lockControls(false);window.__PETTY_AD_BANTER_LOCK=false}}
 const finishCurrentBoundary=()=>finishAdBoundary(document.querySelector('#n99-ad-overlay'));
+async function showNativeAd(overlay){
+  const sdk=window.Capacitor?.Plugins?.AdMob;
+  if(!sdk){finishAdBoundary(overlay);return}
+  let finished=false;const listeners=[];
+  const done=()=>{if(finished)return;finished=true;listeners.forEach(h=>h?.remove?.());finishAdBoundary(overlay)};
+  try{
+    const events=['interstitialAdDismissed','interstitialAdFailedToShow'];
+    for(const event of events)listeners.push(await sdk.addListener(event,done));
+    await sdk.initialize({initializeForTesting:true});
+    // Google's official iOS interstitial TEST unit; never substitute a production unit in test builds.
+    await sdk.prepareInterstitial({adId:'ca-app-pub-3940256099942544/4411468910',isTesting:true});
+    adOpened=true;
+    overlay.remove();
+    await sdk.showInterstitial();
+    setTimeout(done,120000);
+  }catch(err){console.warn('[N99 ADS] Native test ad unavailable',err);done()}
+}
 function runPlaceholderAd(overlay){if(adOpened)return;adOpened=true;if(adFailsafeTimer){clearTimeout(adFailsafeTimer);adFailsafeTimer=0}const title=overlay.querySelector('#adTitle'),sub=overlay.querySelector('#adSub');if(title)title.innerHTML='SIMULATED AD — <span id="adCount">'+SIM_AD_SECONDS+'</span>s';if(sub)sub.textContent='Placeholder for the real mobile ad.';let n=SIM_AD_SECONDS;const t=setInterval(()=>{n--;const el=overlay.querySelector('#adCount');if(el)el.textContent=n;if(n<=0){clearInterval(t);if(title)title.innerHTML='AD COMPLETE';if(sub)sub.innerHTML='<span style="display:inline-block;margin-top:8px;font-size:14px;color:#fff;font-weight:800;letter-spacing:1px">TAP TO CONTINUE</span>';overlay.style.cursor='pointer';const finish=e=>{e.preventDefault();overlay.removeEventListener('pointerup',finish);primeGameAudio();if(title)title.innerHTML=castName()+' HAS ONE MORE THING TO SAY…';if(sub)sub.textContent='';afterAd(()=>{primeGameAudio();finishAdBoundary(overlay)})};overlay.addEventListener('pointerup',finish,{once:true})}},1000)}
-function forceOpenOrFinish(){if(!adBoundaryClaimed||adOpened)return;const overlay=buildOverlay();if(document.visibilityState==='hidden'){pending=true;finishAdBoundary(overlay);return}runPlaceholderAd(overlay)}
-function claimAdBoundary(retryAction=null){if(adBoundaryClaimed||adOpen||boundaryLocked)return false;pending=false;boundaryLocked=true;boundaryFinished=false;deferredRetry=retryAction;adBoundaryClaimed=true;adOpen=true;adOpened=false;lastAdAttempt=currentAttempt();localStorage.setItem(AK('lastAttempt'),String(lastAdAttempt));lockControls(true);window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}const overlay=buildOverlay();beforeAd();adFailsafeTimer=setTimeout(()=>{adFailsafeTimer=0;if(adBoundaryClaimed&&!adOpened)finishAdBoundary(overlay)},AD_FAILSAFE_MS);preAdTimer=setTimeout(()=>{preAdTimer=0;if(!adBoundaryClaimed||adOpened)return;if(document.visibilityState==='hidden'){pending=true;finishAdBoundary(overlay);return}runPlaceholderAd(overlay)},PRE_AD_PAUSE);return true}
+function forceOpenOrFinish(){if(!adBoundaryClaimed||adOpened)return;const overlay=buildOverlay();if(document.visibilityState==='hidden'){pending=true;finishAdBoundary(overlay);return}(NATIVE?showNativeAd(overlay):runPlaceholderAd(overlay))}
+function claimAdBoundary(retryAction=null){if(adBoundaryClaimed||adOpen||boundaryLocked)return false;pending=false;boundaryLocked=true;boundaryFinished=false;deferredRetry=retryAction;adBoundaryClaimed=true;adOpen=true;adOpened=false;lastAdAttempt=currentAttempt();localStorage.setItem(AK('lastAttempt'),String(lastAdAttempt));lockControls(true);window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}const overlay=buildOverlay();beforeAd();adFailsafeTimer=setTimeout(()=>{adFailsafeTimer=0;if(adBoundaryClaimed&&!adOpened)finishAdBoundary(overlay)},AD_FAILSAFE_MS);preAdTimer=setTimeout(()=>{preAdTimer=0;if(!adBoundaryClaimed||adOpened)return;if(document.visibilityState==='hidden'){pending=true;finishAdBoundary(overlay);return}(NATIVE?showNativeAd(overlay):runPlaceholderAd(overlay))},PRE_AD_PAUSE);return true}
 function retryEligibleNow(){updateDue();if(!pending||NO_ADS||adOpen||adBoundaryClaimed||boundaryLocked)return false;if(hasPass()&&!AD_TEST){pending=false;return false}const now=currentAttempt(),gap=now-lastAdAttempt;if(!AD_TEST&&streak()>=2&&gap<HARD_CAP)return false;return true}
 function tryOpenPendingAd(){updateDue();if(!pending||adOpen||adBoundaryClaimed||boundaryLocked)return false;if(hasPass()&&!AD_TEST){pending=false;return false}const now=currentAttempt(),gap=now-lastAdAttempt;if(!AD_TEST&&streak()>=2&&gap<HARD_CAP)return false;if(!safeBoundary())return false;return claimAdBoundary(null)}
 const tot=document.querySelector('#tot');if(tot)new MutationObserver(updateDue).observe(tot,{childList:true,characterData:true,subtree:true});
