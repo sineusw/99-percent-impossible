@@ -166,6 +166,9 @@ jobs:
             -workspace ios/App/App.xcworkspace \
             -scheme ScreenshotCapture \
             -configuration Debug \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 90 \
+            -maximum-test-execution-time-allowance 120 \
             -destination "platform=iOS Simulator,id=$CAPTURE_DEVICE_ID" \
             -resultBundlePath "$RUNNER_TEMP/screenshots.xcresult" \
             CODE_SIGNING_ALLOWED=NO

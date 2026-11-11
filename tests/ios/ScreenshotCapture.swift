@@ -9,9 +9,11 @@ final class ScreenshotCapture: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app.terminate()
-        store = try SKTestSession(configurationFileNamed: "Monetization")
-        store.disableDialogs = true
-        store.clearTransactions()
+        if name.contains("testApple") {
+            store = try SKTestSession(configurationFileNamed: "Monetization")
+            store.disableDialogs = true
+            store.clearTransactions()
+        }
         app.launch()
         // HTML accessibility can appear before the unbundled scripts finish.
         // The cast picker is installed after the core game's event handlers.
