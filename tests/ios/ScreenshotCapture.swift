@@ -107,18 +107,17 @@ final class ScreenshotCapture: XCTestCase {
         XCTAssertTrue(visibleButton("START").isEnabled)
     }
 
-    func testNativePaletteOffers() {
+    func testNativeAppleRestoreControl() {
         press("Change color palette")
-        let paidButtons = app.buttons.matching(NSPredicate(format: "label CONTAINS '$'"))
-        XCTAssertFalse(paidButtons.allElementsBoundByIndex.contains { $0.isHittable })
+        XCTAssertTrue(visibleButton("RESTORE APPLE PURCHASES").isEnabled)
         XCTAssertTrue(visibleButton("ACTIVE").isEnabled)
     }
 
-    func testNativeVoiceOffers() {
+    func testNativeVoiceSelection() {
         press("Change game voice")
-        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'DAISY'")).firstMatch.exists)
-        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'MICK'")).firstMatch.exists)
         XCTAssertTrue(visibleButton("PETTY").isEnabled)
+        // Paid catalog availability requires Apple sandbox/device verification;
+        // the DOM suite separately checks purchase gating and all six mappings.
     }
 
 }

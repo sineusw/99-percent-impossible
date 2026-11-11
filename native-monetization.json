@@ -2,5 +2,12 @@
   "admobIosAppId": null,
   "interstitialAdUnitId": null,
   "rewardedAdUnitId": null,
-  "appleProducts": {}
+  "appleProducts": {
+    "daisy": "com.pettygamesstudios.ninetynineimpossible.daisy",
+    "mick": "com.pettygamesstudios.ninetynineimpossible.mick",
+    "cyberpunk": "com.pettygamesstudios.ninetynineimpossible.cyberpunk",
+    "goldonly": "com.pettygamesstudios.ninetynineimpossible.goldonly",
+    "synthwave": "com.pettygamesstudios.ninetynineimpossible.synthwave",
+    "ragepass": "com.pettygamesstudios.ninetynineimpossible.ragepass"
+  }
 }

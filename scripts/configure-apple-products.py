@@ -61,6 +61,12 @@ def main():
     app = api('/v1/apps/' + APP)['data']
     if app['attributes']['bundleId'] != BUNDLE:
         raise ValueError('Existing app bundle mismatch')
+    app_availability = api('/v1/apps/' + APP + '/appAvailabilityV2')['data']
+    territory_rows = rows('/v2/appAvailabilities/' + app_availability['id'] + '/territoryAvailabilities?include=territory&limit=200')
+    territories = [row['relationships']['territory']['data'] for row in territory_rows
+                   if row['attributes'].get('available')]
+    if not territories:
+        raise ValueError('Existing app has no available territories to mirror')
     existing = rows('/v1/apps/' + APP + '/inAppPurchasesV2?limit=200')
     by_product = {p['attributes']['productId']: p for p in existing}
     configured = {}
@@ -98,6 +104,12 @@ def main():
                     'attributes': {'startDate': None, 'endDate': None},
                     'relationships': {'inAppPurchaseV2': rel('inAppPurchases', identifier),
                         'inAppPurchasePricePoint': rel('inAppPurchasePricePoints', point['id'])}}]})
+        availability = api('/v2/inAppPurchases/' + identifier + '/inAppPurchaseAvailability', allow_missing=True)
+        if not availability or not availability.get('data'):
+            api('/v1/inAppPurchaseAvailabilities', {'data': {'type': 'inAppPurchaseAvailabilities',
+                'attributes': {'availableInNewTerritories': app_availability['attributes']['availableInNewTerritories']},
+                'relationships': {'inAppPurchase': rel('inAppPurchases', identifier),
+                                  'availableTerritories': {'data': territories}}}})
         current = api('/v2/inAppPurchases/' + identifier)['data']
         configured[alias] = current['attributes']['productId']
         print(json.dumps({'preparedProduct': configured[alias], 'state': current['attributes'].get('state'),
