@@ -3,6 +3,11 @@ name: iOS Simulator Screenshots
 # Capture only: never sign, upload to Apple, or submit a release.
 on:
   workflow_dispatch:
+    inputs:
+      inspect_apple_only:
+        description: 'Read existing Apple app and product metadata without building or changing the account'
+        type: boolean
+        default: false
   push:
     branches: [fix/ios-review-purchase-gates]
     paths:
@@ -20,7 +25,20 @@ permissions:
   contents: read
 
 jobs:
+  inspect-apple:
+    if: github.event_name == 'workflow_dispatch' && inputs.inspect_apple_only == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read existing Apple app and product metadata
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+        run: python3 scripts/inspect-apple-products.py
   capture:
+    if: inputs.inspect_apple_only != true
     runs-on: macos-26
     timeout-minutes: 30
     strategy:
