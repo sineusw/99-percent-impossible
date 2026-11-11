@@ -103,12 +103,12 @@ def main():
     api('/v1/buildBetaDetails/' + detail['id'], {'data': {'type': 'buildBetaDetails', 'id': detail['id'],
         'attributes': {'autoNotifyEnabled': False}}}, 'PATCH')
     state = detail['attributes']['externalBuildState']
-    if state == 'READY_FOR_BETA_SUBMISSION':
+    if state == 'READY_FOR_BETA_SUBMISSION' and os.environ.get('TESTFLIGHT_SUBMIT_REVIEW') == 'true':
         submission = api('/v1/betaAppReviewSubmissions', {'data': {'type': 'betaAppReviewSubmissions',
             'relationships': {'build': rel('builds', identifier)}}})['data']
         print(json.dumps({'betaSubmission': submission['id'], 'buildNumber': number}), flush=True)
         state = api('/v1/builds/' + identifier + '/buildBetaDetail')['data']['attributes']['externalBuildState']
-    if state in ['READY_FOR_BETA_TESTING', 'IN_BETA_TESTING']:
+    if state in ['READY_FOR_BETA_TESTING', 'IN_BETA_TESTING', 'BETA_APPROVED'] and os.environ.get('TESTFLIGHT_ENABLE_DISTRIBUTION') == 'true':
         group_builds = api('/v1/betaGroups/' + group['id'] + '/builds?limit=200')['data']
         if not any(p['id'] == identifier for p in group_builds):
             api('/v1/betaGroups/' + group['id'] + '/relationships/builds',
@@ -118,7 +118,7 @@ def main():
         print(json.dumps({'testFlightLink': group['attributes'].get('publicLink'), 'buildNumber': number}), flush=True)
     else:
         print(json.dumps({'buildNumber': number, 'externalBetaState': state,
-                          'message': 'Waiting for Apple beta eligibility/review; no ready test link claimed.'}), flush=True)
+                          'message': 'Distribution remains held pending explicit validation and Apple eligibility/review.'}), flush=True)
 
 
 if __name__ == '__main__':

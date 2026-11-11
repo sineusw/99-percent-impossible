@@ -20,6 +20,14 @@ on:
         description: 'SHA256 of the visually reviewed palette capture'
         type: string
         default: ''
+      submit_testflight_review:
+        description: 'Submit the selected test build for Apple beta review (never App Store release)'
+        type: boolean
+        default: false
+      enable_testflight_distribution:
+        description: 'Enable the beta link only after validation and Apple eligibility'
+        type: boolean
+        default: false
       prepare_testflight_only:
         description: 'Prepare one uploaded test build for external beta review; never publish the app'
         type: boolean
@@ -88,6 +96,8 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
           TESTFLIGHT_BUILD_NUMBER: ${{ inputs.testflight_build_number }}
+          TESTFLIGHT_SUBMIT_REVIEW: ${{ inputs.submit_testflight_review }}
+          TESTFLIGHT_ENABLE_DISTRIBUTION: ${{ inputs.enable_testflight_distribution }}
         run: python3 scripts/prepare-testflight.py
   configure-apple-products:
     if: github.event_name == 'workflow_dispatch' && inputs.configure_apple_products == true
