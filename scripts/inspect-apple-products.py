@@ -80,6 +80,17 @@ def inspect():
         print(json.dumps({'versions': [
             {key: row['attributes'].get(key) for key in ['versionString', 'appStoreState', 'platform']}
             for row in versions.get('data', [])]}))
+    builds = read('/v1/builds?filter[app]=6809299092&sort=-uploadedDate&limit=5')
+    if builds is not None:
+        print(json.dumps({'recentBuilds': [
+            {'id': row['id'], **{key: row['attributes'].get(key) for key in
+             ['version', 'processingState', 'uploadedDate', 'expired', 'usesNonExemptEncryption']}}
+            for row in builds.get('data', [])]}))
+    review = read('/v1/apps/6809299092/betaAppReviewDetail')
+    if review and review.get('data'):
+        attrs = review['data'].get('attributes', {})
+        print(json.dumps({'betaReviewContactComplete': all(attrs.get(key) for key in
+            ['contactFirstName', 'contactLastName', 'contactPhone', 'contactEmail'])}))
     groups = read('/v1/apps/6809299092/betaGroups?limit=100')
     if groups is not None:
         print(json.dumps({'testFlightGroups': [
