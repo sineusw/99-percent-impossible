@@ -2,6 +2,14 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Device enrollment and fresh commerce evidence — November 13, 2026
+
+- Owner's first physical TestFlight screenshots showed old build `348825794361` and the public invitation error **This beta is not accepting any new testers right now**. Earlier API-level distribution claims did not establish usable enrollment.
+- Fresh authenticated inspection [43371332163](https://github.com/sineusw/99-percent-impossible/actions/runs/43371332163) confirmed current build `433688263061` VALID/BETA_APPROVED, assigned to existing public group `116840b3-d97e-42e6-8723-2960f02459db`. Public link enabled, limit 10, tester count 0. The cap was not full.
+- [43371710063](https://github.com/sineusw/99-percent-impossible/actions/runs/43371710063) checked the complete associated-group audience through supported app/group relations, found zero recipients, and successfully issued Apple's explicit build-beta notification/start-testing action for only `433688263061`. No enrolled testers existed to receive messages. The immediate build state still read BETA_APPROVED. **Actual public-link admission remains pending owner confirmation.** The owner was asked to reopen https://testflight.apple.com/join/4PTBzRTD . Do not describe device distribution as verified until it admits the tester and shows the exact build.
+- Fresh commerce run [43369299296](https://github.com/sineusw/99-percent-impossible/actions/runs/43369299296): **iPhone 3/3 passed**, including individual palettes, Rage Pass and both voice purchases/restore; **iPad 2/3 passed**, failing because no completed Mick transaction appeared after its single tap. Earlier full iPad run passed all 11/11, while earlier full iPhone run passed 10/11. Native commerce results are inconsistent and remain a release gate pending physical validation/investigation; no universal pass is claimed.
+- Device candidate app code remains `203a9d5`; subsequent commits changed QA diagnostics, release workflow defaults, Apple inspection/distribution helpers and evidence only. No production IAP submission, main merge or App Store update occurred.
+
 ## Consent integration and current device candidate
 
 This section supersedes earlier statements that consent is unconfigured or all requests are hardcoded test-only.
