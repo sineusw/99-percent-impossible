@@ -27,8 +27,7 @@ final class ScreenshotCapture: XCTestCase {
     }
 
     func press(_ text: String) {
-        let button = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", text)).firstMatch
-        XCTAssertTrue(button.waitForExistence(timeout: 20), "Missing button: \(text)")
+        let button = visibleButton(text)
         XCTAssertTrue(button.isHittable, "Inaccessible button: \(text)")
         if text.hasPrefix("Perfect") || text == "Reaction Test" || text == "Change color palette" || text == "Change game voice" {
             // Cold WebKit/font layout can move a card after accessibility first
@@ -54,11 +53,11 @@ final class ScreenshotCapture: XCTestCase {
     func visibleButton(_ text: String, timeout: TimeInterval = 20) -> XCUIElement {
         let query = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", text))
         let visible = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            query.allElementsBoundByIndex.contains { $0.exists && $0.isHittable }
+            query.allElementsBoundByIndex.contains { $0.exists && $0.isHittable && $0.isEnabled }
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [visible], timeout: timeout), .completed,
                        "No visible, tappable button: \(text)")
-        return query.allElementsBoundByIndex.first { $0.exists && $0.isHittable } ?? query.firstMatch
+        return query.allElementsBoundByIndex.first { $0.exists && $0.isHittable && $0.isEnabled } ?? query.firstMatch
     }
 
     func retryAndVerify() {

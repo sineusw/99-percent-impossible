@@ -45,7 +45,15 @@ public class N99StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     }
     @objc func catalog(_ call: CAPPluginCall) {
         Task {
-            guard configured else { call.resolve(["available": false, "products": []]); return }
+            let base: [String: Any] = [
+                "canMakePayments": AppStore.canMakePayments,
+                "configured": configured,
+                "build": Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown",
+                "receiptKind": Bundle.main.appStoreReceiptURL?.lastPathComponent ?? "unavailable"
+            ]
+            guard configured else {
+                call.resolve(base.merging(["available": false, "products": [], "status": "unconfigured"]) { _, new in new }); return
+            }
             do {
                 let products = try await Product.products(for: Array(mapping.values))
                 let valid = products.filter { $0.type == .nonConsumable }
@@ -53,8 +61,12 @@ public class N99StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
                     guard let item = mapping.first(where: { $0.value == product.id })?.key else { return nil }
                     return ["item": item, "id": product.id, "displayPrice": product.displayPrice]
                 }
-                call.resolve(["available": rows.count == aliases.count && AppStore.canMakePayments, "products": rows])
-            } catch { call.reject("Apple products are unavailable. Please try again.", nil, error) }
+                call.resolve(base.merging(["available": !rows.isEmpty && AppStore.canMakePayments, "products": rows]) { _, new in new })
+            } catch {
+                let failure = error as NSError
+                call.resolve(base.merging(["available": false, "products": [], "status": "error",
+                    "errorDomain": failure.domain, "errorCode": failure.code]) { _, new in new })
+            }
         }
     }
     @objc func entitlements(_ call: CAPPluginCall) {

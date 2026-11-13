@@ -80,3 +80,4 @@ html,body{background:radial-gradient(circle at 12% 18%,rgba(255,46,149,.22),tran
 /* Keep precision controls free of browser double-tap and selection gestures. */
 #primary,#retry,#play{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #primary:disabled{opacity:.45;cursor:default}
+.cos-btn:disabled,.cast-choice:disabled{opacity:.55;cursor:default}

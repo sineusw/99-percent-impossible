@@ -2,7 +2,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node mobile-regression.mjs && node petty-audio.mjs && node review-gates.mjs && node release-regression.mjs && node audio-controls.mjs && node native-monetization.mjs && node native-ad-privacy.mjs && node ad-runtime-config.mjs"
+    "test": "node mobile-regression.mjs && node petty-audio.mjs && node review-gates.mjs && node release-regression.mjs && node audio-controls.mjs && node native-monetization.mjs && node native-ad-privacy.mjs && node ad-runtime-config.mjs && node native-store-catalog.mjs"
   },
   "devDependencies": {
     "happy-dom": "21.0.4"

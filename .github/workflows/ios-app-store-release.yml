@@ -53,7 +53,9 @@ jobs:
       # Unrelated developer certificates remain untouched.
       # 42GA2RC27U signed CI build 433675926521, now VALID/BETA_APPROVED.
       # That run also discarded its temporary private key.
-      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A,5KD7Z889T9,42GA2RC27U
+      # 345ZT433F3 signed processed/approved CI build 433688263061;
+      # its temporary private key was discarded as well.
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A,5KD7Z889T9,42GA2RC27U,345ZT433F3
     steps:
       - name: Checkout
         uses: actions/checkout@v4
