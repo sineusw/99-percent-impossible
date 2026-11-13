@@ -2,6 +2,18 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Authenticated AdMob follow-up — November 12, 2026 (America/New_York)
+
+This section supersedes the unknown-identifier entries in the historical matrix below.
+
+- Saved TinyFish sign-in worked. Read-only inspection [4eb4c088-2dcf-4ac9-9b40-86167b0d8f42](https://agent.tinyfish.ai/runs/4eb4c088-2dcf-4ac9-9b40-86167b0d8f42) confirmed existing **iOS** app `99 Percent Impossible`, App Store ID `6809299092`, AdMob App ID `ca-app-pub-3321938987480073~9570950756`, status **Ready / ad serving enabled**. Policy center reported no current issues limiting serving.
+- The existing iOS app had no ad units. The two pre-existing units belong to **Android**, and must not be reused for iOS.
+- After confirming the full iOS list was empty, [6f41dbe5-2232-4733-aaa4-608539cfd350](https://agent.tinyfish.ai/runs/6f41dbe5-2232-4733-aaa4-608539cfd350) created exactly one standard iOS interstitial: **Between Games Interstitial iOS**, `ca-app-pub-3321938987480073/8711122623`. No app/account or rewarded unit was created. Android settings were preserved.
+- Both confirmed iOS identifiers are recorded in `native-monetization.json`. Build metadata now uses the real App ID, and configuration checks reject malformed ad units or publisher mismatches. **`ads.js` still uses official Google test units; saving these identifiers does not activate production requests.**
+- Detailed app-ads.txt view says **No ad requests with app-ads.txt yet**, with no data displayed. A generic setup prompt does not prove the publicly hosted file is absent; crawl/authorization verification remains open.
+- Privacy inspection [acbfa4ca-f4fa-4319-8a2a-effd7c275eb6](https://agent.tinyfish.ai/runs/acbfa4ca-f4fa-4319-8a2a-effd7c275eb6) found no published European-regulations, US-state-regulations or IDFA-explainer messages for the iOS app. No privacy settings or legal agreements were changed. Production integration needs UMP consent handling and applicable privacy settings/disclosures before device validation.
+- No real production impressions, physical-device ad result or revenue is verified. The existing TestFlight binary is unchanged. Release remains held; PR #33 remains draft/unmerged.
+
 ## Current verified status — November 12, 2026 (America/New_York)
 
 This matrix supersedes historical pending/missing-metadata statements below. No production release gate is waived.

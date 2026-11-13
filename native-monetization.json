@@ -1,6 +1,6 @@
 {
-  "admobIosAppId": null,
-  "interstitialAdUnitId": null,
+  "admobIosAppId": "ca-app-pub-3321938987480073~9570950756",
+  "interstitialAdUnitId": "ca-app-pub-3321938987480073/8711122623",
   "rewardedAdUnitId": null,
   "appleProducts": {
     "daisy": "com.pettygamesstudios.ninetynineimpossible.daisy",

@@ -12,6 +12,12 @@ if app_id is None:
 import re
 if not re.fullmatch(r'ca-app-pub-\d{16}~\d{10}', app_id):
     raise SystemExit('AdMob iOS App ID must be an app identifier containing ~, not an ad unit.')
+for name in ('interstitialAdUnitId', 'rewardedAdUnitId'):
+    unit = config.get(name)
+    if unit is not None and (not isinstance(unit, str) or
+                            not re.fullmatch(r'ca-app-pub-\d{16}/\d{10}', unit) or
+                            unit.split('/')[0] != app_id.split('~')[0]):
+        raise SystemExit(name + ' must be a valid ad unit belonging to the configured publisher.')
 products = config.get('appleProducts', {})
 required = {'daisy', 'mick', 'cyberpunk', 'goldonly', 'synthwave', 'ragepass'}
 if products and (set(products) != required or len(set(products.values())) != 6 or
@@ -24,7 +30,8 @@ info['GADApplicationIdentifier'] = app_id
 info['N99StoreKitProducts'] = products
 with path.open('wb') as target:
     plistlib.dump(info, target)
-print('Configured iOS test ads; Apple purchase catalog ' + ('configured' if products else 'disabled pending existing IDs'))
+print('Configured iOS App ID ' + app_id + '; requests remain test-only; Apple purchase catalog ' +
+      ('configured' if products else 'disabled pending existing IDs'))
 
 # StoreKit 2 requires iOS 15. Keep CocoaPods and the app target consistent.
 project = path.parent.parent / 'App.xcodeproj/project.pbxproj'
