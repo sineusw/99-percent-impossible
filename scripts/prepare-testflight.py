@@ -119,11 +119,18 @@ def main():
         # Starting it through this endpoint also issues notifications. Only do so
         # when every associated group is empty: no one receives an unsolicited message.
         if state == 'BETA_APPROVED':
-            linked = api('/v1/builds/' + identifier + '/betaGroups?limit=200')
-            if linked.get('links', {}).get('next'):
+            # Apple does not support GET_RELATED on build.betaGroups.
+            # Enumerate the app's groups and their supported builds relation instead.
+            all_groups = api('/v1/apps/' + APP + '/betaGroups?limit=200')
+            if all_groups.get('links', {}).get('next'):
                 raise SystemExit('Cannot establish the complete notification audience; testing start held.')
             empty = True
-            for linked_group in linked.get('data', []):
+            for linked_group in all_groups.get('data', []):
+                assigned = api('/v1/betaGroups/' + linked_group['id'] + '/builds?limit=200')
+                if assigned.get('links', {}).get('next'):
+                    raise SystemExit('Cannot establish the complete group build list; testing start held.')
+                if not any(row['id'] == identifier for row in assigned.get('data', [])):
+                    continue
                 audience = api('/v1/betaGroups/' + linked_group['id'] + '/relationships/betaTesters?limit=200')
                 if audience.get('data') or audience.get('links', {}).get('next'):
                     empty = False
