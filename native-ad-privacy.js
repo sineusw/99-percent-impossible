@@ -2,7 +2,7 @@
 (()=>{
   if(!window.Capacitor?.isNativePlatform?.())return;
   const sdk=window.Capacitor?.Plugins?.AdMob;
-  let allowed=false,busy=false,required=false,overlay=null;
+  let allowed=false,busy=false,required=false,overlay=null,previousAudioLock=false;
   const privacy={get canRequestAds(){return allowed&&!busy},get busy(){return busy},ready:null};
   window.N99AdPrivacy=privacy;
   const button=document.createElement('button');
@@ -14,12 +14,14 @@
     busy=value;button.disabled=value;
     document.querySelector('main')?.toggleAttribute('inert',value);
     if(value){
+      previousAudioLock=!!window.__PETTY_AD_BANTER_LOCK;
+      window.__PETTY_AD_BANTER_LOCK=true;
       try{window.speechSynthesis?.cancel?.();window.N99CastStaticAudio?.stop?.();window.N99SFX?.stop?.()}catch{}
       overlay=document.createElement('div');overlay.id='n99-privacy-loading';
       overlay.setAttribute('role','status');overlay.textContent='Checking ad privacy…';
       overlay.style.cssText='position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#050505;color:#fff;font:16px system-ui';
       document.body.appendChild(overlay);
-    }else{overlay?.remove();overlay=null}
+    }else{overlay?.remove();overlay=null;window.__PETTY_AD_BANTER_LOCK=previousAudioLock}
   }
   function apply(info){
     allowed=info?.canRequestAds===true;

@@ -59,4 +59,18 @@ const check=(name,fn)=>{fn();count++;console.log('PASS',name)};
  check('Late consent response after timeout never presents over resumed gameplay',()=>{assert.equal(forms,0);assert.equal(w.N99AdPrivacy.canRequestAds,false);assert.equal(w.N99AdPrivacy.busy,false)});
  await w.happyDOM.close();
 }
+{
+ let second=false,finish;const a=setup({request:async()=>second?({...ok,status:'REQUIRED',canRequestAds:false,isConsentFormAvailable:true}):ok,form:()=>new Promise(r=>{finish=r})});await a.w.N99AdPrivacy.ready;
+ let cancelled=0;
+ a.w.speechSynthesis={speak(){},cancel(){cancelled++}};
+ a.w.PettyPersonality={pools:{interrupt:[{text:'Protected interruption'}]}};
+ vm.runInContext(fs.readFileSync(new URL('../petty-priority-v1.js',import.meta.url),'utf8'),vm.createContext(a.w));
+ a.w.speechSynthesis.speak({text:'Protected interruption'});
+ a.w.speechSynthesis.cancel();assert.equal(cancelled,0);
+ second=true;a.w.document.querySelector('#n99-ad-privacy').click();await flush();
+ check('Privacy form cancels protected speech and blocks new welcome audio',()=>{assert.equal(cancelled,1);assert.equal(a.w.__PETTY_AD_BANTER_LOCK,true)});
+ finish(ok);await flush();
+ check('Privacy dismissal restores normal audio priority',()=>assert.equal(a.w.__PETTY_AD_BANTER_LOCK,false));
+ await a.w.happyDOM.close();
+}
 console.log(`${count} native privacy checks passed (mocked UMP; device QA remains required)`);
