@@ -2,6 +2,7 @@
 import importlib.util
 import json
 import os
+import time
 from pathlib import Path
 import urllib.error
 import urllib.request
@@ -41,9 +42,19 @@ def main():
     app = api('/v1/apps/' + APP)['data']
     if app['attributes']['bundleId'] != 'com.pettygamesstudios.ninetynineimpossible':
         raise ValueError('Wrong existing app')
-    result = api('/v1/builds?filter[app]=' + APP + '&filter[version]=' + number + '&include=preReleaseVersion')
-    if len(result.get('data', [])) != 1:
-        raise SystemExit('The exact uploaded build is not available yet. No changes made.')
+    for attempt in range(18):
+        result = api('/v1/builds?filter[app]=' + APP + '&filter[version]=' + number + '&include=preReleaseVersion')
+        rows = result.get('data', [])
+        if len(rows) > 1:
+            raise SystemExit('More than one exact build matched; no changes made.')
+        if rows and rows[0]['attributes']['processingState'] == 'VALID':
+            break
+        if rows and rows[0]['attributes']['processingState'] in ['FAILED', 'INVALID']:
+            raise SystemExit('Apple rejected processing for the selected build; no changes made.')
+        print(json.dumps({'waitingForAppleProcessing': number, 'attempt': attempt + 1}), flush=True)
+        time.sleep(10)
+    else:
+        raise SystemExit('The exact uploaded build is not processed yet. No changes made.')
     build = result['data'][0]
     version_id = build['relationships']['preReleaseVersion']['data']['id']
     version = next(p for p in result['included'] if p['id'] == version_id)['attributes']['version']
