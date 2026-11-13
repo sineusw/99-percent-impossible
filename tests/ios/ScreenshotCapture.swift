@@ -144,15 +144,36 @@ final class ScreenshotCapture: XCTestCase {
         return app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@ AND label CONTAINS[c] 'OWNED'", voice)).firstMatch
     }
 
+    func waitForAppleTransaction(_ item: String) {
+        let product = "com.pettygamesstudios.ninetynineimpossible." + item
+        let purchased = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            guard let transactions = try? self.store.allTransactions() else { return false }
+            return transactions.contains { $0.productIdentifier == product && $0.state == .purchased }
+        }, object: nil)
+        let result = XCTWaiter.wait(for: [purchased], timeout: 30)
+        if result != .completed {
+            capture("purchase-transaction-missing-" + item)
+            let rows = (try? store.allTransactions()) ?? []
+            let detail = rows.map { "\($0.productIdentifier): \($0.state.rawValue)" }.joined(separator: "\n")
+            let attachment = XCTAttachment(string: detail.isEmpty ? "No StoreKit transactions" : detail)
+            attachment.name = "StoreKit transactions after " + item
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+        XCTAssertEqual(result, .completed, "Apple did not complete the single purchase tap: \(item)")
+    }
+
     func testAppleVoicePurchasesAndRestore() {
         press("Change game voice")
         _ = visibleButton("DAISY", timeout: 60)
         _ = visibleButton("MICK")
         capture("10-native-voice-products")
         press("DAISY")
+        waitForAppleTransaction("daisy")
         press("Change game voice")
         XCTAssertTrue(voiceOwned("DAISY").waitForExistence(timeout: 20))
         press("MICK")
+        waitForAppleTransaction("mick")
         press("Change game voice")
         XCTAssertTrue(voiceOwned("MICK").waitForExistence(timeout: 20))
         press("PETTY")
