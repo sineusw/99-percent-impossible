@@ -37,7 +37,7 @@ jobs:
     runs-on: macos-26
     env:
       BUNDLE_ID: com.pettygamesstudios.ninetynineimpossible
-      RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.marketing_version || '1.0' }}
+      RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.marketing_version || '1.0.1' }}
       TESTFLIGHT_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.testflight_only == true }}
       N99_AD_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.ad_mode || 'production' }}
       TEAM_ID: FHGP486J8U
