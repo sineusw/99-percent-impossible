@@ -60,6 +60,9 @@ def inspect():
         except urllib.error.HTTPError as error:
             print(json.dumps({'endpoint': path.split('?')[0], 'httpStatus': error.code}))
             return None
+        except (TimeoutError, urllib.error.URLError) as error:
+            print(json.dumps({'endpoint': path.split('?')[0], 'readFailure': type(error).__name__}))
+            return None
 
     app = read('/v1/apps/6809299092?fields[apps]=name,bundleId,sku')
     if app:
@@ -113,8 +116,24 @@ def inspect():
     if groups is not None:
         print(json.dumps({'testFlightGroups': [
             {'id': row['id'], **{key: row['attributes'].get(key) for key in
-             ['name', 'isInternalGroup', 'publicLinkEnabled', 'publicLink']}}
+             ['name', 'isInternalGroup', 'publicLinkEnabled', 'publicLink',
+              'publicLinkLimitEnabled', 'publicLinkLimit', 'publicLinkCriteriaEnabled', 'hasAccessToAllBuilds']}}
             for row in groups.get('data', [])]}))
+        for row in groups.get('data', []):
+            if row['attributes'].get('name') != '99 Percent Impossible iPhone Test':
+                continue
+            selected = read('/v1/betaGroups/' + row['id'] + '/builds?limit=200')
+            if selected is not None:
+                print(json.dumps({'testFlightGroupBuilds': {
+                    'groupId': row['id'], 'builds': [
+                        {'id': build['id'], 'number': build['attributes'].get('version'),
+                         'expired': build['attributes'].get('expired')}
+                        for build in selected.get('data', [])]}}))
+            testers = read('/v1/betaGroups/' + row['id'] + '/relationships/betaTesters?limit=200')
+            if testers is not None:
+                print(json.dumps({'testFlightGroupEnrollment': {
+                    'groupId': row['id'], 'testerCount': len(testers.get('data', [])),
+                    'hasMore': bool(testers.get('links', {}).get('next'))}}))
 
 
 if __name__ == '__main__':
