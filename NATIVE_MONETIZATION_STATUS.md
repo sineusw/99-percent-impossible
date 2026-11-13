@@ -2,7 +2,25 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
-## Completed account work
+## Current verified status — November 12, 2026 (America/New_York)
+
+This matrix supersedes historical pending/missing-metadata statements below. No production release gate is waived.
+
+| Area | Verified evidence / current state |
+|---|---|
+| Main / PRs | main `8dd2a38`; PRs #32 and #33 remain draft and unmerged. |
+| Apple account | Fresh read-only run [43356870890](https://github.com/sineusw/99-percent-impossible/actions/runs/43356870890): public iOS version 1.0 READY_FOR_SALE; candidate build 429458525751 VALID, not expired. Exact public build relationship needs the expanded inspection helper. |
+| Six purchases | All six existing non-consumables READY_TO_SUBMIT. Screenshot upload run [42950986865](https://github.com/sineusw/99-percent-impossible/actions/runs/42950986865) recorded COMPLETE for every review image. These are not approved production products. |
+| Native commerce QA | [42949961187](https://github.com/sineusw/99-percent-impossible/actions/runs/42949961187): three StoreKit fixture tests passed on both iPhone and iPad simulators, covering voices/restore, individual palettes and Rage Pass. These do not prove Apple sandbox/device commerce. |
+| TestFlight | Apple reported BETA_APPROVED in [43356953074](https://github.com/sineusw/99-percent-impossible/actions/runs/43356953074). [43357023311](https://github.com/sineusw/99-percent-impossible/actions/runs/43357023311) enabled the existing group for exact build 429458525751 with a 10-tester limit and automatic notifications disabled. Link: https://testflight.apple.com/join/4PTBzRTD . No email invitations sent. |
+| Fresh local checks | All 121 automated checks plus 174 Daisy / 217 Mick shipped phrase checks passed. Chromium mobile smoke checks opened and exited all three modes without page exceptions. |
+| AdMob | Existing production App ID and ad unit IDs remain unknown; configuration values are null, requests are test-only. No authenticated policy/impression verification is available in this session. |
+| Device QA | Physical iPhone purchases, reinstall/restore, audible voice QA and native ad presentation remain unverified. |
+| Release | Held: no main merge, App Store submission or production IAP submission performed. |
+
+The uploaded candidate predates HEAD only in QA harness/workflow and status documentation; game/monetization implementation files are unchanged. Rewarded ads remain optional and excluded until an owner-approved reward exists. Use the TestFlight candidate for sandbox purchase/device testing; do not treat test ads as production impressions.
+
+## Historical account work
 
 - Existing Apple API credentials in GitHub worked. Read-only run [42943209386](https://github.com/sineusw/99-percent-impossible/actions/runs/42943209386) confirmed the existing app is READY_FOR_SALE, with no existing IAP products or TestFlight groups. No app or account was recreated.
 - After the user's explicit authorization to complete all necessary fixes, run [42943469928](https://github.com/sineusw/99-percent-impossible/actions/runs/42943469928) created the six missing NON_CONSUMABLE products, English names/descriptions, and USD price schedules. Run 42943906941 configured availability matching the existing app's countries without expanding app distribution.

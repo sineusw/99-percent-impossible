@@ -80,12 +80,30 @@ def inspect():
         print(json.dumps({'versions': [
             {key: row['attributes'].get(key) for key in ['versionString', 'appStoreState', 'platform']}
             for row in versions.get('data', [])]}))
+        for row in versions.get('data', []):
+            if row['attributes'].get('platform') != 'IOS':
+                continue
+            linked = read('/v1/appStoreVersions/' + row['id'] + '/build')
+            build = linked.get('data') if linked else None
+            print(json.dumps({'versionBuild': {
+                'version': row['attributes'].get('versionString'),
+                'state': row['attributes'].get('appStoreState'),
+                'buildId': build['id'] if build else None,
+                'buildNumber': build['attributes'].get('version') if build else None}}))
     builds = read('/v1/builds?filter[app]=6809299092&sort=-uploadedDate&limit=5')
     if builds is not None:
         print(json.dumps({'recentBuilds': [
             {'id': row['id'], **{key: row['attributes'].get(key) for key in
              ['version', 'processingState', 'uploadedDate', 'expired', 'usesNonExemptEncryption']}}
             for row in builds.get('data', [])]}))
+        for row in builds.get('data', []):
+            detail = read('/v1/builds/' + row['id'] + '/buildBetaDetail')
+            if detail and detail.get('data'):
+                attrs = detail['data']['attributes']
+                print(json.dumps({'buildBetaState': {
+                    'buildNumber': row['attributes'].get('version'),
+                    **{key: attrs.get(key) for key in
+                       ['internalBuildState', 'externalBuildState', 'autoNotifyEnabled']}}}))
     review = read('/v1/apps/6809299092/betaAppReviewDetail')
     if review and review.get('data'):
         attrs = review['data'].get('attributes', {})
