@@ -16,3 +16,4 @@ done
 
 # Capacitor requires an index.html entry point.
 test -f dist/index.html
+node scripts/configure-ad-runtime.mjs

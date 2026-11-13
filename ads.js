@@ -4,6 +4,10 @@
 (()=>{
 const AK=n=>'n99_ads_'+n,hasPass=()=>!!window.N99Entitlements?.isOwned?.('ragepass');
 const QS=new URLSearchParams(location.search),NATIVE=!!window.Capacitor?.isNativePlatform?.(),AD_TEST=QS.get('adtest')==='1',NO_ADS=QS.get('noads')==='1'||!NATIVE;
+const CONFIG=window.N99AdConfig||{mode:'test',testingDevices:[]};
+const PLATFORM=window.Capacitor?.getPlatform?.()||'ios';
+const PRODUCTION=CONFIG.mode==='production'&&PLATFORM==='ios'&&!AD_TEST;
+const consentAllowsAds=()=>window.N99AdPrivacy?.canRequestAds===true;
 let adOpen=false,adBoundaryClaimed=false,adOpened=false,pending=false,boundaryLocked=false,deferredRetry=null,boundaryFinished=false;
 let adFailsafeTimer=0,preAdTimer=0,lastAdAttempt=+(localStorage.getItem(AK('lastAttempt'))||0);
 const PRE_AD_PAUSE=AD_TEST?350:850,HARD_CAP=7,AD_FAILSAFE_MS=4000;
@@ -21,7 +25,7 @@ function primeGameAudio(){try{const c=typeof audio==='function'?audio():null;if(
 function currentAttempt(){return +(localStorage.getItem('n99_total')||document.querySelector('#tot')?.textContent||0)}
 function streak(){return +(localStorage.getItem('n99_currentStreak')||0)}
 function modalSettled(){const m=document.querySelector('#modal');return !m||m.classList.contains('hide')}
-function safeBoundary(){if(NO_ADS||adOpen||adBoundaryClaimed||boundaryLocked)return false;if(document.visibilityState==='hidden')return false;if(typeof st!=='undefined'&&(st.run||st.locked))return false;return modalSettled()}
+function safeBoundary(){if(NO_ADS||!consentAllowsAds()||adOpen||adBoundaryClaimed||boundaryLocked)return false;if(document.visibilityState==='hidden')return false;if(typeof st!=='undefined'&&(st.run||st.locked))return false;return modalSettled()}
 function updateDue(){if(NO_ADS){pending=false;return}if(hasPass()){pending=false;return}const now=currentAttempt(),gap=now-lastAdAttempt,hot=streak()>=2;if(AD_TEST){pending=gap>=1;return}if(gap>=5&&!hot)pending=true;if(gap>=HARD_CAP)pending=true}
 function clearAdTimers(){if(preAdTimer){clearTimeout(preAdTimer);preAdTimer=0}if(adFailsafeTimer){clearTimeout(adFailsafeTimer);adFailsafeTimer=0}}
 function lockControls(locked){for(const id of ['retry','close']){const el=document.getElementById(id);if(!el)continue;el.setAttribute('aria-disabled',locked?'true':'false');if(locked)el.dataset.adBoundaryLocked='1';else delete el.dataset.adBoundaryLocked}}
@@ -53,24 +57,29 @@ async function showNativeAd(overlay){
       if(!active()){await handle.remove();return}
       listeners.push(handle);
     }
-    if(!initialization)initialization=sdk.initialize({initializeForTesting:true}).catch(error=>{initialization=null;throw error});
+    await window.N99AdPrivacy?.ready;
+    if(!active())return;
+    if(!consentAllowsAds()){done();return}
+    const testingDevices=CONFIG.testingDevices||[];
+    if(!initialization)initialization=sdk.initialize({initializeForTesting:!PRODUCTION||testingDevices.length>0,testingDevices}).catch(error=>{initialization=null;throw error});
     await initialization;
     if(!active())return;
-    const platform=window.Capacitor?.getPlatform?.()||'ios';
-    const adId=platform==='android'?'ca-app-pub-3940256099942544/1033173712':'ca-app-pub-3940256099942544/4411468910';
-    await sdk.prepareInterstitial({adId,isTesting:true});
+    if(!consentAllowsAds()){done();return}
+    const adId=PRODUCTION?CONFIG.iosInterstitialAdUnitId:(PLATFORM==='android'?'ca-app-pub-3940256099942544/1033173712':'ca-app-pub-3940256099942544/4411468910');
+    if(PRODUCTION&&!/^ca-app-pub-\d{16}\/\d{10}$/.test(adId||'')){done();return}
+    await sdk.prepareInterstitial({adId,isTesting:!PRODUCTION,npa:true});
     if(!active())return; // An expired load must never present during the next round.
     if(document.visibilityState==='hidden'){done();return}
-    if(hasPass()){done();return}
+    if(hasPass()||!consentAllowsAds()){done();return}
     clearTimeout(loadTimer);
     try{window.speechSynthesis?.cancel?.();window.N99CastStaticAudio?.stop?.();window.N99SFX?.stop?.()}catch{}
     overlay.remove();
     await sdk.showInterstitial();
-  }catch(err){console.warn('[N99 ADS] Native test ad unavailable',err?.message||err);done()}
+  }catch(err){console.warn('[N99 ADS] Native ad unavailable',err?.message||err);done()}
 }
 function forceOpenOrFinish(){if(!adBoundaryClaimed||adOpened)return;const overlay=buildOverlay();if(document.visibilityState==='hidden'){pending=true;finishAdBoundary(overlay);return}showNativeAd(overlay)}
-function claimAdBoundary(retryAction=null){if(adBoundaryClaimed||adOpen||boundaryLocked)return false;pending=false;boundaryLocked=true;boundaryFinished=false;deferredRetry=retryAction;adBoundaryClaimed=true;adOpen=true;adOpened=false;lastAdAttempt=currentAttempt();localStorage.setItem(AK('lastAttempt'),String(lastAdAttempt));lockControls(true);window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}const overlay=buildOverlay();beforeAd();adFailsafeTimer=setTimeout(()=>{adFailsafeTimer=0;if(adBoundaryClaimed&&!adOpened)finishAdBoundary(overlay)},AD_FAILSAFE_MS);preAdTimer=setTimeout(()=>{preAdTimer=0;if(!adBoundaryClaimed||adOpened)return;if(document.visibilityState==='hidden'){pending=true;finishAdBoundary(overlay);return}showNativeAd(overlay)},PRE_AD_PAUSE);return true}
-function retryEligibleNow(){updateDue();if(!pending||NO_ADS||adOpen||adBoundaryClaimed||boundaryLocked)return false;if(hasPass()){pending=false;return false}const now=currentAttempt(),gap=now-lastAdAttempt;if(!AD_TEST&&streak()>=2&&gap<HARD_CAP)return false;return true}
+function claimAdBoundary(retryAction=null){if(!consentAllowsAds()||adBoundaryClaimed||adOpen||boundaryLocked)return false;pending=false;boundaryLocked=true;boundaryFinished=false;deferredRetry=retryAction;adBoundaryClaimed=true;adOpen=true;adOpened=false;lastAdAttempt=currentAttempt();localStorage.setItem(AK('lastAttempt'),String(lastAdAttempt));lockControls(true);window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}const overlay=buildOverlay();beforeAd();adFailsafeTimer=setTimeout(()=>{adFailsafeTimer=0;if(adBoundaryClaimed&&!adOpened)finishAdBoundary(overlay)},AD_FAILSAFE_MS);preAdTimer=setTimeout(()=>{preAdTimer=0;if(!adBoundaryClaimed||adOpened)return;if(document.visibilityState==='hidden'){pending=true;finishAdBoundary(overlay);return}showNativeAd(overlay)},PRE_AD_PAUSE);return true}
+function retryEligibleNow(){updateDue();if(!pending||NO_ADS||!consentAllowsAds()||adOpen||adBoundaryClaimed||boundaryLocked)return false;if(hasPass()){pending=false;return false}const now=currentAttempt(),gap=now-lastAdAttempt;if(!AD_TEST&&streak()>=2&&gap<HARD_CAP)return false;return true}
 function tryOpenPendingAd(){updateDue();if(!pending||adOpen||adBoundaryClaimed||boundaryLocked)return false;if(hasPass()){pending=false;return false}const now=currentAttempt(),gap=now-lastAdAttempt;if(!AD_TEST&&streak()>=2&&gap<HARD_CAP)return false;if(!safeBoundary())return false;return claimAdBoundary(null)}
 const tot=document.querySelector('#tot');if(tot)new MutationObserver(updateDue).observe(tot,{childList:true,characterData:true,subtree:true});
 const resultModal=document.querySelector('#modal');if(resultModal)new MutationObserver(()=>{if(resultModal.classList.contains('hide'))queueMicrotask(tryOpenPendingAd)}).observe(resultModal,{attributes:true,attributeFilter:['class']});

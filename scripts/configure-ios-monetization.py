@@ -27,10 +27,17 @@ path = Path(os.environ.get('N99_IOS_INFO_PLIST', 'ios/App/App/Info.plist'))
 with path.open('rb') as source:
     info = plistlib.load(source)
 info['GADApplicationIdentifier'] = app_id
+info['GADDelayAppMeasurementInit'] = True
+info['N99AdMode'] = os.environ.get('N99_AD_MODE', 'test')
+if info['N99AdMode'] not in ('test', 'production'):
+    raise SystemExit('N99_AD_MODE must be test or production.')
+networks = info.setdefault('SKAdNetworkItems', [])
+if not any(row.get('SKAdNetworkIdentifier') == 'cstr6suwn9.skadnetwork' for row in networks):
+    networks.append({'SKAdNetworkIdentifier': 'cstr6suwn9.skadnetwork'})
 info['N99StoreKitProducts'] = products
 with path.open('wb') as target:
     plistlib.dump(info, target)
-print('Configured iOS App ID ' + app_id + '; requests remain test-only; Apple purchase catalog ' +
+print('Configured iOS App ID ' + app_id + '; ads mode ' + info['N99AdMode'] + '; Apple purchase catalog ' +
       ('configured' if products else 'disabled pending existing IDs'))
 
 # StoreKit 2 requires iOS 15. Keep CocoaPods and the app target consistent.

@@ -11,6 +11,11 @@ on:
         description: 'Test build marketing version'
         type: string
         default: '1.0.1'
+      ad_mode:
+        description: 'Test ads for QA; production requires device consent/ad verification'
+        type: choice
+        options: [test, production]
+        default: test
   push:
     branches: [main]
     paths:
@@ -34,6 +39,7 @@ jobs:
       BUNDLE_ID: com.pettygamesstudios.ninetynineimpossible
       RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.marketing_version || '1.0' }}
       TESTFLIGHT_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.testflight_only == true }}
+      N99_AD_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.ad_mode || 'production' }}
       TEAM_ID: FHGP486J8U
       # 8LDD86ULMQ was generated in this repo's ephemeral keychain by run
       # 36848855130 (2026-10-01); that job retained only its IPA, not the key.
@@ -42,7 +48,10 @@ jobs:
       # PXZ7735A4A signed published build 388277062691 in this repo's
       # discarded CI keychain. The app is now READY_FOR_SALE (API verified);
       # its old submission is no longer pending and its private key was not retained.
-      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A
+      # 5KD7Z889T9 signed our prior CI TestFlight build 429458525751.
+      # Apple now confirms VALID/BETA_APPROVED; its CI-only private key was discarded.
+      # Unrelated developer certificates remain untouched.
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A,5KD7Z889T9
     steps:
       - name: Checkout
         uses: actions/checkout@v4

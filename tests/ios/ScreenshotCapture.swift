@@ -19,6 +19,11 @@ final class ScreenshotCapture: XCTestCase {
         // The cast picker is installed after the core game's event handlers.
         let ready = app.buttons["Change game voice"]
         XCTAssertTrue(ready.waitForExistence(timeout: 45), "App controls did not finish loading")
+        let privacyFinished = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            !self.app.staticTexts["Checking ad privacy…"].exists
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [privacyFinished], timeout: 25), .completed,
+                       "Privacy startup did not release gameplay")
     }
 
     func press(_ text: String) {
@@ -126,6 +131,13 @@ final class ScreenshotCapture: XCTestCase {
         XCTAssertTrue(visibleButton("PETTY").isEnabled)
         // Paid catalog availability requires Apple sandbox/device verification;
         // the DOM suite separately checks purchase gating and all six mappings.
+    }
+
+    func testNativePrivacyControl() {
+        let privacy = app.buttons["Ad privacy options"]
+        XCTAssertTrue(privacy.waitForExistence(timeout: 20))
+        XCTAssertTrue(privacy.isHittable)
+        capture("12-native-privacy-control")
     }
 
     func voiceOwned(_ voice: String) -> XCUIElement {

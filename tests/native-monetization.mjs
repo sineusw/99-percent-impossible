@@ -6,19 +6,22 @@ const read=name=>fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
 let count=0;
 const check=(label,fn)=>{fn();count++;console.log('PASS',label)};
 const flush=async()=>{for(let i=0;i<30;i++)await Promise.resolve()};
-function adWindow({pass=false,prepare=async()=>{}}={}){
- const w=new Window({url:'capacitor://localhost/?adtest=1'}),events={},timers=new Map();
+function adWindow({pass=false,prepare=async()=>{},production=false,permission=true,testingDevices=[]}={}){
+ const w=new Window({url:'capacitor://localhost/'+(production?'':'?adtest=1')}),events={},timers=new Map(),requests=[];
  let next=0,shows=0,removed=0,initializes=0;
+ let initializationOptions;
  w.document.write('<div id="tot">8</div><div id="modal" class="hide"></div><button id="retry">RETRY</button>');
  w.localStorage.setItem('n99_petty_voice','0');
  w.N99Entitlements={isOwned:()=>pass};
+ w.N99AdPrivacy={canRequestAds:permission,ready:Promise.resolve()};
+ w.N99AdConfig={mode:production?'production':'test',iosInterstitialAdUnitId:'ca-app-pub-3321938987480073/8711122623',testingDevices};
  w.setTimeout=(fn,ms)=>{timers.set(++next,{fn,ms});return next};w.clearTimeout=id=>timers.delete(id);
  w.Capacitor={isNativePlatform:()=>true,getPlatform:()=> 'ios',Plugins:{AdMob:{
   addListener:async(event,fn)=>{events[event]=fn;return {remove:async()=>{removed++;delete events[event]}}},
-  initialize:async()=>{initializes++},prepareInterstitial:prepare,showInterstitial:async()=>{shows++}
+  initialize:async options=>{initializes++;initializationOptions=options},prepareInterstitial:async options=>{requests.push(options);await prepare()},showInterstitial:async()=>{shows++}
  }}};
  vm.runInContext(read('ads.js'),vm.createContext(w));
- return {w,events,timers,get shows(){return shows},get removed(){return removed},get initializes(){return initializes}};
+ return {w,events,timers,requests,get initializationOptions(){return initializationOptions},get shows(){return shows},get removed(){return removed},get initializes(){return initializes}};
 }
 {
  const a=adWindow();a.w.N99Ads.tryOpenPendingAd();a.w.N99Ads.forceOpenOrSkipAd();a.w.N99Ads.forceOpenOrSkipAd();await flush();
@@ -47,6 +50,23 @@ function adWindow({pass=false,prepare=async()=>{}}={}){
  check('No-fill releases native retry lock',()=>{assert.equal(a.w.N99Ads.boundaryLocked,false);assert.equal(a.shows,0);assert.equal(a.removed,3)});await a.w.happyDOM.close();
 }
 const items=['daisy','mick','cyberpunk','goldonly','synthwave','ragepass'];
+{
+ const a=adWindow({production:true});a.w.N99Ads.tryOpenPendingAd();a.w.N99Ads.forceOpenOrSkipAd();await flush();
+ check('Production requests use the real iOS unit and non-personalized ads',()=>{assert.equal(a.requests[0].adId,'ca-app-pub-3321938987480073/8711122623');assert.equal(a.requests[0].isTesting,false);assert.equal(a.requests[0].npa,true);assert.equal(a.initializationOptions.initializeForTesting,false)});
+ a.events.interstitialAdDismissed();await a.w.happyDOM.close();
+ const b=adWindow();b.w.N99Ads.tryOpenPendingAd();b.w.N99Ads.forceOpenOrSkipAd();await flush();
+ check('QA requests stay on official Google test units',()=>{assert.equal(b.requests[0].adId,'ca-app-pub-3940256099942544/4411468910');assert.equal(b.requests[0].isTesting,true)});
+ b.events.interstitialAdDismissed();await b.w.happyDOM.close();
+ const c=adWindow({production:true,permission:false});
+ check('Unresolved consent prevents ad boundary and SDK initialization',()=>{assert.equal(c.w.N99Ads.tryOpenPendingAd(),false);assert.equal(c.initializes,0);assert.equal(c.requests.length,0)});await c.w.happyDOM.close();
+ const d=adWindow({production:true,testingDevices:['A'.repeat(32)]});d.w.N99Ads.tryOpenPendingAd();d.w.N99Ads.forceOpenOrSkipAd();await flush();
+ check('Production supports registered test devices without using live clicks for QA',()=>{assert.equal(d.initializationOptions.initializeForTesting,true);assert.equal(d.initializationOptions.testingDevices[0],'A'.repeat(32))});d.events.interstitialAdDismissed();await d.w.happyDOM.close();
+}
+{
+ let resolve;const a=adWindow({production:true,prepare:()=>new Promise(r=>{resolve=r})});a.w.N99Ads.tryOpenPendingAd();a.w.N99Ads.forceOpenOrSkipAd();await flush();
+ a.w.N99AdPrivacy.canRequestAds=false;resolve();await flush();
+ check('Privacy change during ad load prevents presentation and releases retry',()=>{assert.equal(a.shows,0);assert.equal(a.w.N99Ads.boundaryLocked,false)});await a.w.happyDOM.close();
+}
 for(const catalogAvailable of [true,false]){
  const w=new Window({url:'capacitor://localhost/'});let listener,requests=0,restores=0,status='cancelled';
  w.alert=()=>{};w.fetch=async()=>{requests++;throw new Error('native must not use web checkout')};
