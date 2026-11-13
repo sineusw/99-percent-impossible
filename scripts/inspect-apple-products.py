@@ -78,6 +78,25 @@ def inspect():
             {'id': row['id'], **{key: row['attributes'].get(key) for key in
              ['name', 'productId', 'inAppPurchaseType', 'state']}}
             for row in products.get('data', [])], 'hasMore': bool(products.get('links', {}).get('next'))}))
+        for row in products.get('data', []):
+            identifier = row['id']
+            availability = read('/v2/inAppPurchases/' + identifier + '/inAppPurchaseAvailability')
+            price = read('/v2/inAppPurchases/' + identifier + '/iapPriceSchedule')
+            regions = None
+            if availability and availability.get('data'):
+                regions = read('/v1/inAppPurchaseAvailabilities/' + availability['data']['id'] + '/availableTerritories?limit=200')
+            usa = None
+            if regions is not None:
+                if any(region['id'] == 'USA' for region in regions.get('data', [])):
+                    usa = True
+                elif not regions.get('links', {}).get('next'):
+                    usa = False
+            print(json.dumps({'productCommerceMetadata': {
+                'productId': row['attributes'].get('productId'),
+                'state': row['attributes'].get('state'),
+                'hasAvailability': bool(availability.get('data')) if availability is not None else None,
+                'hasPriceSchedule': bool(price.get('data')) if price is not None else None,
+                'usaAvailable': usa}}))
     versions = read('/v1/apps/6809299092/appStoreVersions?limit=10')
     if versions is not None:
         print(json.dumps({'versions': [
