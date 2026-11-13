@@ -115,7 +115,28 @@ def main():
                 {'data': [{'type': 'builds', 'id': identifier}]}, 'POST')
         group = api('/v1/betaGroups/' + group['id'], {'data': {'type': 'betaGroups', 'id': group['id'],
             'attributes': {'publicLinkEnabled': True, 'publicLinkLimitEnabled': True, 'publicLinkLimit': 10}}}, 'PATCH')['data']
-        print(json.dumps({'testFlightLink': group['attributes'].get('publicLink'), 'buildNumber': number}), flush=True)
+        # An approved build can still reject enrollment until testing is started.
+        # Starting it through this endpoint also issues notifications. Only do so
+        # when every associated group is empty: no one receives an unsolicited message.
+        if state == 'BETA_APPROVED':
+            linked = api('/v1/builds/' + identifier + '/betaGroups?limit=200')
+            if linked.get('links', {}).get('next'):
+                raise SystemExit('Cannot establish the complete notification audience; testing start held.')
+            empty = True
+            for linked_group in linked.get('data', []):
+                audience = api('/v1/betaGroups/' + linked_group['id'] + '/relationships/betaTesters?limit=200')
+                if audience.get('data') or audience.get('links', {}).get('next'):
+                    empty = False
+            if empty:
+                api('/v1/buildBetaNotifications', {'data': {'type': 'buildBetaNotifications',
+                    'relationships': {'build': rel('builds', identifier)}}}, 'POST')
+                print(json.dumps({'testingStartedForEmptyGroups': number, 'notificationRecipients': 0}), flush=True)
+                state = api('/v1/builds/' + identifier + '/buildBetaDetail')['data']['attributes']['externalBuildState']
+            else:
+                print(json.dumps({'testingStartHeld': number,
+                                  'reason': 'Existing testers would receive a notification; no notifications sent.'}), flush=True)
+        print(json.dumps({'testFlightLink': group['attributes'].get('publicLink'), 'buildNumber': number,
+                          'externalBetaState': state}), flush=True)
     else:
         print(json.dumps({'buildNumber': number, 'externalBetaState': state,
                           'message': 'Distribution remains held pending explicit validation and Apple eligibility/review.'}), flush=True)
