@@ -1,0 +1,109 @@
+{
+  "identifier": "DF2527B3-14E2-4C0C-A9E1-A71664D723A1",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6833273777",
+      "localizations": [
+        {
+          "description": "Unlock Daisy voice and commentary.",
+          "displayName": "Daisy Voice Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.pettygamesstudios.ninetynineimpossible.daisy",
+      "referenceName": "Daisy Voice Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6833273722",
+      "localizations": [
+        {
+          "description": "Unlock Mick voice and commentary.",
+          "displayName": "Mick Voice Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.pettygamesstudios.ninetynineimpossible.mick",
+      "referenceName": "Mick Voice Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6833273815",
+      "localizations": [
+        {
+          "description": "Unlock the Cyberpunk color palette.",
+          "displayName": "Cyberpunk Colors",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.pettygamesstudios.ninetynineimpossible.cyberpunk",
+      "referenceName": "Cyberpunk Colors",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6833273980",
+      "localizations": [
+        {
+          "description": "Unlock the Gold Only color palette.",
+          "displayName": "Gold Only Colors",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.pettygamesstudios.ninetynineimpossible.goldonly",
+      "referenceName": "Gold Only Colors",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6833274009",
+      "localizations": [
+        {
+          "description": "Unlock the Synthwave color palette.",
+          "displayName": "Synthwave Colors",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.pettygamesstudios.ninetynineimpossible.synthwave",
+      "referenceName": "Synthwave Colors",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "3.99",
+      "familyShareable": false,
+      "internalID": "6833274120",
+      "localizations": [
+        {
+          "description": "Unlock 3 premium palettes and remove ads.",
+          "displayName": "Rage Pass",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.pettygamesstudios.ninetynineimpossible.ragepass",
+      "referenceName": "Rage Pass",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "6809299092",
+    "_developerTeamID": "FHGP486J8U",
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

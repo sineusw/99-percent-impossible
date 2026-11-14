@@ -10,9 +10,9 @@ function canUse(c){
 }
 
 let stored=localStorage.getItem(KEY)||'petty';
-if(!chars.includes(stored))stored='petty';
+if(!chars.includes(stored)){stored='petty';localStorage.setItem(KEY,stored)}
 let current=canUse(stored)?stored:'petty';
-if(current!==stored)localStorage.setItem(KEY,current);
+// Keep the saved preference while ownership verification is pending.
 
 window.N99Character={
   get:()=>current,

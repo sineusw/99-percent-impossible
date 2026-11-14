@@ -21,7 +21,7 @@
     };
 
     function guardedCancel(){
-      if(window.__PETTY_AD_BANTER_LOCK){
+      if(window.__PETTY_AD_BANTER_LOCK||localStorage.getItem('n99_petty_voice')==='0'){
         restoreCancel();
         return realCancel.call(synth);
       }

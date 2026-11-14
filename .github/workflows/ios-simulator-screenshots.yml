@@ -1,8 +1,48 @@
 name: iOS Simulator Screenshots
 
-# Capture only: never sign, upload to Apple, or submit a release.
+# Default operation captures unsigned simulator QA. Explicit metadata/beta jobs never publish an App Store release.
 on:
   workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Choose native QA or an explicit existing-app metadata operation'
+        type: choice
+        options:
+          - capture
+          - inspect-apple
+          - configure-apple-products
+          - upload-iap-screenshots
+          - prepare-testflight
+        default: capture
+      test_scope:
+        description: 'Run the full native suite or only the three commerce regressions'
+        type: choice
+        options: [full, commerce]
+        default: full
+      screenshots_run_id:
+        description: 'Exact iPhone capture run containing the reviewed images'
+        type: string
+        default: ''
+      review_voice_sha256:
+        description: 'SHA256 of the visually reviewed voice capture'
+        type: string
+        default: ''
+      review_palette_sha256:
+        description: 'SHA256 of the visually reviewed palette capture'
+        type: string
+        default: ''
+      submit_testflight_review:
+        description: 'Submit the selected test build for Apple beta review only'
+        type: boolean
+        default: false
+      enable_testflight_distribution:
+        description: 'Enable the beta link after validation and Apple eligibility'
+        type: boolean
+        default: false
+      testflight_build_number:
+        description: 'Exact uploaded 1.0.1 build number'
+        type: string
+        default: ''
   push:
     branches: [fix/ios-review-purchase-gates]
     paths:
@@ -13,14 +53,77 @@ on:
       - package.json
 
 concurrency:
-  group: ios-simulator-screenshots-${{ github.ref }}
+  group: ios-native-${{ github.ref }}-${{ inputs.operation || 'capture' }}-${{ inputs.test_scope || 'full' }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  upload-iap-screenshots:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'upload-iap-screenshots'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-simulator-iphone
+          run-id: ${{ inputs.screenshots_run_id }}
+          github-token: ${{ github.token }}
+          path: work/review-captures
+      - name: Upload exact visually reviewed images to existing Apple products
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+          REVIEW_VOICE_SHA256: ${{ inputs.review_voice_sha256 }}
+          REVIEW_PALETTE_SHA256: ${{ inputs.review_palette_sha256 }}
+        run: python3 scripts/upload-apple-review-screenshots.py
+  prepare-testflight:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'prepare-testflight'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare only the selected test build
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+          TESTFLIGHT_BUILD_NUMBER: ${{ inputs.testflight_build_number }}
+          TESTFLIGHT_SUBMIT_REVIEW: ${{ inputs.submit_testflight_review }}
+          TESTFLIGHT_ENABLE_DISTRIBUTION: ${{ inputs.enable_testflight_distribution }}
+        run: python3 scripts/prepare-testflight.py
+  configure-apple-products:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'configure-apple-products'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare the six authorized Apple products
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+        run: python3 scripts/configure-apple-products.py
+  inspect-apple:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'inspect-apple'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read existing Apple app and product metadata
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+        run: python3 scripts/inspect-apple-products.py
   capture:
+    if: github.event_name != 'workflow_dispatch' || inputs.operation == 'capture'
     runs-on: macos-26
     timeout-minutes: 30
     strategy:
@@ -50,17 +153,31 @@ jobs:
         run: |
           xcrun simctl list devices available
           xcrun simctl list devicetypes
-          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x.get("isAvailable") and x["identifier"].startswith("com.apple.CoreSimulator.SimRuntime.iOS-")]; print(sorted(r,key=lambda x:tuple(map(int,x["version"].split("."))))[-1]["identifier"])')
+          # Apple's FB22237318 affects CLI StoreKit sessions on iOS 26.5.
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 scripts/select-storekit-runtime.py)
           DEVICE_ID=$(xcrun simctl create ReviewCapture "$DEVICE_TYPE" "$RUNTIME")
           echo "CAPTURE_DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
           xcrun simctl boot "$DEVICE_ID"
           xcrun simctl bootstatus "$DEVICE_ID" -b
       - name: Capture genuine app screens through XCTest
+        env:
+          NATIVE_TEST_SCOPE: ${{ inputs.test_scope || 'full' }}
         run: |
-          xcodebuild test \
+          native_test_args=()
+          if [ "$NATIVE_TEST_SCOPE" = commerce ]; then
+            native_test_args+=(
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testAppleIndividualPalettePurchases'
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testAppleRagePassUnlocksAllPalettes'
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testAppleVoicePurchasesAndRestore'
+            )
+          fi
+          xcodebuild test "${native_test_args[@]}" \
             -workspace ios/App/App.xcworkspace \
             -scheme ScreenshotCapture \
             -configuration Debug \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 180 \
+            -maximum-test-execution-time-allowance 240 \
             -destination "platform=iOS Simulator,id=$CAPTURE_DEVICE_ID" \
             -resultBundlePath "$RUNNER_TEMP/screenshots.xcresult" \
             CODE_SIGNING_ALLOWED=NO

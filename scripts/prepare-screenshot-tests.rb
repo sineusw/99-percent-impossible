@@ -8,6 +8,11 @@ tests = project.new_target(:ui_test_bundle, 'ScreenshotCapture', :ios, '15.0')
 tests.add_dependency(app)
 source = project.main_group.new_file('../../tests/ios/ScreenshotCapture.swift')
 tests.source_build_phase.add_file_reference(source)
+storekit = project.main_group.new_file('../../tests/ios/Monetization.storekit')
+tests.resources_build_phase.add_file_reference(storekit)
+# This script runs only for simulator QA, never the release/archive workflow.
+# StoreKit needs the app's launch scheme to explicitly select the local catalog.
+app.resources_build_phase.add_file_reference(storekit)
 tests.build_configurations.each do |config|
   config.build_settings['PRODUCT_NAME'] = 'ScreenshotCapture'
   config.build_settings['PRODUCT_MODULE_NAME'] = 'ScreenshotCapture'
@@ -24,4 +29,8 @@ scheme.add_build_target(app)
 scheme.add_build_target(tests)
 scheme.add_test_target(tests)
 scheme.test_action.build_configuration = 'Debug'
+scheme.set_launch_target(app)
+scheme.launch_action.xml_element.add_element('StoreKitConfigurationFileReference',
+  { 'identifier' => File.expand_path('tests/ios/Monetization.storekit') })
+scheme.test_action.xml_element.attributes['shouldUseLaunchSchemeArgsEnv'] = 'YES'
 scheme.save_as(project.path, 'ScreenshotCapture', true)

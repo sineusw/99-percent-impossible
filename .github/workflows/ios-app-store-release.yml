@@ -2,6 +2,20 @@ name: iOS App Store Release
 
 on:
   workflow_dispatch:
+    inputs:
+      testflight_only:
+        description: 'Upload a test build only; do not submit to App Review or notify testers'
+        type: boolean
+        default: true
+      marketing_version:
+        description: 'Test build marketing version'
+        type: string
+        default: '1.0.1'
+      ad_mode:
+        description: 'Test ads for QA; production requires device consent/ad verification'
+        type: choice
+        options: [test, production]
+        default: test
   push:
     branches: [main]
     paths:
@@ -23,12 +37,25 @@ jobs:
     runs-on: macos-26
     env:
       BUNDLE_ID: com.pettygamesstudios.ninetynineimpossible
+      RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.marketing_version || '1.0.1' }}
+      TESTFLIGHT_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.testflight_only == true }}
+      N99_AD_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.ad_mode || 'production' }}
       TEAM_ID: FHGP486J8U
       # 8LDD86ULMQ was generated in this repo's ephemeral keychain by run
       # 36848855130 (2026-10-01); that job retained only its IPA, not the key.
       # ZSZ95M9BQB belongs to failed pre-upload run 38827334945; its
       # temporary private key was also discarded when that runner ended.
-      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB
+      # PXZ7735A4A signed published build 388277062691 in this repo's
+      # discarded CI keychain. The app is now READY_FOR_SALE (API verified);
+      # its old submission is no longer pending and its private key was not retained.
+      # 5KD7Z889T9 signed our prior CI TestFlight build 429458525751.
+      # Apple now confirms VALID/BETA_APPROVED; its CI-only private key was discarded.
+      # Unrelated developer certificates remain untouched.
+      # 42GA2RC27U signed CI build 433675926521, now VALID/BETA_APPROVED.
+      # That run also discarded its temporary private key.
+      # 345ZT433F3 signed processed/approved CI build 433688263061;
+      # its temporary private key was discarded as well.
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A,5KD7Z889T9,42GA2RC27U,345ZT433F3
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -157,13 +184,23 @@ jobs:
             end
             lane :upload_build do
               token = api_token
-              upload_to_app_store(
-                api_key: token,
-                ipa: ENV.fetch("IPA_PATH"),
-                skip_metadata: true,
-                skip_screenshots: true,
-                run_precheck_before_submit: false
-              )
+              if ENV.fetch("TESTFLIGHT_ONLY", "false") == "true"
+                upload_to_testflight(
+                  api_key: token,
+                  ipa: ENV.fetch("IPA_PATH"),
+                  skip_waiting_for_build_processing: true,
+                  distribute_external: false,
+                  notify_external_testers: false
+                )
+              else
+                upload_to_app_store(
+                  api_key: token,
+                  ipa: ENV.fetch("IPA_PATH"),
+                  skip_metadata: true,
+                  skip_screenshots: true,
+                  run_precheck_before_submit: false
+                )
+              end
             end
           end
           RUBY
@@ -185,7 +222,7 @@ jobs:
       - name: Set version and unique build number
         run: |
           BUILD_NUMBER="${GITHUB_RUN_ID}${GITHUB_RUN_ATTEMPT}"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${RELEASE_VERSION}" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" ios/App/App/Info.plist || true
           echo "Using iOS build number ${BUILD_NUMBER}"
 
