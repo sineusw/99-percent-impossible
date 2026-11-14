@@ -2,6 +2,25 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Current release matrix — November 14, 2026
+
+This matrix supersedes historical current/pending statements in the sections below.
+
+| Area | Current verified outcome |
+|---|---|
+| Repository | main remains `8dd2a38`; PR #33 remains open, draft and unmerged. |
+| Device candidate | **1.0.1 build `433736456171`**, app source `5fa7a83`; upload [43373645617](https://github.com/sineusw/99-percent-impossible/actions/runs/43373645617), beta approval/group assignment [43374345654](https://github.com/sineusw/99-percent-impossible/actions/runs/43374345654). |
+| Physical catalog | Owner explicitly confirmed this exact build is installed and paid packs now show Apple prices on the iPhone. Purchase, playback, restore and ad results remain pending. |
+| Catalog recovery | Catalog loading runs independently of ownership/listener initialization; partial catalogs enable only returned products. Empty/error catalogs keep pack cards visible with disabled purchases, retry and QA Store Details. Timeouts/coalesced retries, busy purchase controls and stale startup-ownership protection are implemented. |
+| Exported binary | Independently downloaded artifact `14012689891` and inspected the actual IPA: correct bundle/version/build, all six exact Apple product mappings match configuration, real AdMob App ID, catalog recovery scripts present, test-ad mode, no shipped `.storekit` fixture. |
+| Automated verification | **159 checks** plus 174 Daisy / 217 Mick phrase checks passed. Headless mobile checks cover both unavailable and loaded catalogs, with all pack cards shown and only real-priced offers enabled. |
+| Native commerce | [43373649344](https://github.com/sineusw/99-percent-impossible/actions/runs/43373649344): iPhone **3/3 passed** (individual palettes, Rage Pass, Daisy/Mick purchases and restore). iPad **2/3 passed**; its failure video shows Colors never opened after the single synthetic menu tap, before any Rage Pass purchase attempt. Keep this input/harness issue open; it is not evidence of a rejected Rage Pass transaction. |
+| Apple product records | Last successful inspection [43373708297](https://github.com/sineusw/99-percent-impossible/actions/runs/43373708297), November 13: all six existing products READY_TO_SUBMIT with price schedules and US availability. No production IAP approval/submission is claimed. |
+| Apple account blocker | Fresh read [43564560262](https://github.com/sineusw/99-percent-impossible/actions/runs/43564560262), November 14, fails on GET app with HTTP 403 **FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED**: an in-effect agreement has not been signed or has expired. This is the verified blocker; the exact agreement is not identified by the API response. Apple web sign-in setup was opened for owner inspection of Business/Agreements and any developer-account notice. No agreement was accepted. Stop API retries until this is resolved. |
+| Ads / release | European and US privacy messages are published; production configuration exists. Current device candidate uses official Google TEST ads. Device fill/dismissal, Rage Pass suppression, production serving/impressions and release metadata/approval gates remain unverified. No main merge or App Store update. |
+
+The original physical screenshots showed only free Petty/default palette in the prior consent-enabled candidate. The owner-reported catalog pass above is for the replacement recovery build. Do not equate successful catalog loading with successful purchases or an approved production release.
+
 ## Device enrollment and fresh commerce evidence — November 13, 2026
 
 - Owner's first physical TestFlight screenshots showed old build `348825794361` and the public invitation error **This beta is not accepting any new testers right now**. Earlier API-level distribution claims did not establish usable enrollment.
