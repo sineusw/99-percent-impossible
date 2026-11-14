@@ -58,7 +58,13 @@ def inspect():
             with opener.open(req, timeout=30) as response:
                 return json.load(response)
         except urllib.error.HTTPError as error:
-            print(json.dumps({'endpoint': path.split('?')[0], 'httpStatus': error.code}))
+            try:
+                errors = json.loads(error.read()).get('errors', [])
+            except (ValueError, UnicodeDecodeError):
+                errors = []
+            print(json.dumps({'endpoint': path.split('?')[0], 'httpStatus': error.code,
+                              'errors': [{key: item.get(key) for key in ['code', 'title', 'detail']}
+                                         for item in errors]}))
             return None
         except (TimeoutError, urllib.error.URLError) as error:
             print(json.dumps({'endpoint': path.split('?')[0], 'readFailure': type(error).__name__}))
