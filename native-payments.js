@@ -8,6 +8,8 @@ if(!sdk)return; // Existing native purchase gates remain closed without the brid
 const items=['daisy','mick','cyberpunk','goldonly','synthwave','ragepass'];
 let owned=new Set(['petty']),products=new Map(),available=false,busy=false,purchasingItem=null;
 let refreshing=null,catalogState='loading',diagnostics={},ownershipRevision=0;
+const catalogRetryDelays=[5000,25000];
+let catalogRetryTimer=0,catalogRetryIndex=0;
 const emit=()=>window.dispatchEvent(new CustomEvent('n99:entitlements',{detail:{owned:[...owned]}}));
 function apply(data){ownershipRevision++;owned=new Set(['petty',...(data?.owned||[]).filter(item=>items.includes(item))]);emit()}
 const service={
@@ -20,6 +22,7 @@ const service={
   refreshCatalog(){
     if(refreshing)return refreshing;
     if(busy)return Promise.resolve(false);
+    clearTimeout(catalogRetryTimer);
     catalogState='loading';emit();
     refreshing=Promise.resolve().then(async()=>{
       try{
@@ -37,7 +40,14 @@ const service={
         console.warn('[N99 StoreKit] Native store unavailable',error?.message);
       }
       return available;
-    }).finally(()=>{refreshing=null;emit()});
+    }).finally(()=>{
+      refreshing=null;
+      emit();
+      if(catalogState==='ready')catalogRetryIndex=0;
+      if(['partial','unavailable'].includes(catalogState)&&catalogRetryIndex<catalogRetryDelays.length){
+        catalogRetryTimer=setTimeout(()=>service.refreshCatalog(),catalogRetryDelays[catalogRetryIndex++]);
+      }
+    });
     return refreshing;
   },
   async purchase(item){
@@ -78,7 +88,7 @@ const retryMissing=()=>{if(!available||products.size<items.length)service.refres
 window.addEventListener('n99:store-open',retryMissing);
 window.addEventListener('online',retryMissing);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')retryMissing()});
-for(const delay of [5000,30000])setTimeout(retryMissing,delay);
+
 const mountRestore=()=>{
   const button=document.createElement('button');button.id='n99-restore-purchases';button.textContent='RESTORE APPLE PURCHASES';
   button.style.cssText='display:block;margin:12px auto;min-height:44px;padding:10px;background:transparent;color:inherit;border:1px solid currentColor;border-radius:8px;font:inherit;font-size:11px';
@@ -89,7 +99,7 @@ const mountRestore=()=>{
     const retry=document.createElement('button');retry.id='n99-retry-store';retry.textContent='RETRY APPLE STORE';retry.style.cssText=button.style.cssText;
     retry.onclick=()=>service.refreshCatalog();
     const detail=document.createElement('button');detail.id='n99-store-details';detail.textContent='STORE DETAILS';detail.style.cssText=button.style.cssText;
-    detail.onclick=()=>{const d=service.diagnostics;alert('Apple store: '+catalogState+'\nBuild: '+(d.build||'unknown')+'\nProducts: '+(d.returnedCount||0)+' / 6\nPayments allowed: '+(d.canMakePayments??'unknown')+'\nReceipt: '+(d.receiptKind||'unknown')+'\nMissing: '+(d.missingItems||[]).join(', ')+'\nError: '+(d.errorDomain?d.errorDomain+' '+d.errorCode:d.errorMessage||'none'))};
+    detail.onclick=()=>{const d=service.diagnostics;alert('Apple store: '+catalogState+'\nBuild: '+(d.build||'unknown')+'\nProducts: '+(d.returnedCount||0)+' / 6\nPayments allowed: '+(d.canMakePayments??'unknown')+'\nCatalog response: '+(d.status||(d.returnedCount?'products returned':'no products returned'))+'\nReceipt: '+(d.receiptKind||'unknown')+'\nMissing: '+(d.missingItems||[]).join(', ')+'\nError: '+(d.errorDomain?d.errorDomain+' '+d.errorCode:d.errorMessage||'none'))};
     host.after(status,retry,detail);
     const sync=()=>{status.textContent=service.storeMessage;retry.hidden=catalogState==='ready';retry.disabled=catalogState==='loading'||busy;detail.hidden=window.N99AdConfig?.mode!=='test'};
     window.addEventListener('n99:entitlements',sync);sync();

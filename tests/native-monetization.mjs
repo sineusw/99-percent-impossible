@@ -24,6 +24,22 @@ function adWindow({pass=false,prepare=async()=>{},production=false,permission=tr
  return {w,events,timers,requests,get initializationOptions(){return initializationOptions},get shows(){return shows},get removed(){return removed},get initializes(){return initializes}};
 }
 {
+ const a=adWindow();
+ a.w.localStorage.setItem('n99_petty_voice','1');
+ let utterance;
+ a.w.SpeechSynthesisUtterance=class {};
+ a.w.speechSynthesis={cancel(){},speak(value){utterance=value}};
+ a.w.N99Ads.tryOpenPendingAd();
+ a.w.N99Ads.forceOpenOrSkipAd();
+ await flush();
+ check('An ad cannot present while Petty is speaking',()=>assert.equal(a.shows,0));
+ utterance.onend();
+ await flush();
+ check('Petty finishing releases exactly one ad',()=>assert.equal(a.shows,1));
+ a.events.interstitialAdDismissed();
+ await a.w.happyDOM.close();
+}
+{
  const a=adWindow();a.w.N99Ads.tryOpenPendingAd();a.w.N99Ads.forceOpenOrSkipAd();a.w.N99Ads.forceOpenOrSkipAd();await flush();
  check('One native presentation despite repeated force-open',()=>assert.equal(a.shows,1));
  check('Presented ad stays locked without gameplay timeout',()=>{assert.equal(a.w.N99Ads.boundaryLocked,true);assert.ok(![...a.timers.values()].some(t=>t.ms===15000))});
