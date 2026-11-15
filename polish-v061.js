@@ -70,6 +70,10 @@
       'Fine. Run it back.'
     ];
     const text=lines[Math.floor(Math.random()*lines.length)];
-    setTimeout(()=>window.PettyPersonality.speak(text),180);
+    setTimeout(()=>{
+      if(!q('#modal')?.classList.contains('hide'))return;
+      if((window.N99Character?.get?.()||'petty')!=='petty')return;
+      window.PettyPersonality.speak(text);
+    },180);
   },true);
 })();
