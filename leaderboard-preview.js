@@ -44,14 +44,87 @@
     mick: ['You made the cut, mate. Have another crack.', 'Top hundred! That’s a bloody good run.', 'Top fifty, mate. Keep the pressure on.', 'Twenty-five. The field’s getting thin.', 'Top ten! The rest better warm up.', 'Top five. Nearly at the pointy end.', 'On the podium, mate. Take a bow.']
   };
 
+  const contextRoasts = {
+    petty: [
+      'It’s {day}. I had plans to underestimate you.',
+      '{date}. Mark it down. I’m only admitting this once.',
+      'It’s {time} and you’re making this everybody’s problem.',
+      '{part}? Your thumb has a more demanding schedule than I do.',
+      'On a {day}, too. You really couldn’t leave well enough alone.',
+      'You picked {date} to start drama with a scoreboard.',
+      '{time} on a {day}. Of course this is what you’re doing.',
+      'Honestly, I expected a quieter {part}.'
+    ],
+    daisy: [
+      'You picked a {day} to give us all something to talk about.',
+      'Put {date} in your calendar. I want a rematch.',
+      'It’s {time}. I see your thumb clocked in before the rest of you.',
+      'Well, that woke up my {part}.',
+      'A little {day} scoreboard drama. I love it.',
+      '{date} just became a lot more interesting.',
+      '{time} on a {day}? I admire the commitment to chaos.',
+      'There goes my quiet {part}.'
+    ],
+    mick: [
+      'Bit of scoreboard drama for a {day}, mate.',
+      'Circle {date}, mate. This one’s worth remembering.',
+      '{time}? Your thumb’s putting in overtime.',
+      'Thought we were having a quiet {part}, mate.',
+      'That’s one way to spend a {day}.',
+      'Fancy picking {date} to stir up the board.',
+      '{time} on a {day}. You’re keeping odd hours, mate.',
+      'Oi, leave some action for the rest of the {part}.'
+    ]
+  };
+  const holidayRoasts = {
+    petty: ['On {holiday}, too. Apparently the leaderboard doesn’t get a day off.', 'Happy {holiday}. I got you a rank and very conditional respect.', 'You brought scoreboard drama to {holiday}. Bold.'],
+    daisy: ['Happy {holiday}! You brought the entertainment.', 'A little {holiday} chaos looks good on you.', 'Well, there’s our {holiday} highlight.'],
+    mick: ['Happy {holiday}, mate. The scoreboard’s working the holiday shift.', 'A bit of {holiday} competition never hurt anybody.', 'Save some energy for {holiday}, mate.']
+  };
+
+  function localContext(now) {
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+    const weekday = now.getDay();
+    const holidays = {
+      '1-1': 'New Year’s Day', '2-14': 'Valentine’s Day',
+      '7-4': 'the Fourth of July', '10-31': 'Halloween',
+      '12-24': 'Christmas Eve', '12-25': 'Christmas', '12-31': 'New Year’s Eve'
+    };
+    const hours = now.getHours();
+    return {
+      day: now.toLocaleDateString('en-US', { weekday: 'long' }),
+      date: now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+      time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      part: hours < 5 ? 'late night' : hours < 12 ? 'morning' : hours < 18 ? 'afternoon' : 'evening',
+      holiday: holidays[`${month}-${day}`] || (month === 11 && weekday === 4 && day >= 22 && day <= 28 ? 'Thanksgiving' : '')
+    };
+  }
+
+  function nextIndex(key, count) {
+    let index = 0;
+    try {
+      index = Number(localStorage.getItem(key)) % count || 0;
+      localStorage.setItem(key, String((index + 1) % count));
+    } catch {}
+    return index;
+  }
+
+  function personalize(voice, now) {
+    const context = localContext(now);
+    const useHoliday = context.holiday && nextIndex(`n99-demo-holiday:${voice}:${context.date}`, 3) === 0;
+    const pool = useHoliday ? holidayRoasts[voice] : contextRoasts[voice];
+    return pool[nextIndex(`n99-demo-context:${voice}:${useHoliday ? 'holiday' : 'regular'}`, pool.length)]
+      .replace(/\{(\w+)\}/g, (_, name) => context[name]);
+  }
+
   function pickLine(voice, category, milestone) {
     const pool = category === 'milestone'
       ? [milestoneLines[voice][[1000, 100, 50, 25, 10, 5, 3].indexOf(milestone)], ...lines[voice].milestone]
       : lines[voice][category];
     const key = `n99-demo-voice:${voice}:${category}:${milestone ?? ""}`;
-    const index = Number(localStorage.getItem(key)) % pool.length || 0;
-    localStorage.setItem(key, String((index + 1) % pool.length));
-    return pool[index].replace('{rank}', milestone);
+    const line = pool[nextIndex(key, pool.length)].replace('{rank}', milestone);
+    return `${line} ${personalize(voice, new Date())}`;
   }
 
   window.addEventListener('n99:result', ({ detail }) => {
