@@ -55,7 +55,9 @@ jobs:
       # That run also discarded its temporary private key.
       # 345ZT433F3 signed processed/approved CI build 433688263061;
       # its temporary private key was discarded as well.
-      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A,5KD7Z889T9,42GA2RC27U,345ZT433F3,4773DSMT2B,274GVYGT72,7P6C4D882U
+      # X356PZQ4R5 signed CI build 436868618131, verified READY_FOR_SALE.
+      # Its temporary CI private key was discarded; unrelated certificates stay intact.
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A,5KD7Z889T9,42GA2RC27U,345ZT433F3,4773DSMT2B,274GVYGT72,7P6C4D882U,X356PZQ4R5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
