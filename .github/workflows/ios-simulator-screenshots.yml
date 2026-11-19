@@ -39,8 +39,12 @@ on:
         description: 'Enable the beta link after validation and Apple eligibility'
         type: boolean
         default: false
+      testflight_marketing_version:
+        description: 'Expected marketing version of the selected beta build'
+        type: string
+        default: '1.0.1'
       testflight_build_number:
-        description: 'Exact uploaded 1.0.1 build number'
+        description: 'Exact uploaded build number'
         type: string
         default: ''
   push:
@@ -94,6 +98,7 @@ jobs:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+          TESTFLIGHT_MARKETING_VERSION: ${{ inputs.testflight_marketing_version }}
           TESTFLIGHT_BUILD_NUMBER: ${{ inputs.testflight_build_number }}
           TESTFLIGHT_SUBMIT_REVIEW: ${{ inputs.submit_testflight_review }}
           TESTFLIGHT_ENABLE_DISTRIBUTION: ${{ inputs.enable_testflight_distribution }}

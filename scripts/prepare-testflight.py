@@ -58,8 +58,9 @@ def main():
     build = result['data'][0]
     version_id = build['relationships']['preReleaseVersion']['data']['id']
     version = next(p for p in result['included'] if p['id'] == version_id)['attributes']['version']
-    if version != '1.0.1':
-        raise ValueError('This helper accepts only the explicitly prepared 1.0.1 test candidate.')
+    expected_version = os.environ.get('TESTFLIGHT_MARKETING_VERSION', '1.0.1')
+    if version != expected_version:
+        raise ValueError('Selected build does not match the explicitly requested marketing version.')
     if build['attributes']['processingState'] != 'VALID':
         print(json.dumps({'build': number, 'processingState': build['attributes']['processingState']}))
         return
