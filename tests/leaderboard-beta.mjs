@@ -1,0 +1,14 @@
+import {Window} from 'happy-dom';
+import vm from 'node:vm';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const script=fs.readFileSync(new URL('../leaderboard-preview.js',import.meta.url),'utf8');
+function setup(enabled){const w=new Window({url:'http://localhost/'});w.document.write('<section id="home"></section><div id="modal"><button id="retry">Retry</button></div>');w.N99LeaderboardPreviewEnabled=enabled;w.N99Character={get:()=>w.character||'petty'};vm.runInContext(script,vm.createContext(w));return w;}
+const off=setup(false);assert.equal(off.document.querySelector('.rank-reveal'),null);off.close();
+const w=setup(true);assert.ok(w.document.querySelector('.leaderboard-preview'));
+function result(value){w.dispatchEvent(new w.CustomEvent('n99:result',{detail:value}));return w.N99LeaderboardLine(value);}
+const suspicious={rawScore:1,isSuspicious:true};assert.equal(result(suspicious),null);assert.equal(w.document.querySelector('.rank-reveal').textContent,'');
+let first,second;
+for(const character of ['petty','daisy','mick']){w.character=character;let texts=[];for(let i=0;i<13;i++){const data={game:'timer',rawScore:1,isPerfect:true};const line=result(data);assert.ok(line);texts.push(line);assert.match(w.document.querySelector('.rank-reveal').textContent,/DEMO RANK/);assert.equal(w.N99LeaderboardLine({}),null);}assert.ok(new Set(texts).size>3);if(character==='petty'){first=texts;assert.ok(texts.some(x=>x.includes('ninety-nine')||x.includes('roast ready')||x.includes('clap once')));}else{assert.notDeepEqual(texts,first);}}
+const bad={rawScore:NaN};assert.equal(result(bad),null);
+w.close();console.log('Leaderboard beta: gating, visible sample labels, invalid-score exclusion, rank milestones, per-character variety and result identity passed');

@@ -1,0 +1,1 @@
+window.N99LeaderboardPreviewEnabled=false;

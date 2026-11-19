@@ -7,6 +7,10 @@ on:
         description: 'Upload a test build only; do not submit to App Review or notify testers'
         type: boolean
         default: true
+      leaderboard_preview:
+        description: 'Include visible sample-rank leaderboard preview for beta testing'
+        type: boolean
+        default: false
       marketing_version:
         description: 'Test build marketing version'
         type: string
@@ -39,6 +43,7 @@ jobs:
       BUNDLE_ID: com.pettygamesstudios.ninetynineimpossible
       RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.marketing_version || '1.0.1' }}
       TESTFLIGHT_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.testflight_only == true }}
+      N99_LEADERBOARD_PREVIEW: ${{ github.event_name == 'workflow_dispatch' && inputs.leaderboard_preview == true }}
       N99_AD_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.ad_mode || 'production' }}
       TEAM_ID: FHGP486J8U
       # 8LDD86ULMQ was generated in this repo's ephemeral keychain by run
@@ -57,7 +62,9 @@ jobs:
       # its temporary private key was discarded as well.
       # X356PZQ4R5 signed CI build 436868618131, verified READY_FOR_SALE.
       # Its temporary CI private key was discarded; unrelated certificates stay intact.
-      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A,5KD7Z889T9,42GA2RC27U,345ZT433F3,4773DSMT2B,274GVYGT72,7P6C4D882U,X356PZQ4R5
+      # 979987DUBW signed processed BETA_APPROVED build 445893933221.
+      # The CI-only private key was discarded with that runner.
+      STALE_DISTRIBUTION_CERT_IDS: 788LUV25T6,X69A9HLTP4,8LDD86ULMQ,ZSZ95M9BQB,PXZ7735A4A,5KD7Z889T9,42GA2RC27U,345ZT433F3,4773DSMT2B,274GVYGT72,7P6C4D882U,X356PZQ4R5,979987DUBW
     steps:
       - name: Checkout
         uses: actions/checkout@v4

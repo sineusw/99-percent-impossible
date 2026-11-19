@@ -1,6 +1,6 @@
 // Opt-in fixture for reviewing leaderboard presentation before connecting ranked scores.
 (() => {
-  if (!new URLSearchParams(location.search).has('leaderboard-preview')) return;
+  if (!window.N99LeaderboardPreviewEnabled && !new URLSearchParams(location.search).has('leaderboard-preview')) return;
 
   const milestones = [1, 3, 5, 10, 25, 50, 100, 1000];
   const toggle = document.createElement('label');

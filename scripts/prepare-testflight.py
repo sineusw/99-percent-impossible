@@ -94,7 +94,7 @@ def main():
     else:
         api('/v1/betaAppLocalizations', {'data': {'type': 'betaAppLocalizations',
             'attributes': {'locale': 'en-US', **attrs}, 'relationships': {'app': rel('apps', APP)}}})
-    notes = 'Test all three games, repeated retry, sound/mute, interstitial loading/dismissal after several retries, six Apple sandbox purchases, voice/palette application, Rage Pass, and Restore Apple Purchases. Physical iPhone QA is pending.'
+    notes = 'Leaderboard beta: sample rank climbs, milestones, rotating Petty/Daisy/Mick reactions and local day/holiday commentary. Demo ranks are not live worldwide standings. Test all three games, repeated retry, sound/mute, interstitial loading/dismissal after several retries, six Apple sandbox purchases, voice/palette application, Rage Pass, and Restore Apple Purchases. Physical iPhone QA is pending.'
     build_localizations = api('/v1/builds/' + identifier + '/betaBuildLocalizations')['data']
     english_build = next((p for p in build_localizations if p['attributes']['locale'] == 'en-US'), None)
     if english_build:

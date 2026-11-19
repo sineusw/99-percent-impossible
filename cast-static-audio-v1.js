@@ -109,6 +109,10 @@ function unlock(character=currentCharacter()){
 synth.cancel=function(){return stopAll()};
 
 synth.speak=function(utterance){
+  if(window.Capacitor?.isNativePlatform?.() && window.N99LeaderboardLine?.(window.N99Result) === utterance?.text && window.N99LeaderboardSpeech){
+    stopAll();
+    return window.N99LeaderboardSpeech.speak(utterance);
+  }
   const character=currentCharacter();
   if(character==='petty')return priorSpeak(utterance);
   const text=String(utterance?.text||'').trim();
