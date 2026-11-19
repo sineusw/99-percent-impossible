@@ -12,3 +12,17 @@ let first,second;
 for(const character of ['petty','daisy','mick']){w.character=character;let texts=[];for(let i=0;i<13;i++){const data={game:'timer',rawScore:1,isPerfect:true};const line=result(data);assert.ok(line);texts.push(line);assert.match(w.document.querySelector('.rank-reveal').textContent,/DEMO RANK/);assert.equal(w.N99LeaderboardLine({}),null);}assert.ok(new Set(texts).size>3);if(character==='petty'){first=texts;assert.ok(texts.some(x=>x.includes('ninety-nine')||x.includes('roast ready')||x.includes('clap once')));}else{assert.notDeepEqual(texts,first);}}
 const bad={rawScore:NaN};assert.equal(result(bad),null);
 w.close();console.log('Leaderboard beta: gating, visible sample labels, invalid-score exclusion, rank milestones, per-character variety and result identity passed');
+// Native personalized lines must use the captured device engine, not localhost /api.
+const native=new Window({url:'http://localhost/'});
+let spoken=null;
+native.speechSynthesis={speak:u=>{spoken=u},cancel(){},getVoices:()=>[{lang:'en-AU',name:'Device AU'}]};
+native.Capacitor={isNativePlatform:()=>true};
+native.N99Character={get:()=> 'mick'};
+native.N99Result={game:'timer'};
+native.N99LeaderboardLine=()=> 'Top ten, mate. It is Thursday.';
+native.fetch=()=>{throw Error('Native leaderboard must not fetch web voice endpoint')};
+const nativeContext=vm.createContext(native);
+for(const file of ['leaderboard-speech.js','cast-static-audio-v1.js'])vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),nativeContext);
+const utterance={text:native.N99LeaderboardLine()};native.speechSynthesis.speak(utterance);
+assert.equal(spoken,utterance);assert.equal(spoken.lang,'en-AU');
+console.log('Native leaderboard commentary reaches the device speech engine');
