@@ -2,6 +2,16 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Latest beta delivery — November 19, 2026
+
+This section supersedes the older release matrix below. Fresh Apple inspection [44588795284](https://github.com/sineusw/99-percent-impossible/actions/runs/44588795284) confirms production version 1.0.1/build 436868618131 is READY_FOR_SALE and API access works. This branch remains unmerged into main.
+
+The owner requested the current gameplay and monetization changes in TestFlight. Uploaded **1.0.2 / 445893933221**, source b4874c2, via successful signed/export-verified [44589393322](https://github.com/sineusw/99-percent-impossible/actions/runs/44589393322). It includes paid catalog recovery, Petty voice-caption synchronization, commentary-aware ad timing, settled StoreKit purchase retries and consent controls. QA uses official Google test ads. Local gameplay/voice/commerce/privacy/catalog checks and shipped audio validation passed; physical validation of this new binary is pending.
+
+Apple processing completed. Beta submission 0d823be5-3918-49c6-8d58-eb1a3e9ee41f was created by [44590603171](https://github.com/sineusw/99-percent-impossible/actions/runs/44590603171); resulting state **WAITING_FOR_BETA_REVIEW**. External distribution is not yet available. Once approved, rerun prepare-testflight selecting marketing version 1.0.2 and exact build 445893933221 with distribution enabled. Existing link: https://testflight.apple.com/join/4PTBzRTD . No new App Store submission or tester notifications were sent.
+
+Apple rejected a new beta submission of published 1.0.1, requiring a new marketing version. Beta preparation now validates an explicitly supplied expected version (default remains 1.0.1). Signing recovered from certificate quota by retiring only X356PZQ4R5, proven from previous CI logs to sign the processed/published 436868618131 with a discarded ephemeral private key. Unrelated certificates were preserved.
+
 ## Current release matrix — November 14, 2026
 
 This matrix supersedes historical current/pending statements in the sections below.
