@@ -37,4 +37,28 @@ w.fetch=async()=>new Response(new Uint8Array([73,68,51]),{headers:{'Content-Type
 assert.equal(await w.preloadPettyVoice('Bad'),true);ok('Failed audio request can be retried',()=>{});
 await w.happyDOM.abort();w.close();
 }
+const resultWindow=new Window({url:'https://'+host});
+resultWindow.document.body.innerHTML='<div id="modal" class="hide"><div id="mg">REACTION TEST</div><div id="ms">370ms</div><div id="mr"></div></div>';
+const spoken=[];
+resultWindow.SpeechSynthesisUtterance=class { constructor(text){this.text=text} };
+resultWindow.speechSynthesis={getVoices:()=>[],cancel(){},speak(utterance){spoken.push(utterance.text)}};
+const resultContext=vm.createContext(resultWindow);
+for(const script of ['petty.js','petty-color-sync-v092.js']){
+  vm.runInContext(fs.readFileSync(new URL('../'+script,import.meta.url),'utf8'),resultContext);
+}
+resultWindow.PettyPersonality.speak('Earlier retry commentary');
+resultWindow.document.querySelector('#modal').classList.remove('hide');
+await resultWindow.happyDOM.waitUntilComplete();
+const caption=resultWindow.document.querySelector('.petty-aside');
+ok('A result replaces earlier commentary with its exact caption',()=>{
+  assert.equal(spoken.length,2);
+  assert.equal(spoken[1],caption.textContent);
+});
+caption.textContent='Wait for green.';
+resultWindow.N99Cosmetics={activeId:()=>'gold',THEMES:{gold:{targetName:'GOLD'}}};
+resultWindow.N99PettyColorSync.sync();
+ok('Palette changes leave previously displayed captions intact',()=>{
+  assert.equal(caption.textContent,'Wait for green.');
+});
+resultWindow.close();
 console.log(count+' audio checks passed');

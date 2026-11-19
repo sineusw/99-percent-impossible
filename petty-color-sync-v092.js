@@ -25,14 +25,8 @@
     });
   }
 
-  function syncVisible(){
-    const color=activeColor();
-    document.querySelectorAll('.petty-aside,.petty-pop').forEach(el=>{
-      if(el?.textContent)el.textContent=el.textContent.replace(COLORS,color);
-    });
-  }
-
-  function sync(){syncPools();syncVisible()}
+  // Keep displayed lines paired with the audio already requested for them.
+  function sync(){syncPools()}
 
   setTimeout(sync,0);
   setTimeout(sync,250);

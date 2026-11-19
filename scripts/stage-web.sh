@@ -7,7 +7,7 @@ mkdir -p dist
 # folders out of the payload.
 for item in *; do
   case "$item" in
-    api|dist|ios|node_modules|scripts|tests|package.json|package-lock.json|capacitor.config.json|vercel.json)
+    api|dist|ios|native|native-monetization.json|node_modules|scripts|tests|package.json|package-lock.json|capacitor.config.json|vercel.json)
       continue
       ;;
   esac
@@ -16,3 +16,4 @@ done
 
 # Capacitor requires an index.html entry point.
 test -f dist/index.html
+node scripts/configure-ad-runtime.mjs

@@ -88,11 +88,14 @@
     !st.locked &&
     (st.g==='timer'||st.g==='stop');
 
-  function alignTimerToPhysicalPress(e){
-    if(st.g!=='timer'||!st.start)return;
+  function physicalPressTime(e){
     const now=performance.now();
     const rawTs=Number(e.timeStamp);
-    const eventNow=Number.isFinite(rawTs)&&Math.abs(rawTs-now)<60000?rawTs:now;
+    return Number.isFinite(rawTs)&&Math.abs(rawTs-now)<60000?rawTs:now;
+  }
+
+  function alignTimerToPhysicalPress(eventNow){
+    if(st.g!=='timer'||!st.start)return;
     const elapsed=Math.max(0,eventNow-st.start);
     st.start=performance.now()-elapsed;
   }
@@ -101,10 +104,11 @@
     if(!isPrecisionStop())return false;
     e.preventDefault?.();
     stopGestureActive=true;
-    alignTimerToPhysicalPress(e);
+    const at=physicalPressTime(e);
+    alignTimerToPhysicalPress(at);
     audio();
     if(st.g==='timer')timerStop();
-    else stopStop();
+    else stopStop(at);
     return true;
   }
 

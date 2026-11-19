@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 const read=name=>fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
 let checks=0;
 function check(name,value){assert.ok(value,name);console.log('PASS',name);checks++}
-for(const [query,expected] of [['',false],['?adtest=1',true],['?adtest=1&noads=1',false]]){
+for(const [query,expected] of [['',false],['?adtest=1',false],['?adtest=1&noads=1',false]]){
  const w=new Window({url:'https://example.test/'+query});const ctx=vm.createContext(w);
  w.document.write('<div id="tot">8</div><div id="modal" class="hide"></div><button id="retry">RETRY</button>');
  vm.runInContext(read('ads.js'),ctx);

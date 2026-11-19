@@ -1,0 +1,6 @@
+{
+  "name": "@n99/storekit",
+  "version": "1.0.0",
+  "main": "index.js",
+  "capacitor": { "ios": { "src": "ios" } }
+}
