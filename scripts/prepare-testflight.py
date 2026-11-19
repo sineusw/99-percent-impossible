@@ -137,6 +137,7 @@ def main():
             if all_groups.get('links', {}).get('next'):
                 raise SystemExit('Cannot establish the complete notification audience; testing start held.')
             empty = True
+            recipients = set()
             for linked_group in all_groups.get('data', []):
                 assigned = api('/v1/betaGroups/' + linked_group['id'] + '/builds?limit=200')
                 if assigned.get('links', {}).get('next'):
@@ -144,12 +145,20 @@ def main():
                 if not any(row['id'] == identifier for row in assigned.get('data', [])):
                     continue
                 audience = api('/v1/betaGroups/' + linked_group['id'] + '/relationships/betaTesters?limit=200')
-                if audience.get('data') or audience.get('links', {}).get('next'):
+                if audience.get('links', {}).get('next'):
+                    raise SystemExit('Cannot establish notification recipients; testing start held.')
+                recipients.update(row['id'] for row in audience.get('data', []))
+                if audience.get('data'):
                     empty = False
-            if empty:
+            owner_email = os.environ.get('TESTFLIGHT_NOTIFY_OWNER_EMAIL', '').strip().lower()
+            owner_only = False
+            if owner_email and len(recipients) == 1:
+                tester = api('/v1/betaTesters/' + next(iter(recipients)))['data']
+                owner_only = tester['attributes'].get('email', '').strip().lower() == owner_email
+            if empty or owner_only:
                 api('/v1/buildBetaNotifications', {'data': {'type': 'buildBetaNotifications',
                     'relationships': {'build': rel('builds', identifier)}}}, 'POST')
-                print(json.dumps({'testingStartedForEmptyGroups': number, 'notificationRecipients': 0}), flush=True)
+                print(json.dumps({'testingStarted': number, 'notificationRecipients': len(recipients), 'verifiedOwnerOnly': owner_only}), flush=True)
                 state = api('/v1/builds/' + identifier + '/buildBetaDetail')['data']['attributes']['externalBuildState']
             else:
                 print(json.dumps({'testingStartHeld': number,
