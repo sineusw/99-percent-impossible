@@ -2,6 +2,10 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Leaderboard beta supersedes prior candidate — November 19, 2026
+
+**1.0.2 / 446317554281** includes all four leaderboard branches (scoring, theatrical rank climbs, three-character reaction variety and local date/holiday commentary), enabled directly in the native beta. The previous 445893933221 candidate omitted these changes. Source bccbef5; upload 44631755428; inspected actual IPA artifact 14582127737 with preview flag true and all leaderboard scripts present. Beta preparation 44632701324 returned BETA_APPROVED and assigned the existing TestFlight group. No tester notifications were sent. Rankings are explicitly sample fixtures, not a live global ranking service. Native dynamic rank reactions use device speech voices; normal character audio remains on existing transports. Full regression suite, dedicated leaderboard/native speech checks and an actual-round mobile browser capture passed. Physical iPhone testing is pending. See LEADERBOARD_BETA_QA.md and draft PR #34.
+
 ## Latest beta delivery — November 19, 2026
 
 This section supersedes the older release matrix below. Fresh Apple inspection [44588795284](https://github.com/sineusw/99-percent-impossible/actions/runs/44588795284) confirms production version 1.0.1/build 436868618131 is READY_FOR_SALE and API access works. This branch remains unmerged into main.
