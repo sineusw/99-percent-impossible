@@ -16,3 +16,7 @@ On iPhone:
 Verification: full gameplay/audio/store/privacy regression suite passed; leaderboard tests cover gating, sample labels, milestone reveals, per-character variety, result identity, and native speech routing without web API fetches. A 390×844 Chromium session completed a real timer round, captured the rank reveal and found Retry accessible with no page errors. This does not establish physical iPhone audio/haptics behavior.
 
 Apple processing completed and beta review approved the build. Preparation workflow 44632701324 returned BETA_APPROVED and associated it with the existing public tester group, https://testflight.apple.com/join/4PTBzRTD . Existing testers were not emailed. Open TestFlight and manually select version 1.0.2 / build 446317554281. Physical installation and feature/audio checks remain pending owner feedback.
+
+### Testing activated after owner reported missing update
+
+Preparation workflow 44634704099 verified that the full notification audience was the single owner tester, started testing, and confirmed **IN_BETA_TESTING** for build 446317554281. One standard Apple beta notification was issued to that verified owner. The earlier BETA_APPROVED/group-assigned status was insufficient to establish device availability; it is superseded by this activation result.
