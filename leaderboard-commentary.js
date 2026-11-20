@@ -13,10 +13,10 @@
         return { type: state.drops % 2 === 0 ? 'rank' : 'silent', streak: 0 };
       }
       state.rises++;
-      const band = to <= 10 ? 'top10' : to <= 100 ? 'top100' : 'field';
+      const band = to <= 100 ? 'top100' : 'field';
       if (state.band !== band) { state.band = band; state.turn = 0; }
       state.turn++;
-      const comment = band === 'top10' || (band === 'top100' ? state.turn % 3 !== 0 : state.turn % 2 === 1);
+      const comment = band === 'top100' ? state.turn % 3 !== 0 : state.turn % 2 === 1;
       return { type: comment ? 'rank' : 'roast', streak: state.rises };
     };
   }
