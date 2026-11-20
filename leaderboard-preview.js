@@ -12,11 +12,11 @@
   reveal.className = 'rank-reveal';
   reveal.setAttribute('aria-live', 'polite');
   document.getElementById('retry').before(reveal);
-  const ranks = [1204, 984, 943, 87, 48, 23, 9, 4, 3, 1, 7, 3, 1];
+  const ranks = [1204, 984, 943, 901, 880, 150, 101, 99, 98, 97, 96, 48, 23, 11, 10, 9, 8, 7, 5, 3, 1, 7, 9, 8, 7, 4, 3, 1];
   let step = 0;
   let previousResult;
   let reaction;
-  const dropCounts = new Map();
+  const decideCommentary = window.N99LeaderboardCommentary.create();
   window.N99LeaderboardLine = result => result === previousResult ? reaction : null;
   const lines = {
     petty: {
@@ -37,6 +37,12 @@
       milestone: ['Top {rank}! That’s a bloody good run.', 'Top {rank}, mate. The rest better warm up.', 'You cracked the top {rank}. Give yourself a minute.'],
       first: ['Top of the world this week, mate. Take a bow.', 'Number one. You’ve given everyone else homework.', 'Back the camera up, mate. That’s the whole world behind you.']
     }
+  };
+
+  const climbingLines = {
+    petty: ['You keep climbing. This is becoming a problem for my personality.', 'Another climb? You are making my insults age terribly.', 'Three climbs and counting. Fine. I am paying attention now.', 'You keep taking spots. Should I call security or your fan club?'],
+    daisy: ['You keep climbing! That is a proper run.', 'Another move up! Keep that momentum.', 'Look at this climbing streak. Everybody better practice.'],
+    mick: ['Still climbing, mate. Keep the pressure on.', 'Another overtake! You are making a habit of this.', 'That is a proper climb streak, mate. Keep going.']
   };
 
   const milestoneLines = {
@@ -120,7 +126,7 @@
   }
 
   function pickLine(voice, category, milestone) {
-    const pool = category === 'milestone'
+    const pool = category === 'streak' ? climbingLines[voice] : category === 'milestone'
       ? [milestoneLines[voice][[1000, 100, 50, 25, 10, 5, 3].indexOf(milestone)], ...lines[voice].milestone]
       : lines[voice][category];
     const key = `n99-demo-voice:${voice}:${category}:${milestone ?? ""}`;
@@ -143,14 +149,12 @@
       : to < from ? `↑ ${from - to} spots`
       : to > from ? `↓ ${to - from} spots` : 'Rank held';
     const voice = window.N99Character?.get?.() || 'petty';
-    const category = milestone === 1 ? 'first' : milestone ? 'milestone' : to < from ? 'climb' : 'drop';
-    if (to !== from && lines[voice]) {
-      const key = `${voice}:${detail.game}`;
-      const drops = to > from ? (dropCounts.get(key) || 0) + 1 : 0;
-      if (to > from) dropCounts.set(key, drops);
-      // An empty line deliberately suppresses both speech and the generic result roast.
-      reaction = to > from && drops % 2 === 1 ? '' : pickLine(voice, category, milestone);
-    }
+    const decision = decideCommentary(`${voice}:${detail.game}`, from, to);
+    const category = milestone === 1 ? 'first' : milestone ? 'milestone'
+      : decision?.streak >= 3 ? 'streak' : to < from ? 'climb' : 'drop';
+    if (lines[voice] && decision?.type === 'rank') reaction = pickLine(voice, category, milestone);
+    // null selects normal gameplay roasting; empty text intentionally stays silent.
+    if (decision?.type === 'silent') reaction = '';
     reveal.dataset.direction = to > from ? 'down' : 'up';
     reveal.dataset.milestone = milestone ?? '';
     const path = document.createElement('span');
