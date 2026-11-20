@@ -26,3 +26,14 @@ for(const file of ['leaderboard-speech.js','cast-static-audio-v1.js'])vm.runInCo
 const utterance={text:native.N99LeaderboardLine()};native.speechSynthesis.speak(utterance);
 assert.equal(spoken,utterance);assert.equal(spoken.lang,'en-AU');
 console.log('Native leaderboard commentary reaches the device speech engine');
+
+// Petty's rank changes must bypass device TTS and reach his actual audio transport.
+const petty=new Window({url:'http://localhost/'});let pettyAudio=null;
+petty.speechSynthesis={speak:u=>{pettyAudio=u},cancel(){},getVoices:()=>[]};
+petty.Capacitor={isNativePlatform:()=>true};petty.N99Character={get:()=> 'petty'};
+petty.N99Result={};petty.N99LeaderboardLine=()=> 'Somebody just lost their seat.';
+petty.N99LeaderboardSpeech={speak(){throw Error('Petty was incorrectly sent to device TTS')}};
+vm.runInContext(fs.readFileSync(new URL('../cast-static-audio-v1.js',import.meta.url),'utf8'),vm.createContext(petty));
+const pettyLine={text:petty.N99LeaderboardLine()};petty.speechSynthesis.speak(pettyLine);
+assert.equal(pettyAudio,pettyLine);petty.close();
+console.log('Petty rank changes retain the real Petty audio transport');

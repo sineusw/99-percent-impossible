@@ -109,7 +109,8 @@ function unlock(character=currentCharacter()){
 synth.cancel=function(){return stopAll()};
 
 synth.speak=function(utterance){
-  if(window.Capacitor?.isNativePlatform?.() && window.N99LeaderboardLine?.(window.N99Result) === utterance?.text && window.N99LeaderboardSpeech){
+  // Petty must retain his real voice player, including dynamic leaderboard lines.
+  if(currentCharacter()!=='petty' && window.Capacitor?.isNativePlatform?.() && window.N99LeaderboardLine?.(window.N99Result) === utterance?.text && window.N99LeaderboardSpeech){
     stopAll();
     return window.N99LeaderboardSpeech.speak(utterance);
   }
