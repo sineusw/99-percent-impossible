@@ -20,3 +20,11 @@ Apple processing completed and beta review approved the build. Preparation workf
 ### Testing activated after owner reported missing update
 
 Preparation workflow 44634704099 verified that the full notification audience was the single owner tester, started testing, and confirmed **IN_BETA_TESTING** for build 446317554281. One standard Apple beta notification was issued to that verified owner. The earlier BETA_APPROVED/group-assigned status was insufficient to establish device availability; it is superseded by this activation result.
+
+## Petty rank-change audio correction — November 20, 2026
+
+Owner reported no audible Petty on rank rises/falls in 446317554281. Found the native leaderboard route intercepted Petty before his actual voice player and sent dynamic lines to device TTS. The corrected route preserves Petty's existing runtime HTMLAudio/voice API transport; device TTS remains the Daisy/Mick dynamic-line fallback. The full regression suite and a targeted Petty-routing test pass. A request with Origin capacitor://localhost to the live Petty voice endpoint returned HTTP 200 audio/mpeg (7,958 bytes) and matching CORS for a rank-climb line.
+
+Replacement **1.0.2 / 448077898641**, source 21d7e3d, uploaded successfully via 44807789864. Independently inspected actual artifact 14662734710: corrected Petty branch is present and leaderboard preview remains enabled. Physical audibility still requires owner verification after installation.
+
+Audio-fix delivery: workflow 44812789471 successfully submitted and activated build **448077898641**, returning **IN_BETA_TESTING**. The single owner tester was verified before Apple sent the standard update notification. Install this build to physically verify Petty's rank-change speech; prior 446317554281 is superseded.
