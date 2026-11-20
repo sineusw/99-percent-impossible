@@ -9,7 +9,7 @@ const w=setup(true);assert.ok(w.document.querySelector('.leaderboard-preview'));
 function result(value){w.dispatchEvent(new w.CustomEvent('n99:result',{detail:value}));return w.N99LeaderboardLine(value);}
 const suspicious={rawScore:1,isSuspicious:true};assert.equal(result(suspicious),null);assert.equal(w.document.querySelector('.rank-reveal').textContent,'');
 let first,second;
-for(const character of ['petty','daisy','mick']){w.character=character;let texts=[];for(let i=0;i<13;i++){const data={game:'timer',rawScore:1,isPerfect:true};const line=result(data);assert.ok(line);texts.push(line);assert.match(w.document.querySelector('.rank-reveal').textContent,/DEMO RANK/);assert.equal(w.N99LeaderboardLine({}),null);}assert.ok(new Set(texts).size>3);if(character==='petty'){first=texts;assert.ok(texts.some(x=>x.includes('ninety-nine')||x.includes('roast ready')||x.includes('clap once')));}else{assert.notDeepEqual(texts,first);}}
+for(const character of ['petty','daisy','mick']){w.character=character;let texts=[];let drops=0;for(let i=0;i<39;i++){const data={game:'timer',rawScore:1,isPerfect:true};const line=result(data);if(w.document.querySelector('.rank-reveal').dataset.direction==='down'){drops++;assert.equal(line==='',drops%2===1);}else assert.ok(line);texts.push(line);assert.match(w.document.querySelector('.rank-reveal').textContent,/DEMO RANK/);assert.equal(w.N99LeaderboardLine({}),null);}assert.ok(new Set(texts).size>3);if(character==='petty'){first=texts;assert.ok(texts.some(x=>x.includes('ninety-nine')||x.includes('roast ready')||x.includes('clap once')));}else{assert.notDeepEqual(texts,first);}}
 const bad={rawScore:NaN};assert.equal(result(bad),null);
 w.close();console.log('Leaderboard beta: gating, visible sample labels, invalid-score exclusion, rank milestones, per-character variety and result identity passed');
 // Native personalized lines must use the captured device engine, not localhost /api.
@@ -37,3 +37,19 @@ vm.runInContext(fs.readFileSync(new URL('../cast-static-audio-v1.js',import.meta
 const pettyLine={text:petty.N99LeaderboardLine()};petty.speechSynthesis.speak(pettyLine);
 assert.equal(pettyAudio,pettyLine);petty.close();
 console.log('Petty rank changes retain the real Petty audio transport');
+// Exercise the actual caption/speech consumer, including silent drops.
+const paired=setup(true);paired.document.querySelector('#modal').insertAdjacentHTML('afterbegin','<div id="mg">PERFECT TIMER</div><div id="ms"></div><div id="mm"></div><div id="mr"></div><div id="att"></div>');
+const said=[];
+paired.speechSynthesis={speak:u=>{said.push(u.text);u.onend?.()},cancel(){},getVoices:()=>[]};
+paired.SpeechSynthesisUtterance=function(text){this.text=text};
+vm.runInContext(fs.readFileSync(new URL('../petty.js',import.meta.url),'utf8'),vm.createContext(paired));
+for(let i=0;i<26;i++){
+ const value={game:'timer',rawScore:1.1};paired.N99Result=value;
+ paired.dispatchEvent(new paired.CustomEvent('n99:result',{detail:value}));
+ const expected=paired.N99LeaderboardLine(value),before=said.length;
+ paired.document.querySelector('#ms').textContent='1.100s';paired.document.querySelector('#att').textContent=String(i+1);
+ await new Promise(resolve=>setTimeout(resolve,10));
+ if(expected===''){assert.equal(said.length,before);assert.equal(paired.document.querySelector('#mr').textContent,'');}
+ else {assert.equal(said.at(-1),expected);assert.equal(paired.document.querySelector('#mr').textContent,expected);}
+}
+paired.close();console.log('Actual result captions match spoken rank lines; alternate drops are silent without a generic fallback');

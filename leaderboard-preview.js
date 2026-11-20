@@ -16,6 +16,7 @@
   let step = 0;
   let previousResult;
   let reaction;
+  const dropCounts = new Map();
   window.N99LeaderboardLine = result => result === previousResult ? reaction : null;
   const lines = {
     petty: {
@@ -143,7 +144,13 @@
       : to > from ? `↓ ${to - from} spots` : 'Rank held';
     const voice = window.N99Character?.get?.() || 'petty';
     const category = milestone === 1 ? 'first' : milestone ? 'milestone' : to < from ? 'climb' : 'drop';
-    if (to !== from && lines[voice]) reaction = pickLine(voice, category, milestone);
+    if (to !== from && lines[voice]) {
+      const key = `${voice}:${detail.game}`;
+      const drops = to > from ? (dropCounts.get(key) || 0) + 1 : 0;
+      if (to > from) dropCounts.set(key, drops);
+      // An empty line deliberately suppresses both speech and the generic result roast.
+      reaction = to > from && drops % 2 === 1 ? '' : pickLine(voice, category, milestone);
+    }
     reveal.dataset.direction = to > from ? 'down' : 'up';
     reveal.dataset.milestone = milestone ?? '';
     const path = document.createElement('span');
