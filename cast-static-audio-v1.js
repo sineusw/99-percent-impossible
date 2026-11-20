@@ -109,6 +109,11 @@ function unlock(character=currentCharacter()){
 synth.cancel=function(){return stopAll()};
 
 synth.speak=function(utterance){
+  // Petty must retain his real voice player, including dynamic leaderboard lines.
+  if(currentCharacter()!=='petty' && window.Capacitor?.isNativePlatform?.() && window.N99LeaderboardLine?.(window.N99Result) === utterance?.text && window.N99LeaderboardSpeech){
+    stopAll();
+    return window.N99LeaderboardSpeech.speak(utterance);
+  }
   const character=currentCharacter();
   if(character==='petty')return priorSpeak(utterance);
   const text=String(utterance?.text||'').trim();
@@ -116,7 +121,8 @@ synth.speak=function(utterance){
   stopCast(true);
   const my=++seq;
   const file=`/assets/${character}-audio/${hashText(text)}.mp3`;
-  const a=new Audio(file);
+  const leaderboard = window.N99LeaderboardLine?.(window.N99Result) === text;
+  const a=new Audio(leaderboard ? undefined : file);
   a.preload='auto';
   a.playsInline=true;
   a.setAttribute('playsinline','');
@@ -125,8 +131,27 @@ synth.speak=function(utterance){
   a.onplay=()=>{if(my===seq)try{utterance.onstart?.({type:'start',engine:'cast-static-audio',character})}catch{}};
   a.onended=()=>{if(my===seq)finish('end',{character})};
   a.onerror=()=>{if(my===seq)finish('error',{character,file})};
+  async function playUtterance() {
+    if (leaderboard) {
+      const response = await fetch('/api/cast-voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ character, text })
+      });
+      if (!response.ok) throw new Error('Leaderboard voice unavailable');
+      const blob = await response.blob();
+      if (my !== seq) return;
+      a.src = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+    if (my === seq) await a.play();
+  }
   try{
-    const p=a.play();
+    const p=playUtterance();
     if(p&&typeof p.catch==='function')p.catch(()=>{if(my===seq)finish('error',{character,file,blocked:true})});
   }catch{if(my===seq)finish('error',{character,file,blocked:true})}
 };
