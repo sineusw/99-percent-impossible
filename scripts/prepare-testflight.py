@@ -42,7 +42,7 @@ def main():
     app = api('/v1/apps/' + APP)['data']
     if app['attributes']['bundleId'] != 'com.pettygamesstudios.ninetynineimpossible':
         raise ValueError('Wrong existing app')
-    for attempt in range(42):
+    for attempt in range(120):
         result = api('/v1/builds?filter[app]=' + APP + '&filter[version]=' + number + '&include=preReleaseVersion')
         rows = result.get('data', [])
         if len(rows) > 1:

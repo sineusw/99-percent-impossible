@@ -94,7 +94,7 @@ jobs:
   prepare-testflight:
     if: github.event_name == 'workflow_dispatch' && inputs.operation == 'prepare-testflight'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Prepare only the selected test build
