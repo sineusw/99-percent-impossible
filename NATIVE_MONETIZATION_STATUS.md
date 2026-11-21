@@ -2,6 +2,10 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Current rank visibility / responsiveness candidate — November 21, 2026
+
+**1.0.2 / 449564423561**, app source c2eb210, uploaded successfully via 44956442356. Owner reported missing rank on early attempts and broad lag. Rank now renders from startup and remains visible on unranked/false-start attempts without advancing standing. Removed delayed number reveal and forced layout, coalesced utility layouts, avoided unchanged hidden timer DOM writes, shortened near-miss presentation, and removed result backdrop blur. Full regressions and 4× CPU-throttled browser checks passed; actual exported IPA 14727711304 inspected. Physical iPhone responsiveness/audio latency is not yet verified. Apple processing/activation retry 44957377115 is pending; previous active beta remains 448384263331 until the new candidate is confirmed IN_BETA_TESTING. Details: LEADERBOARD_BETA_QA.md.
+
 ## Leaderboard beta supersedes prior candidate — November 19, 2026
 
 **1.0.2 / 446317554281** includes all four leaderboard branches (scoring, theatrical rank climbs, three-character reaction variety and local date/holiday commentary), enabled directly in the native beta. The previous 445893933221 candidate omitted these changes. Source bccbef5; upload 44631755428; inspected actual IPA artifact 14582127737 with preview flag true and all leaderboard scripts present. Beta preparation 44632701324 returned BETA_APPROVED and assigned the existing TestFlight group. No tester notifications were sent. Rankings are explicitly sample fixtures, not a live global ranking service. Native dynamic rank reactions use device speech voices; normal character audio remains on existing transports. Full regression suite, dedicated leaderboard/native speech checks and an actual-round mobile browser capture passed. Physical iPhone testing is pending. See LEADERBOARD_BETA_QA.md and draft PR #34.
