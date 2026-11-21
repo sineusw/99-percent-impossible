@@ -13,7 +13,20 @@
   reveal.setAttribute('aria-live', 'polite');
   document.getElementById('retry').before(reveal);
   const ranks = [1204, 984, 943, 901, 880, 150, 101, 99, 98, 97, 96, 48, 23, 11, 10, 9, 8, 7, 5, 3, 1, 7, 9, 8, 7, 4, 3, 1];
+  const rankStorageKey = 'n99-leaderboard-demo-step-v1';
   let step = 0;
+  try {
+    const saved = Number(localStorage.getItem(rankStorageKey));
+    if (Number.isInteger(saved) && saved >= 0 && saved < ranks.length) step = saved;
+  } catch {}
+  const homeRank = document.createElement('section');
+  homeRank.className = 'home-rank';
+  homeRank.setAttribute('aria-label', 'Your leaderboard preview rank');
+  homeRank.innerHTML = '<span>YOUR RANK</span><strong id="home-rank-value"></strong><small>Leaderboard preview · sample ranks</small>';
+  const home = document.getElementById('home');
+  const intro = home.querySelector('.sub');
+  if (intro) intro.after(homeRank); else home.prepend(homeRank);
+  const homeRankValue = homeRank.querySelector('strong');
   let previousResult;
   let reaction;
   const decideCommentary = window.N99LeaderboardCommentary.create();
@@ -145,6 +158,7 @@
     const from = ranks[step];
     step = step === ranks.length - 1 ? 1 : step + 1;
     const to = ranks[step];
+    try { localStorage.setItem(rankStorageKey, String(step)); } catch {}
 
     const milestone = milestones.find(limit => from > limit && to <= limit);
     const headline = milestone === 1 ? '#1 IN THE WORLD THIS WEEK'
@@ -166,6 +180,8 @@
     }
   }
   function renderRank(from, to, headline, milestone = null) {
+    const rankText = `#${to.toLocaleString('en-US')}`;
+    if (homeRankValue.textContent !== rankText) homeRankValue.textContent = rankText;
     reveal.dataset.direction = to > from ? 'down' : to < from ? 'up' : 'held';
     reveal.dataset.milestone = milestone ?? '';
     const path = document.createElement('span');

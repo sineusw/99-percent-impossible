@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const script=fs.readFileSync(new URL('../leaderboard-preview.js',import.meta.url),'utf8');
-function setup(enabled){const w=new Window({url:'http://localhost/'});w.document.write('<section id="home"></section><div id="modal"><button id="retry">Retry</button></div>');w.N99LeaderboardPreviewEnabled=enabled;w.N99Character={get:()=>w.character||'petty'};vm.runInContext(fs.readFileSync(new URL('../leaderboard-commentary.js',import.meta.url),'utf8'),vm.createContext(w));vm.runInContext(script,vm.createContext(w));return w;}
+function setup(enabled,savedStep){const w=new Window({url:'http://localhost/'});w.document.write('<section id="home"></section><div id="modal"><button id="retry">Retry</button></div>');if(savedStep!==undefined)w.localStorage.setItem('n99-leaderboard-demo-step-v1',String(savedStep));w.N99LeaderboardPreviewEnabled=enabled;w.N99Character={get:()=>w.character||'petty'};vm.runInContext(fs.readFileSync(new URL('../leaderboard-commentary.js',import.meta.url),'utf8'),vm.createContext(w));vm.runInContext(script,vm.createContext(w));return w;}
 const off=setup(false);assert.equal(off.document.querySelector('.rank-reveal'),null);off.close();
 const w=setup(true);assert.ok(w.document.querySelector('.leaderboard-preview'));
 function result(value){w.dispatchEvent(new w.CustomEvent('n99:result',{detail:value}));return w.N99LeaderboardLine(value);}
@@ -69,3 +69,10 @@ instant.document.querySelector('.rank-reveal').getBoundingClientRect=()=>{throw 
 for(const detail of [{game:'reaction',rawScore:null},{game:'reaction',rawScore:70,isSuspicious:true}]){instant.dispatchEvent(new instant.CustomEvent('n99:result',{detail}));assert.equal(instant.document.querySelector('.rank-current').textContent,'#1204');assert.match(instant.document.querySelector('.rank-reveal').textContent,/UNRANKED ATTEMPT/);assert.equal(instant.N99LeaderboardLine(detail),null);}
 instant.dispatchEvent(new instant.CustomEvent('n99:result',{detail:{game:'reaction',rawScore:250}}));assert.equal(instant.document.querySelector('.rank-current').textContent,'#984');instant.close();
 console.log('Cold start and false starts keep rank visible; invalid attempts do not move rank; no forced layout read');
+
+const homeRank=setup(true);assert.equal(homeRank.document.querySelector('#home-rank-value').textContent,'#1,204');
+homeRank.dispatchEvent(new homeRank.CustomEvent('n99:result',{detail:{game:'timer',rawScore:1.1}}));assert.equal(homeRank.document.querySelector('#home-rank-value').textContent,'#984');
+const savedStep=homeRank.localStorage.getItem('n99-leaderboard-demo-step-v1');homeRank.dispatchEvent(new homeRank.CustomEvent('n99:result',{detail:{game:'reaction',rawScore:null}}));assert.equal(homeRank.document.querySelector('#home-rank-value').textContent,'#984');homeRank.close();
+const restoredRank=setup(true,savedStep);assert.equal(restoredRank.document.querySelector('#home-rank-value').textContent,'#984');assert.equal(restoredRank.document.querySelector('.rank-current').textContent,'#984');restoredRank.close();
+const badSavedRank=setup(true,'bad');assert.equal(badSavedRank.document.querySelector('#home-rank-value').textContent,'#1,204');badSavedRank.close();
+console.log('Home rank updates immediately, survives reopening, and ignores unranked attempts or invalid saved data');
