@@ -2,6 +2,12 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Current Home rank / startup candidate — November 21, 2026
+
+Owner reports the prior rank/rendering beta is good apart from slight initial lag and requests Home rank visibility. **1.0.2 / 449582621811**, app source 3c17451, adds a prominent Home card that updates with valid results and restores the last sample rank after reopening. First-gesture outcome-audio warmup is spread across gestures (three elements initially rather than nine). Mute, delayed outcome playback, retries and priming/playback races are covered by tests. Full regressions passed; a real mobile Chromium round confirmed Home/result sync and persistence after reload.
+
+Upload 44958262181 succeeded. Exported IPA 14727978058 inspected. Apple preparation 44958491311 is waiting for ingestion/processing and is not yet confirmed IN_BETA_TESTING; previous active candidate remains 449564423561. No main merge or App Store submission. Physical startup improvement needs owner verification after update.
+
 ## Current rank visibility / responsiveness candidate — November 21, 2026
 
 **1.0.2 / 449564423561**, app source c2eb210, uploaded successfully via 44956442356. Owner reported missing rank on early attempts and broad lag. Rank now renders from startup and remains visible on unranked/false-start attempts without advancing standing. Removed delayed number reveal and forced layout, coalesced utility layouts, avoided unchanged hidden timer DOM writes, shortened near-miss presentation, and removed result backdrop blur. Full regressions and 4× CPU-throttled browser checks passed; actual exported IPA 14727711304 inspected. Physical iPhone responsiveness/audio latency is not yet verified. Apple processing/activation retry 44957377115 is pending; previous active beta remains 448384263331 until the new candidate is confirmed IN_BETA_TESTING. Details: LEADERBOARD_BETA_QA.md.
