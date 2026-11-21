@@ -7,7 +7,7 @@ function setup(enabled){const w=new Window({url:'http://localhost/'});w.document
 const off=setup(false);assert.equal(off.document.querySelector('.rank-reveal'),null);off.close();
 const w=setup(true);assert.ok(w.document.querySelector('.leaderboard-preview'));
 function result(value){w.dispatchEvent(new w.CustomEvent('n99:result',{detail:value}));return w.N99LeaderboardLine(value);}
-const suspicious={rawScore:1,isSuspicious:true};assert.equal(result(suspicious),null);assert.equal(w.document.querySelector('.rank-reveal').textContent,'');
+const suspicious={rawScore:1,isSuspicious:true};assert.equal(result(suspicious),null);assert.match(w.document.querySelector('.rank-reveal').textContent,/UNRANKED ATTEMPT/);assert.equal(w.document.querySelector('.rank-current').textContent,'#1204');
 let first,second;
 for(const character of ['petty','daisy','mick']){w.character=character;let texts=[];let drops=0;for(let i=0;i<39;i++){const data={game:'timer',rawScore:1,isPerfect:true};const line=result(data);if(w.document.querySelector('.rank-reveal').dataset.direction==='down'){drops++;assert.equal(line==='',drops%2===1);}else assert.notEqual(line,undefined);texts.push(line);assert.match(w.document.querySelector('.rank-reveal').textContent,/DEMO RANK/);assert.equal(w.N99LeaderboardLine({}),null);}assert.ok(new Set(texts).size>3);if(character==='petty'){first=texts;assert.ok(texts.some(x=>x?.includes('ninety-nine')||x?.includes('roast ready')||x?.includes('clap once')));}else{assert.notDeepEqual(texts,first);}}
 const bad={rawScore:NaN};assert.equal(result(bad),null);
@@ -64,3 +64,8 @@ console.log('Cadence verified: alternating field, two-thirds top100, two-thirds 
 const previewMix=setup(true);const previewLines=[];for(let i=0;i<4;i++){const d={game:'timer',rawScore:1};previewMix.dispatchEvent(new previewMix.CustomEvent('n99:result',{detail:d}));previewLines.push(previewMix.N99LeaderboardLine(d));}
 assert.ok(previewLines[0]);assert.equal(previewLines[1],null);assert.match(previewLines[2],/keep climbing|habit|three moves up/);assert.equal(previewLines[3],null);previewMix.close();
 console.log('Visible preview applies the cadence and sustained-climb reaction');
+const instant=setup(true);assert.equal(instant.document.querySelector('.rank-current').textContent,'#1204');
+instant.document.querySelector('.rank-reveal').getBoundingClientRect=()=>{throw Error('Synchronous layout forced during result')};
+for(const detail of [{game:'reaction',rawScore:null},{game:'reaction',rawScore:70,isSuspicious:true}]){instant.dispatchEvent(new instant.CustomEvent('n99:result',{detail}));assert.equal(instant.document.querySelector('.rank-current').textContent,'#1204');assert.match(instant.document.querySelector('.rank-reveal').textContent,/UNRANKED ATTEMPT/);assert.equal(instant.N99LeaderboardLine(detail),null);}
+instant.dispatchEvent(new instant.CustomEvent('n99:result',{detail:{game:'reaction',rawScore:250}}));assert.equal(instant.document.querySelector('.rank-current').textContent,'#984');instant.close();
+console.log('Cold start and false starts keep rank visible; invalid attempts do not move rank; no forced layout read');

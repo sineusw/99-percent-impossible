@@ -134,11 +134,14 @@
     return `${line} ${personalize(voice, new Date())}`;
   }
 
-  window.addEventListener('n99:result', ({ detail }) => {
-    reveal.replaceChildren();
+  function onResult({ detail }) {
     reaction = null;
     previousResult = detail;
-    if (!detail || !Number.isFinite(detail.rawScore) || detail.isSuspicious) return;
+    if (!detail) return;
+    if (!Number.isFinite(detail.rawScore) || detail.isSuspicious) {
+      renderRank(ranks[step], ranks[step], 'UNRANKED ATTEMPT · RANK UNCHANGED');
+      return;
+    }
     const from = ranks[step];
     step = step === ranks.length - 1 ? 1 : step + 1;
     const to = ranks[step];
@@ -155,7 +158,15 @@
     if (lines[voice] && decision?.type === 'rank') reaction = pickLine(voice, category, milestone);
     // null selects normal gameplay roasting; empty text intentionally stays silent.
     if (decision?.type === 'silent') reaction = '';
-    reveal.dataset.direction = to > from ? 'down' : 'up';
+    renderRank(from, to, headline, milestone);
+    if (vibration.checked && from !== to) {
+      navigator.vibrate?.(milestone === 1 ? [18, 65, 30, 65, 55]
+        : milestone && milestone <= 10 ? [20, 55, 36]
+        : milestone ? 32 : to < from ? 15 : 8);
+    }
+  }
+  function renderRank(from, to, headline, milestone = null) {
+    reveal.dataset.direction = to > from ? 'down' : to < from ? 'up' : 'held';
     reveal.dataset.milestone = milestone ?? '';
     const path = document.createElement('span');
     path.className = 'rank-previous';
@@ -169,12 +180,11 @@
     label.textContent = 'DEMO RANK';
     reveal.replaceChildren(label, path, current, heading);
     reveal.classList.remove('rank-animate');
-    reveal.getBoundingClientRect();
     reveal.classList.add('rank-animate');
-    if (vibration.checked && from !== to) {
-      navigator.vibrate?.(milestone === 1 ? [18, 65, 30, 65, 55]
-        : milestone && milestone <= 10 ? [20, 55, 36]
-        : milestone ? 32 : to < from ? 15 : 8);
-    }
-  });
+  }
+  renderRank(ranks[step], ranks[step], 'CURRENT RANK');
+  window.addEventListener('n99:result', onResult);
+  if (window.N99Result && !document.getElementById('modal')?.classList.contains('hide')) {
+    onResult({ detail: window.N99Result });
+  }
 })();

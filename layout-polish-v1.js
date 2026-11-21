@@ -100,7 +100,13 @@ function placeControls(){
   if(c&&c.parentElement===d&&s&&s.nextElementSibling!==c)d.appendChild(c);
 }
 
-const observer=new MutationObserver(()=>requestAnimationFrame(placeControls));
+let placementScheduled=false;
+function queuePlacement(){
+  if(placementScheduled)return;
+  placementScheduled=true;
+  requestAnimationFrame(()=>{placementScheduled=false;placeControls()});
+}
+const observer=new MutationObserver(queuePlacement);
 if(home)observer.observe(home,{attributes:true,attributeFilter:['class'],childList:true,subtree:false});
 if(game)observer.observe(game,{attributes:true,attributeFilter:['class'],childList:true,subtree:false});
 observer.observe(document.body,{childList:true,subtree:false});
