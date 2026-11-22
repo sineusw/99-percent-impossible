@@ -21,8 +21,17 @@ The original Teko (600/700) and Chakra Petch (500/600/700) families now ship as 
 
 Full gameplay, commerce, consent, real-character audio, rank cadence, live bridge, daily-goal persistence, cache and local metrics regressions passed. The daily test now also checks all three completed checkpoints and the completed ring.
 
-Headless Chromium at widths 320, 393 and 430 confirmed no horizontal overflow or page errors. Clicking all three mode illustrations opened the correct existing game; leaderboard and voice picker also opened. At 393px, the first game card moved from y=495 in the initial fallback-font prototype to y=369 with the bundled fonts and corrected privacy/footer order. This comparison is local render evidence, not an iPhone performance measurement.
+Headless Chromium at widths 320, 393 and 430 confirmed no horizontal overflow or page errors. Clicking all three mode illustrations opened the correct existing game; leaderboard and voice picker also opened. At 393px, the first game card moved from y=495 in the initial fallback-font prototype to y=372 in the final styling with the bundled fonts and corrected privacy/footer order. This comparison is local render evidence, not an iPhone performance measurement.
 
 Local screenshots: /workspace/output/home-redesign-393.png, /workspace/output/home-redesign-320.png, /workspace/output/home-redesign-430.png and /workspace/output/home-redesign-goals.png. Screenshots use a mocked signed-in but unranked Game Center bridge; no real network standings are asserted. Actual iPhone touch/layout remains to be verified in the next beta.
 
 No public App Store release or main merge is part of this work. Public web gameplay remains on its separate production source.
+
+
+## Export and additional render evidence
+
+Code source fd6a16a94d2cc4ef2a179f449d3171adcd791fe5 built as 1.0.2 (450580327671), upload workflow 45058032767. Signed archive and export checks passed. Downloaded artifact 14768322630 was inspected independently: the illustrated index, Home stylesheet, local font CSS and primary fonts, both font licenses, daily/rank markup and privacy policy match source. The Game Center plugin remains registered; sample ranks remain disabled.
+
+A second browser check completed the three goals using labeled local result fixtures: the ring reached zero remaining dash offset, all three checkpoints changed to complete, and the earned-title state appeared. Changing palette CSS variables changed illustration accents. The browser loaded the bundled Chakra Petch/Teko faces with zero Google Fonts network requests. These are UI/test-fixture observations, not real account purchases or global score submissions.
+
+Privacy-only commit 31ccd432dfb7fa3d3e684b1d9690a33c4e07a427 deployed READY as dpl_8H9DNa3twWj2wUsoEXKNra2a57MA, preserving the existing public gameplay source while clarifying bundled fonts versus older/web font requests. Exact TestFlight activation is tracked in workflow 45058115535 and must be read before declaring availability.
