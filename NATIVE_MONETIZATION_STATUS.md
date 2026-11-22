@@ -2,6 +2,12 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Current real-character leaderboard voice beta — November 21, 2026
+
+**1.0.2 / 449705266391**, app source 309c262, is confirmed **IN_BETA_TESTING** via 44970852315. Daisy/Mick rank speech now uses their configured ElevenLabs voice IDs through the native-compatible HTTPS cast endpoint; device-TTS fallback was removed. Their ordinary prerecorded gameplay lines and Petty's actual voice path are preserved. Home rank, saved sample position and startup/rendering improvements remain included. Full regressions passed; actual exported IPA 14733492015 inspected. Native/web endpoint selection, correct voice/model, validated/cached audio, CORS and rejection paths are tested. Physical iPhone playback remains pending owner verification.
+
+Server-only production fix 8a6aceb deployed READY as dpl_3Gaq3eJfmsyXN3TGQ6m4TftVDtLh. Real native-origin ElevenLabs audio returned HTTP 200 for both characters; homepage, app-ads.txt and privacy hashes unchanged. Existing server credential reused without decrypting or exposing it. Draft API PR #35 and beta PR #34 retain reviewable changes; main unmerged and no App Store submission.
+
 ## Current Home rank / startup candidate — November 21, 2026
 
 Owner reports the prior rank/rendering beta is good apart from slight initial lag and requests Home rank visibility. **1.0.2 / 449582621811**, app source 3c17451, adds a prominent Home card that updates with valid results and restores the last sample rank after reopening. First-gesture outcome-audio warmup is spread across gestures (three elements initially rather than nine). Mute, delayed outcome playback, retries and priming/playback races are covered by tests. Full regressions passed; a real mobile Chromium round confirmed Home/result sync and persistence after reload.
