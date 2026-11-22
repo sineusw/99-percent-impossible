@@ -12,20 +12,21 @@ let first,second;
 for(const character of ['petty','daisy','mick']){w.character=character;let texts=[];let drops=0;for(let i=0;i<39;i++){const data={game:'timer',rawScore:1,isPerfect:true};const line=result(data);if(w.document.querySelector('.rank-reveal').dataset.direction==='down'){drops++;assert.equal(line==='',drops%2===1);}else assert.notEqual(line,undefined);texts.push(line);assert.match(w.document.querySelector('.rank-reveal').textContent,/DEMO RANK/);assert.equal(w.N99LeaderboardLine({}),null);}assert.ok(new Set(texts).size>3);if(character==='petty'){first=texts;assert.ok(texts.some(x=>x?.includes('ninety-nine')||x?.includes('roast ready')||x?.includes('clap once')));}else{assert.notDeepEqual(texts,first);}}
 const bad={rawScore:NaN};assert.equal(result(bad),null);
 w.close();console.log('Leaderboard beta: gating, visible sample labels, invalid-score exclusion, rank milestones, per-character variety and result identity passed');
-// Native personalized lines must use the captured device engine, not localhost /api.
-const native=new Window({url:'http://localhost/'});
-let spoken=null;
-native.speechSynthesis={speak:u=>{spoken=u},cancel(){},getVoices:()=>[{lang:'en-AU',name:'Device AU'}]};
-native.Capacitor={isNativePlatform:()=>true};
-native.N99Character={get:()=> 'mick'};
-native.N99Result={game:'timer'};
-native.N99LeaderboardLine=()=> 'Top ten, mate. It is Thursday.';
-native.fetch=()=>{throw Error('Native leaderboard must not fetch web voice endpoint')};
-const nativeContext=vm.createContext(native);
-for(const file of ['leaderboard-speech.js','cast-static-audio-v1.js'])vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),nativeContext);
-const utterance={text:native.N99LeaderboardLine()};native.speechSynthesis.speak(utterance);
-assert.equal(spoken,utterance);assert.equal(spoken.lang,'en-AU');
-console.log('Native leaderboard commentary reaches the device speech engine');
+// Dynamic cast lines must use the actual character API on native and web.
+for(const nativeApp of [true,false])for(const character of ['daisy','mick']){
+ const cast=new Window({url:'http://localhost/'}),calls=[],audios=[];let deviceSpeech=0;
+ cast.speechSynthesis={speak(){deviceSpeech++},cancel(){},getVoices:()=>[]};
+ cast.Capacitor={isNativePlatform:()=>nativeApp};cast.N99Character={get:()=>character};cast.N99Result={};
+ cast.N99LeaderboardLine=()=> 'Up the leaderboard!';
+ cast.Audio=class{constructor(src){this.src=src;this.played=0;audios.push(this)}setAttribute(){}pause(){}play(){this.played++;this.onplay?.();return Promise.resolve()}};
+ cast.fetch=async(url,options)=>{calls.push({url,body:JSON.parse(options.body)});return{ok:true,blob:async()=>new cast.Blob([new Uint8Array([73,68,51])],{type:'audio/mpeg'})}};
+ vm.runInContext(fs.readFileSync(new URL('../cast-static-audio-v1.js',import.meta.url),'utf8'),vm.createContext(cast));
+ for(let i=0;i<2;i++){cast.speechSynthesis.speak({text:cast.N99LeaderboardLine()});for(let tries=0;tries<40&&!audios.at(-1).played;tries++)await new Promise(r=>setTimeout(r,2));assert.equal(audios.at(-1).played,1);assert.match(audios.at(-1).src,/^data:audio/);}
+ assert.equal(calls.length,1);assert.equal(calls[0].url,nativeApp?'https://99-percent-impossible.vercel.app/api/cast-voice':'/api/cast-voice');assert.equal(calls[0].body.character,character);assert.equal(calls[0].body.text,'Up the leaderboard!');assert.equal(deviceSpeech,0);
+ cast.speechSynthesis.speak({text:'A prerecorded game line'});assert.ok(audios.at(-1).src.startsWith('/assets/'+character+'-audio/'));assert.equal(calls.length,1);
+ await cast.happyDOM.abort();cast.close();
+}
+console.log('Daisy/Mick native and web rank audio uses real character API, validates/caches audio and preserves normal static playback');
 
 // Petty's rank changes must bypass device TTS and reach his actual audio transport.
 const petty=new Window({url:'http://localhost/'});let pettyAudio=null;

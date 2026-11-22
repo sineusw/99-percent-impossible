@@ -12,6 +12,28 @@ const priorCancel=synth.cancel.bind(synth);
 let activeAudio=null;
 let activeUtterance=null;
 let seq=0;
+const nativeApp=window.Capacitor?.isNativePlatform?.()||location.protocol==='capacitor:';
+const leaderboardEndpoint=nativeApp?'https://99-percent-impossible.vercel.app/api/cast-voice':'/api/cast-voice';
+const leaderboardCache=new Map();
+function leaderboardAudio(character,text){
+  const key=character+'\0'+text;
+  if(leaderboardCache.has(key))return leaderboardCache.get(key);
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),10000);
+  const request=fetch(leaderboardEndpoint,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({character,text}),signal:controller.signal
+  }).then(async response=>{
+    if(!response.ok)throw new Error('Leaderboard voice unavailable');
+    const blob=await response.blob();
+    if(!blob.size||!blob.type.startsWith('audio/'))throw new Error('Invalid character audio');
+    return blob;
+  }).catch(error=>{leaderboardCache.delete(key);throw error}).finally(()=>clearTimeout(timeout));
+  leaderboardCache.set(key,request);
+  if(leaderboardCache.size>30)leaderboardCache.delete(leaderboardCache.keys().next().value);
+  return request;
+}
+
 
 function hashText(text){
   let h=0x811c9dc5;
@@ -109,11 +131,6 @@ function unlock(character=currentCharacter()){
 synth.cancel=function(){return stopAll()};
 
 synth.speak=function(utterance){
-  // Petty must retain his real voice player, including dynamic leaderboard lines.
-  if(currentCharacter()!=='petty' && window.Capacitor?.isNativePlatform?.() && window.N99LeaderboardLine?.(window.N99Result) === utterance?.text && window.N99LeaderboardSpeech){
-    stopAll();
-    return window.N99LeaderboardSpeech.speak(utterance);
-  }
   const character=currentCharacter();
   if(character==='petty')return priorSpeak(utterance);
   const text=String(utterance?.text||'').trim();
@@ -133,13 +150,7 @@ synth.speak=function(utterance){
   a.onerror=()=>{if(my===seq)finish('error',{character,file})};
   async function playUtterance() {
     if (leaderboard) {
-      const response = await fetch('/api/cast-voice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ character, text })
-      });
-      if (!response.ok) throw new Error('Leaderboard voice unavailable');
-      const blob = await response.blob();
+      const blob = await leaderboardAudio(character,text);
       if (my !== seq) return;
       a.src = await new Promise((resolve, reject) => {
         const reader = new FileReader();
