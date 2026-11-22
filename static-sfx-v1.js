@@ -44,10 +44,13 @@ function play(name){
 // Kept for compatibility with the prior Timer-only workaround; now all games use the same pooled path.
 function playFresh(name){return play(name)}
 
-function prime(){
+let lastPrimeAt=-Infinity;
+function prime(event){
   if(!soundOn())return false;
-  Object.values(bank).forEach(pool=>pool.els.forEach(a=>{
-    if(warmed.has(a)||warming.has(a))return;
+  if(event){const now=performance.now();if(now-lastPrimeAt<120)return false;lastPrimeAt=now;}
+  Object.values(bank).forEach(pool=>{
+    const a=pool.els.find(candidate=>!warmed.has(candidate)&&!warming.has(candidate));
+    if(!a)return;
     const pending={volume:a.volume,src:a.src};
     warming.set(a,pending);
     // load() alone does not grant Safari permission to play a later outcome.
@@ -64,7 +67,7 @@ function prime(){
       const p=a.play();
       if(p?.then)p.then(()=>finish(true),()=>finish(false));else finish(true);
     }catch{finish(false)}
-  }));
+  });
   return true;
 }
 

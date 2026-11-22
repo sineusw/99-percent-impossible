@@ -85,13 +85,16 @@ audioWindow.Audio=class {
 vm.runInContext(read('static-sfx-v1.js'),vm.createContext(audioWindow));
 const flush=async()=>{await Promise.resolve();await Promise.resolve()};
 gesture=true;audioWindow.dispatchEvent(new audioWindow.Event('pointerdown'));gesture=false;await flush();
-check('Every pooled outcome element is warmed silently on a gesture',()=>{
+check('First gesture warms one silent element per outcome instead of all nine',()=>{
  assert.equal(elements.length,9);
- assert.ok(elements.every(a=>a.allowed&&a.plays.length===1&&a.plays[0]===0&&a.pauses===1&&a.volume>0));
- assert.ok(elements.every(a=>a.sources[0].startsWith('data:audio/wav;')&&a.src.startsWith('/assets/sfx/')));
+ assert.equal(elements.filter(a=>a.allowed).length,3);
+ assert.ok(Object.values(audioWindow.N99SFX.bank).every(pool=>pool.els[0].allowed&&pool.els[0].plays[0]===0&&pool.els[0].pauses===1&&pool.els[0].volume>0));
+ assert.ok(elements.filter(a=>a.allowed).every(a=>a.sources[0].startsWith('data:audio/wav;')&&a.src.startsWith('/assets/sfx/')));
 });
 audioWindow.dispatchEvent(new audioWindow.Event('click'));await flush();
-check('Compatibility click does not repeat a successful warmup',()=>assert.ok(elements.every(a=>a.plays.length===1)));
+check('Compatibility click does not add startup warmup work',()=>assert.equal(elements.reduce((n,a)=>n+a.plays.length,0),3));
+for(let round=0;round<2;round++){now+=130;gesture=true;audioWindow.dispatchEvent(new audioWindow.Event('pointerdown'));gesture=false;await flush();}
+check('Later gestures warm the remaining pooled elements',()=>assert.ok(elements.every(a=>a.allowed&&a.plays.length===1)));
 for(const name of ['fail','win','perfect']){
  audioWindow.N99SFX.play(name);await flush();
  check(`Delayed ${name} plays through its warmed outcome element`,()=>{
@@ -106,8 +109,8 @@ const retryAudio=new Window({url:'https://example.test/'});
 retryAudio.Audio=audioWindow.Audio;
 vm.runInContext(read('static-sfx-v1.js'),vm.createContext(retryAudio));
 rejectUnlock=true;gesture=true;retryAudio.dispatchEvent(new retryAudio.Event('pointerdown'));gesture=false;await flush();
-rejectUnlock=false;gesture=true;retryAudio.dispatchEvent(new retryAudio.Event('pointerdown'));gesture=false;await flush();
-check('Rejected media unlock retries on a later gesture',()=>assert.ok(Object.values(retryAudio.N99SFX.bank).every(pool=>pool.els.every(a=>a.allowed&&a.plays.length===2))));
+now+=130;rejectUnlock=false;gesture=true;retryAudio.dispatchEvent(new retryAudio.Event('pointerdown'));gesture=false;await flush();
+check('Rejected media unlock retries on a later gesture',()=>assert.ok(Object.values(retryAudio.N99SFX.bank).every(pool=>pool.els[0].allowed&&pool.els[0].plays.length===2&&pool.els.slice(1).every(a=>a.plays.length===0))));
 await retryAudio.happyDOM.close();
 const racingAudio=new Window({url:'https://example.test/'});
 racingAudio.Audio=audioWindow.Audio;

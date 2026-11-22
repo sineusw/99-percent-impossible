@@ -42,7 +42,7 @@ def main():
     app = api('/v1/apps/' + APP)['data']
     if app['attributes']['bundleId'] != 'com.pettygamesstudios.ninetynineimpossible':
         raise ValueError('Wrong existing app')
-    for attempt in range(18):
+    for attempt in range(120):
         result = api('/v1/builds?filter[app]=' + APP + '&filter[version]=' + number + '&include=preReleaseVersion')
         rows = result.get('data', [])
         if len(rows) > 1:
@@ -94,7 +94,7 @@ def main():
     else:
         api('/v1/betaAppLocalizations', {'data': {'type': 'betaAppLocalizations',
             'attributes': {'locale': 'en-US', **attrs}, 'relationships': {'app': rel('apps', APP)}}})
-    notes = 'Test all three games, repeated retry, sound/mute, interstitial loading/dismissal after several retries, six Apple sandbox purchases, voice/palette application, Rage Pass, and Restore Apple Purchases. Physical iPhone QA is pending.'
+    notes = 'Leaderboard beta: sample rank climbs, milestones, rotating Petty/Daisy/Mick reactions and local day/holiday commentary. Demo ranks are not live worldwide standings. Test all three games, repeated retry, sound/mute, interstitial loading/dismissal after several retries, six Apple sandbox purchases, voice/palette application, Rage Pass, and Restore Apple Purchases. Physical iPhone QA is pending.'
     build_localizations = api('/v1/builds/' + identifier + '/betaBuildLocalizations')['data']
     english_build = next((p for p in build_localizations if p['attributes']['locale'] == 'en-US'), None)
     if english_build:
@@ -137,6 +137,7 @@ def main():
             if all_groups.get('links', {}).get('next'):
                 raise SystemExit('Cannot establish the complete notification audience; testing start held.')
             empty = True
+            recipients = set()
             for linked_group in all_groups.get('data', []):
                 assigned = api('/v1/betaGroups/' + linked_group['id'] + '/builds?limit=200')
                 if assigned.get('links', {}).get('next'):
@@ -144,12 +145,20 @@ def main():
                 if not any(row['id'] == identifier for row in assigned.get('data', [])):
                     continue
                 audience = api('/v1/betaGroups/' + linked_group['id'] + '/relationships/betaTesters?limit=200')
-                if audience.get('data') or audience.get('links', {}).get('next'):
+                if audience.get('links', {}).get('next'):
+                    raise SystemExit('Cannot establish notification recipients; testing start held.')
+                recipients.update(row['id'] for row in audience.get('data', []))
+                if audience.get('data'):
                     empty = False
-            if empty:
+            owner_email = os.environ.get('TESTFLIGHT_NOTIFY_OWNER_EMAIL', '').strip().lower()
+            owner_only = False
+            if owner_email and len(recipients) == 1:
+                tester = api('/v1/betaTesters/' + next(iter(recipients)))['data']
+                owner_only = tester['attributes'].get('email', '').strip().lower() == owner_email
+            if empty or owner_only:
                 api('/v1/buildBetaNotifications', {'data': {'type': 'buildBetaNotifications',
                     'relationships': {'build': rel('builds', identifier)}}}, 'POST')
-                print(json.dumps({'testingStartedForEmptyGroups': number, 'notificationRecipients': 0}), flush=True)
+                print(json.dumps({'testingStarted': number, 'notificationRecipients': len(recipients), 'verifiedOwnerOnly': owner_only}), flush=True)
                 state = api('/v1/builds/' + identifier + '/buildBetaDetail')['data']['attributes']['externalBuildState']
             else:
                 print(json.dumps({'testingStartHeld': number,

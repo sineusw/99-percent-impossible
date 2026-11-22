@@ -13,3 +13,5 @@ if(testingDevices.some(id=>!/^[a-fA-F0-9]{32}$/.test(id)))throw new Error('Inval
 const runtime={mode,iosInterstitialAdUnitId:mode==='production'?unit:null,testingDevices};
 fs.writeFileSync('dist/native-ad-config.js','window.N99AdConfig=Object.freeze('+JSON.stringify(runtime)+');\n');
 console.log('Staged native ads mode: '+mode+'; test devices: '+testingDevices.length);
+
+fs.writeFileSync('dist/leaderboard-preview-config.js','window.N99LeaderboardPreviewEnabled='+String(process.env.N99_LEADERBOARD_PREVIEW==='true')+';\n');

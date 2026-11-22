@@ -39,6 +39,10 @@ on:
         description: 'Enable the beta link after validation and Apple eligibility'
         type: boolean
         default: false
+      testflight_notify_owner_email:
+        description: 'Start testing only if every notification goes to this single owner email; blank sends none'
+        type: string
+        default: ''
       testflight_marketing_version:
         description: 'Expected marketing version of the selected beta build'
         type: string
@@ -90,7 +94,7 @@ jobs:
   prepare-testflight:
     if: github.event_name == 'workflow_dispatch' && inputs.operation == 'prepare-testflight'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Prepare only the selected test build
@@ -98,6 +102,7 @@ jobs:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+          TESTFLIGHT_NOTIFY_OWNER_EMAIL: ${{ inputs.testflight_notify_owner_email }}
           TESTFLIGHT_MARKETING_VERSION: ${{ inputs.testflight_marketing_version }}
           TESTFLIGHT_BUILD_NUMBER: ${{ inputs.testflight_build_number }}
           TESTFLIGHT_SUBMIT_REVIEW: ${{ inputs.submit_testflight_review }}

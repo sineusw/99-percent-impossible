@@ -2,6 +2,26 @@
 
 PR #33 remains draft and unmerged. App identity is unchanged: `com.pettygamesstudios.ninetynineimpossible`, App Store ID `6809299092`. It includes PR #32's gameplay/audio fixes and preserves the web Stripe checkout/API handlers.
 
+## Current real-character leaderboard voice beta — November 21, 2026
+
+**1.0.2 / 449705266391**, app source 309c262, is confirmed **IN_BETA_TESTING** via 44970852315. Daisy/Mick rank speech now uses their configured ElevenLabs voice IDs through the native-compatible HTTPS cast endpoint; device-TTS fallback was removed. Their ordinary prerecorded gameplay lines and Petty's actual voice path are preserved. Home rank, saved sample position and startup/rendering improvements remain included. Full regressions passed; actual exported IPA 14733492015 inspected. Native/web endpoint selection, correct voice/model, validated/cached audio, CORS and rejection paths are tested. Physical iPhone playback remains pending owner verification.
+
+Server-only production fix 8a6aceb deployed READY as dpl_3Gaq3eJfmsyXN3TGQ6m4TftVDtLh. Real native-origin ElevenLabs audio returned HTTP 200 for both characters; homepage, app-ads.txt and privacy hashes unchanged. Existing server credential reused without decrypting or exposing it. Draft API PR #35 and beta PR #34 retain reviewable changes; main unmerged and no App Store submission.
+
+## Current Home rank / startup candidate — November 21, 2026
+
+Owner reports the prior rank/rendering beta is good apart from slight initial lag and requests Home rank visibility. **1.0.2 / 449582621811**, app source 3c17451, adds a prominent Home card that updates with valid results and restores the last sample rank after reopening. First-gesture outcome-audio warmup is spread across gestures (three elements initially rather than nine). Mute, delayed outcome playback, retries and priming/playback races are covered by tests. Full regressions passed; a real mobile Chromium round confirmed Home/result sync and persistence after reload.
+
+Upload 44958262181 succeeded. Exported IPA 14727978058 inspected. Apple preparation 44958491311 is waiting for ingestion/processing and is not yet confirmed IN_BETA_TESTING; previous active candidate remains 449564423561. No main merge or App Store submission. Physical startup improvement needs owner verification after update.
+
+## Current rank visibility / responsiveness candidate — November 21, 2026
+
+**1.0.2 / 449564423561**, app source c2eb210, uploaded successfully via 44956442356. Owner reported missing rank on early attempts and broad lag. Rank now renders from startup and remains visible on unranked/false-start attempts without advancing standing. Removed delayed number reveal and forced layout, coalesced utility layouts, avoided unchanged hidden timer DOM writes, shortened near-miss presentation, and removed result backdrop blur. Full regressions and 4× CPU-throttled browser checks passed; actual exported IPA 14727711304 inspected. Physical iPhone responsiveness/audio latency is not yet verified. Apple processing/activation retry 44957377115 is pending; previous active beta remains 448384263331 until the new candidate is confirmed IN_BETA_TESTING. Details: LEADERBOARD_BETA_QA.md.
+
+## Leaderboard beta supersedes prior candidate — November 19, 2026
+
+**1.0.2 / 446317554281** includes all four leaderboard branches (scoring, theatrical rank climbs, three-character reaction variety and local date/holiday commentary), enabled directly in the native beta. The previous 445893933221 candidate omitted these changes. Source bccbef5; upload 44631755428; inspected actual IPA artifact 14582127737 with preview flag true and all leaderboard scripts present. Beta preparation 44632701324 returned BETA_APPROVED and assigned the existing TestFlight group. No tester notifications were sent. Rankings are explicitly sample fixtures, not a live global ranking service. Native dynamic rank reactions use device speech voices; normal character audio remains on existing transports. Full regression suite, dedicated leaderboard/native speech checks and an actual-round mobile browser capture passed. Physical iPhone testing is pending. See LEADERBOARD_BETA_QA.md and draft PR #34.
+
 ## Latest beta delivery — November 19, 2026
 
 This section supersedes the older release matrix below. Fresh Apple inspection [44588795284](https://github.com/sineusw/99-percent-impossible/actions/runs/44588795284) confirms production version 1.0.1/build 436868618131 is READY_FOR_SALE and API access works. This branch remains unmerged into main.
