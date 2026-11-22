@@ -9,9 +9,9 @@ apple = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(apple)
 headers = {'Authorization': 'Bearer ' + apple.token(), 'Content-Type': 'application/json'}
 
-def request(path, data=None):
+def request(path, data=None, method=None):
     req = urllib.request.Request('https://api.appstoreconnect.apple.com' + path,
-        headers=headers, data=json.dumps({'data': data}).encode() if data else None)
+        headers=headers, method=method, data=json.dumps({'data': data}).encode() if data else None)
     try:
         with urllib.request.urlopen(req, timeout=40) as response:
             return json.load(response)
@@ -39,8 +39,8 @@ if not center:
         'relationships': {'app': relation('apps', '6809299092')}})['data']
 center_id = center['id']
 boards = request('/v1/gameCenterDetails/' + center_id + '/gameCenterLeaderboards?limit=200')['data']
-for game, name, sort, end in [('timer', 'Perfect Timer Streak', 'DESC', '1000001000000'),
-                              ('stop', 'Perfect Stop Streak', 'DESC', '1000001000000'),
+for game, name, sort, end in [('timer', 'Perfect Timer Streak', 'DESC', '60000001000000'),
+                              ('stop', 'Perfect Stop Streak', 'DESC', '60000001000000'),
                               ('reaction', 'Fastest Reaction', 'ASC', '60000')]:
     vendor = 'com.pettygamesstudios.ninetynineimpossible.' + game + '.v1'
     matches = [x for x in boards if x['attributes']['vendorIdentifier'] == vendor]
@@ -48,11 +48,15 @@ for game, name, sort, end in [('timer', 'Perfect Timer Streak', 'DESC', '1000001
     if matches:
         board = matches[0]
         assert board['attributes']['scoreSortType'] == sort
+        board = request('/v1/gameCenterLeaderboards/' + board['id'], {
+            'type': 'gameCenterLeaderboards', 'id': board['id'],
+            'attributes': {'scoreRangeStart': '100' if game == 'reaction' else '60000001',
+                           'scoreRangeEnd': end}}, method='PATCH')['data']
     else:
         board = request('/v1/gameCenterLeaderboards', {'type': 'gameCenterLeaderboards',
             'attributes': {'referenceName': name, 'vendorIdentifier': vendor,
                 'defaultFormatter': 'INTEGER', 'submissionType': 'BEST_SCORE',
-                'scoreSortType': sort, 'scoreRangeStart': '100' if game == 'reaction' else '1000001',
+                'scoreSortType': sort, 'scoreRangeStart': '100' if game == 'reaction' else '60000001',
                 'scoreRangeEnd': end},
             'relationships': {'gameCenterDetail': relation('gameCenterDetails', center_id)}})['data']
     localizations = request('/v1/gameCenterLeaderboards/' + board['id'] + '/localizations')['data']

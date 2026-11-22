@@ -9,6 +9,7 @@ Pod::Spec.new do |s|
   s.source_files = 'ios/Plugin/**/*.{swift,h,m}'
   # Capacitor generates iOS 14 before project configuration raises the app to 15.
   s.ios.deployment_target = '14.0'
+  s.frameworks = 'GameKit'
   s.dependency 'Capacitor'
   s.swift_version = '5.1'
 end
