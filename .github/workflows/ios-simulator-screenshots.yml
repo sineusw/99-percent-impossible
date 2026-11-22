@@ -18,7 +18,7 @@ on:
       test_scope:
         description: 'Run the full native suite or only the three commerce regressions'
         type: choice
-        options: [full, commerce]
+        options: [full, commerce, layout]
         default: full
       screenshots_run_id:
         description: 'Exact iPhone capture run containing the reviewed images'
@@ -187,7 +187,7 @@ jobs:
           ruby scripts/prepare-screenshot-tests.rb
       - name: Create simulator
         env:
-          DEVICE_TYPE: ${{ matrix.device_type }}
+          DEVICE_TYPE: ${{ inputs.test_scope == 'layout' && matrix.label == 'iphone' && 'com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro' || matrix.device_type }}
         run: |
           xcrun simctl list devices available
           xcrun simctl list devicetypes
@@ -202,6 +202,13 @@ jobs:
           NATIVE_TEST_SCOPE: ${{ inputs.test_scope || 'full' }}
         run: |
           native_test_args=()
+          if [ "$NATIVE_TEST_SCOPE" = layout ]; then
+            native_test_args+=(
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testEdgeToEdgeHomeLayout'
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testWholeLeaderboardCard'
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testEdgeToEdgeGameLayout'
+            )
+          fi
           if [ "$NATIVE_TEST_SCOPE" = commerce ]; then
             native_test_args+=(
               '-only-testing:ScreenshotCapture/ScreenshotCapture/testAppleIndividualPalettePurchases'

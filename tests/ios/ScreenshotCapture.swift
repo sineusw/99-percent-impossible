@@ -1,5 +1,6 @@
 import XCTest
 import StoreKitTest
+import UIKit
 
 final class ScreenshotCapture: XCTestCase {
     let app = XCUIApplication(bundleIdentifier: "com.pettygamesstudios.ninetynineimpossible")
@@ -70,6 +71,53 @@ final class ScreenshotCapture: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func assertDarkStatusBackground() {
+        let screenshot = XCUIScreen.main.screenshot().image
+        guard let image = screenshot.cgImage else { XCTFail("Screenshot unavailable"); return }
+        let scale = CGFloat(image.width) / app.frame.width
+        let pointY: CGFloat = app.frame.width > 600 ? 10 : 32
+        guard let pixel = image.cropping(to: CGRect(x: 12 * scale, y: pointY * scale, width: 1, height: 1)) else {
+            XCTFail("Status background pixel unavailable"); return
+        }
+        var rgba = [UInt8](repeating: 0, count: 4)
+        let rendered = rgba.withUnsafeMutableBytes { bytes -> Bool in
+            guard let context = CGContext(data: bytes.baseAddress, width: 1, height: 1,
+                bitsPerComponent: 8, bytesPerRow: 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue) else { return false }
+            context.draw(pixel, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+            return true
+        }
+        XCTAssertTrue(rendered)
+        XCTAssertLessThan(max(rgba[0], max(rgba[1], rgba[2])), 90,
+                          "Top status background must be the dark game surface, not a white inset")
+    }
+
+    func testEdgeToEdgeHomeLayout() {
+        let board = visibleButton("Open live leaderboard")
+        XCTAssertGreaterThan(board.frame.width, app.frame.width * 0.75)
+        XCTAssertGreaterThan(board.frame.minY, app.frame.minY + 50)
+        assertDarkStatusBackground()
+        capture("01-edge-to-edge-home")
+    }
+
+    func testWholeLeaderboardCard() {
+        let board = visibleButton("Open live leaderboard")
+        for x in [0.08, 0.5, 0.92] {
+            board.coordinate(withNormalizedOffset: CGVector(dx: CGFloat(x), dy: 0.5)).tap()
+            let close = visibleButton("Close leaderboard")
+            XCTAssertTrue(close.isHittable)
+            capture("02-leaderboard-card-tap-\(x)")
+            close.tap()
+        }
+    }
+
+    func testEdgeToEdgeGameLayout() {
+        press("Perfect Timer")
+        XCTAssertTrue(visibleButton("START").isHittable)
+        assertDarkStatusBackground()
+        capture("03-edge-to-edge-game")
     }
 
     func testMenu() {

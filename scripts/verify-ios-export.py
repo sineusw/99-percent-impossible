@@ -62,3 +62,9 @@ for asset in ['home-visual.css', 'fonts.css', 'assets/fonts/teko-700.ttf', 'asse
     assert (app / 'public' / asset).is_file(), 'Visual refresh asset missing: ' + asset
 assert 'home-visual.css' in (app / 'public/index.html').read_text(), 'Home visual stylesheet not linked'
 print('Verified illustrated home screen and bundled offline typography are included.')
+
+assert plugin_config.get('ios', {}).get('contentInset') == 'never', 'Automatic native inset would duplicate CSS safe areas'
+assert plugin_config.get('ios', {}).get('backgroundColor') == '#0a0b16', 'Native WebView background must be dark'
+assert info.get('UIStatusBarStyle') == 'UIStatusBarStyleLightContent', 'Status icons must be light over the dark game'
+assert info.get('UIViewControllerBasedStatusBarAppearance') is True, 'Capacitor must own status-bar appearance'
+print('Verified edge-to-edge WebView configuration and readable light status-bar defaults.')
