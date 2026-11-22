@@ -10,6 +10,7 @@ on:
         options:
           - capture
           - inspect-apple
+          - configure-game-center
           - configure-apple-products
           - upload-iap-screenshots
           - prepare-testflight
@@ -68,6 +69,18 @@ permissions:
   contents: read
 
 jobs:
+  configure-game-center:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'configure-game-center'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Game Center for the existing app
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+        run: python3 scripts/configure-game-center.py
   upload-iap-screenshots:
     if: github.event_name == 'workflow_dispatch' && inputs.operation == 'upload-iap-screenshots'
     runs-on: ubuntu-latest
