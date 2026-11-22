@@ -29,3 +29,7 @@ Production source eb6e4c71995e8881d89b0a674192d93a7ec0b202 adds landscape safe-a
 Apple activated build 450618427741 at 2026-11-22 19:43:53 UTC, IN_BETA_TESTING, via workflow 45062151574. Start Testing notified exactly one verified owner tester. Link: https://testflight.apple.com/join/4PTBzRTD. CI signer TFDLHVGQV9 belongs to upload run 45061842774; the ephemeral signing key was discarded with the runner. Preserve unrelated certificates. Interim build 450602710321 was also activated earlier; the final build supersedes it.
 
 Owner checks: update to 450618427741, tap trophy/text/blank space/arrow on the rank card, review the stacked logo, verify background behind the status icons, and check rotation and return from a game. No public App Store release or main merge occurred.
+
+## Completed tablet verification
+
+Tablet-only retry 45062367546, job 137330913037, completed successfully. All three native iPad tests passed: edge-to-edge Game, edge-to-edge Home, and left/middle/right leaderboard taps. The downloaded iPad screenshot was visually inspected at /workspace/output/verified-fullscreen-ipad-home.png. The earlier tablet failures were the test's full-screen-width assumption; the app correctly retains its centered 520-point content area. Both target families now have confirmed native checks. No app-code change or new beta is needed after this test-only correction; 450618427741 remains the final active beta.
