@@ -121,6 +121,12 @@ def main():
                   'Larger stacked 99% IMPOSSIBLE wordmark. Edge-to-edge dark game background behind '
                   'light iPhone status icons, with safe-area spacing for the Dynamic Island. '
                   'Check Home, all three games, rotation, leaderboard opening and Ad Privacy.')
+    if os.environ.get('TESTFLIGHT_LEADERBOARD_VISUALS') == 'true':
+        notes += (' Visual update: the 99% IMPOSSIBLE wordmark fills more of the header. '
+                  'The whole leaderboard card has a new trophy illustration and layout. '
+                  'Open it for the redesigned full-height board, illustrated game tabs, your position, '
+                  'real top-three podium and player rows. Check signed-out/empty boards, tab switching, '
+                  'refresh, close, Play action and long player names. No sample players are included.')
     build_localizations = api('/v1/builds/' + identifier + '/betaBuildLocalizations')['data']
     english_build = next((p for p in build_localizations if p['attributes']['locale'] == 'en-US'), None)
     if english_build:

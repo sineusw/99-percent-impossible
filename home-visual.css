@@ -104,3 +104,27 @@ body:has(.home-visual #home.on) .cast-picker{top:calc(max(20px,env(safe-area-ins
 /* UIKit no longer supplies side insets: keep game controls clear of landscape cutouts. */
 body:has(#game.on) .home-visual #game .back{left:max(18px,env(safe-area-inset-left))!important}
 body:has(.home-visual #game.on) .cast-picker{right:max(18px,env(safe-area-inset-right))!important}
+/* Fill the left side of the header with a bolder, full-height wordmark. */
+body:has(#home.on) .home-visual .brand{height:116px;gap:5px;margin-bottom:20px!important}
+body:has(#home.on) .home-visual .brand b{font-size:clamp(92px,28vw,112px)!important;line-height:.78}
+body:has(#home.on) .home-visual .brand b span{font-size:clamp(62px,19vw,75px)}
+body:has(#home.on) .home-visual .brand-word{font-size:clamp(11px,3.6vw,15px);letter-spacing:clamp(3px,1.4vw,6px)}
+body:has(.home-visual #home.on) .cast-picker{top:calc(max(20px,env(safe-area-inset-top)) + 39px)!important}
+/* One whole-card action, with an illustrated medal and a distinct invitation. */
+#home button.live-home-rank{display:grid;grid-template-columns:64px minmax(0,1fr) 48px;gap:10px 12px;position:relative;overflow:hidden;isolation:isolate;padding:17px 17px 0;min-height:154px;border-color:#31515b;background:radial-gradient(ellipse at 3% 5%,#18495788,transparent 65%),radial-gradient(ellipse at 100% 100%,#32264a66,transparent 70%),#111b28;box-shadow:inset 0 1px 0 #ffffff0a,0 8px 20px #00000020}
+#home button.live-home-rank::before{content:'';position:absolute;width:180px;height:180px;left:-70px;top:-50px;border:1px solid #53e0ea12;border-radius:50%;z-index:-1;pointer-events:none}
+#home .rank-emblem{width:64px;height:76px;border-radius:0;background:none;color:var(--neon-cyan,#50dfed)}
+#home .rank-emblem svg{width:76px;height:76px}
+#home .rank-copy{align-self:center}
+#home .rank-eyebrow{font-size:8px;letter-spacing:1.5px}
+#home .rank-headline{display:flex;gap:9px;flex-wrap:wrap;align-items:center;min-height:39px}
+#home .rank-headline>span{font-size:14px;letter-spacing:-.3px}
+#home .rank-headline strong{font-size:35px;line-height:1}
+#home .live-rank-status{font-size:10px;line-height:1.4;color:#b1c3cf}
+#home .live-home-rank .live-open{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;align-self:center;min-width:0;width:48px;padding:0;border:0;color:var(--neon-cyan,#50dfed)}
+#home .rank-open-label{font-size:7px;line-height:1;letter-spacing:.3px;white-space:nowrap;color:#adced9}
+#home .rank-open-glyph{width:34px;height:34px;display:grid;place-items:center;border:1px solid #4a8a9455;border-radius:50%;background:#233e4866}
+#home .rank-open-glyph svg{width:18px;height:18px}
+#home .rank-card-footer{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;margin-top:2px;min-height:32px;border-top:1px solid #ffffff0a;color:#8ea8b9;font-size:7px;letter-spacing:1px;font-weight:600}
+#home .rank-card-footer>span:last-child{color:var(--neon-cyan,#50dfed)}
+@media(max-width:350px){#home button.live-home-rank{grid-template-columns:53px minmax(0,1fr) 42px;padding-left:13px;padding-right:13px;gap:8px}#home .rank-emblem,#home .rank-emblem svg{width:60px;height:65px}#home .rank-headline>span{font-size:12px}#home .rank-headline strong{font-size:29px}#home .rank-eyebrow{font-size:7px;letter-spacing:.7px}#home .rank-card-footer{font-size:6px;letter-spacing:.6px}}

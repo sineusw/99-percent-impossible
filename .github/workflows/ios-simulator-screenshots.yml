@@ -48,6 +48,10 @@ on:
         description: 'Expected marketing version of the selected beta build'
         type: string
         default: '1.0.1'
+      leaderboard_visuals:
+        description: 'The selected build includes the larger logo and redesigned leaderboard page'
+        type: boolean
+        default: false
       edge_to_edge:
         description: 'The selected build includes fullscreen status area and whole-card leaderboard taps'
         type: boolean
@@ -133,6 +137,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
           TESTFLIGHT_NOTIFY_OWNER_EMAIL: ${{ inputs.testflight_notify_owner_email }}
           TESTFLIGHT_MARKETING_VERSION: ${{ inputs.testflight_marketing_version }}
+          TESTFLIGHT_LEADERBOARD_VISUALS: ${{ inputs.leaderboard_visuals }}
           TESTFLIGHT_EDGE_TO_EDGE: ${{ inputs.edge_to_edge }}
           TESTFLIGHT_VISUAL_REFRESH: ${{ inputs.visual_refresh }}
           TESTFLIGHT_DAILY_PROGRESS: ${{ inputs.daily_progress }}
