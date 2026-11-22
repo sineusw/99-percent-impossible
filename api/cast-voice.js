@@ -3,9 +3,18 @@ const CAST={
   mick:{voiceId:'YLbQE9U7P1K6rBNJWNSv',modelId:'eleven_multilingual_v2',settings:{stability:.50,similarity_boost:.64,style:.85,use_speaker_boost:true,speed:1.01}}
 };
 module.exports=async function handler(req,res){
-  if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({error:'Method not allowed'})}
   const origin=req.headers.origin||'',host=req.headers.host||'';
-  if(origin){try{if(new URL(origin).host!==host)return res.status(403).json({error:'Forbidden'})}catch{return res.status(403).json({error:'Forbidden'})}}
+  let allowed=!origin||origin==='capacitor://localhost';
+  if(origin&&!allowed){try{allowed=new URL(origin).host===host}catch{}}
+  res.setHeader('Vary','Origin');
+  if(!allowed)return res.status(403).json({error:'Forbidden'});
+  if(origin==='capacitor://localhost'){
+    res.setHeader('Access-Control-Allow-Origin',origin);
+    res.setHeader('Access-Control-Allow-Methods','POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers','Content-Type');
+  }
+  if(req.method==='OPTIONS')return res.status(204).end();
+  if(req.method!=='POST'){res.setHeader('Allow','POST, OPTIONS');return res.status(405).json({error:'Method not allowed'})}
   const apiKey=process.env.ELEVENLABS_API_KEY;if(!apiKey)return res.status(500).json({error:'Voice service is not configured'});
   const character=String(req.body?.character||'').toLowerCase(),cfg=CAST[character],text=String(req.body?.text||'').trim();
   if(!cfg)return res.status(400).json({error:'Unknown character'});if(!text||text.length>420)return res.status(400).json({error:'Invalid text'});
