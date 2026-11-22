@@ -52,3 +52,9 @@ Code source 0b7943b86c9c5755f566fa8d3d788092b37448f8 built as 1.0.2 (45055301036
 Privacy-only production commit f3ce39dd18fe04d18220c2c6f7998ef74689eaa2 (based on the previously live 2d2478a) deployed READY as dpl_Fb9LpUvHqLC62dqBNv8ULA4PbQUb. Public privacy text matches that source. Public homepage and app-ads.txt bytes still match the prior gameplay deployment. No native gameplay branch was deployed to the website.
 
 Measurement limits: the current local `sessions` counter counts page/app-view loads, not every foreground return. Local rounds/daily-goal events can indicate activity on a device, but are not population retention or verified purchase/ad proceeds. `adInterruptedExit` records app backgrounding while an ad boundary is open; it does not establish why the player left. Net-profit evaluation needs actual ad proceeds + net Apple purchase proceeds − actual voice/hosting/acquisition costs. Do not substitute predicted eCPM, nominal pack prices or mock test counts for those inputs.
+
+## Activated for owner testing
+
+Apple returned IN_BETA_TESTING for 1.0.2 (450553010361) at 2026-11-22 18:38:20 UTC. Activation workflow 45055427271 succeeded; Start Testing notified exactly one verified owner tester. TestFlight link: https://testflight.apple.com/join/4PTBzRTD. Signer G8FA5ACHGQ belongs to successful upload run 45055301036; the temporary CI private key was discarded with that runner. Never retire unrelated certificates.
+
+Physical iPhone checks remain: complete the three daily goals, relaunch and confirm progress; verify the next local day resets goals while retaining earned titles; check the first welcome is responsive and repeated voice lines still use the correct character; confirm ads respect consent/Rage Pass and time spacing; validate live Game Center score syncing and actual Apple sandbox purchases/restore. No actual population retention or earnings gain has yet been established.
