@@ -116,6 +116,11 @@ def main():
                   'and checkpoints, a cleaner voice selector and bundled offline fonts. Test every mode card, '
                   'leaderboard, voice picker, daily goals, sound, Colors and footer Ad Privacy. '
                   'Check narrow screens and larger text. Gameplay scoring is unchanged.')
+    if os.environ.get('TESTFLIGHT_EDGE_TO_EDGE') == 'true':
+        notes += (' Fixes: tap anywhere on the weekly leaderboard card, not just the arrow. '
+                  'Larger stacked 99% IMPOSSIBLE wordmark. Edge-to-edge dark game background behind '
+                  'light iPhone status icons, with safe-area spacing for the Dynamic Island. '
+                  'Check Home, all three games, rotation, leaderboard opening and Ad Privacy.')
     build_localizations = api('/v1/builds/' + identifier + '/betaBuildLocalizations')['data']
     english_build = next((p for p in build_localizations if p['attributes']['locale'] == 'en-US'), None)
     if english_build:
