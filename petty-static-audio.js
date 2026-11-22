@@ -44,10 +44,12 @@ function fetchVoice(text){
   if(cache.has(text))return cache.get(text);
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),10000);
-  const p=fetch(voiceEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:controller.signal})
+  const load=()=>fetch(voiceEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:controller.signal})
     .then(async r=>{if(!r.ok)throw new Error('voice '+r.status);const blob=await r.blob();if(!blob.size||!blob.type.startsWith('audio/'))throw new Error('Invalid voice audio');return blob})
+;
+  const p=(window.N99VoiceCache?window.N99VoiceCache.audio('petty',text,load):load())
     .catch(e=>{cache.delete(text);throw e}).finally(()=>clearTimeout(timeout));
-  cache.set(text,p);return p;
+  cache.set(text,p);if(cache.size>40)cache.delete(cache.keys().next().value);return p;
 }
 window.preloadPettyVoice=text=>fetchVoice(text).then(()=>true).catch(()=>false);
 window.isPettyVoicePreloaded=text=>cache.has(String(text||'').trim());

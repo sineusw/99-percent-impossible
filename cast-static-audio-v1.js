@@ -20,7 +20,7 @@ function leaderboardAudio(character,text){
   if(leaderboardCache.has(key))return leaderboardCache.get(key);
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),10000);
-  const request=fetch(leaderboardEndpoint,{
+  const load=()=>fetch(leaderboardEndpoint,{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({character,text}),signal:controller.signal
   }).then(async response=>{
@@ -28,7 +28,8 @@ function leaderboardAudio(character,text){
     const blob=await response.blob();
     if(!blob.size||!blob.type.startsWith('audio/'))throw new Error('Invalid character audio');
     return blob;
-  }).catch(error=>{leaderboardCache.delete(key);throw error}).finally(()=>clearTimeout(timeout));
+  });
+  const request=(window.N99VoiceCache?window.N99VoiceCache.audio(character,text,load):load()).catch(error=>{leaderboardCache.delete(key);throw error}).finally(()=>clearTimeout(timeout));
   leaderboardCache.set(key,request);
   if(leaderboardCache.size>30)leaderboardCache.delete(leaderboardCache.keys().next().value);
   return request;

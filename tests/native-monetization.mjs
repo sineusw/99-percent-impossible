@@ -6,11 +6,12 @@ const read=name=>fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
 let count=0;
 const check=(label,fn)=>{fn();count++;console.log('PASS',label)};
 const flush=async()=>{for(let i=0;i<30;i++)await Promise.resolve()};
-function adWindow({pass=false,prepare=async()=>{},production=false,permission=true,testingDevices=[]}={}){
+function adWindow({pass=false,prepare=async()=>{},production=false,permission=true,testingDevices=[],elapsed=90001}={}){
  const w=new Window({url:'capacitor://localhost/'+(production?'':'?adtest=1')}),events={},timers=new Map(),requests=[];
  let next=0,shows=0,removed=0,initializes=0;
  let initializationOptions;
  w.document.write('<div id="tot">8</div><div id="modal" class="hide"></div><button id="retry">RETRY</button>');
+ let now=1800000000000;w.Date.now=()=>now;
  w.localStorage.setItem('n99_petty_voice','0');
  w.N99Entitlements={isOwned:()=>pass};
  w.N99AdPrivacy={canRequestAds:permission,ready:Promise.resolve()};
@@ -21,7 +22,8 @@ function adWindow({pass=false,prepare=async()=>{},production=false,permission=tr
   initialize:async options=>{initializes++;initializationOptions=options},prepareInterstitial:async options=>{requests.push(options);await prepare()},showInterstitial:async()=>{shows++}
  }}};
  vm.runInContext(read('ads.js'),vm.createContext(w));
- return {w,events,timers,requests,get initializationOptions(){return initializationOptions},get shows(){return shows},get removed(){return removed},get initializes(){return initializes}};
+ now+=elapsed;
+ return {w,events,timers,requests,advance:ms=>{now+=ms},get initializationOptions(){return initializationOptions},get shows(){return shows},get removed(){return removed},get initializes(){return initializes}};
 }
 {
  const a=adWindow();
@@ -64,6 +66,18 @@ function adWindow({pass=false,prepare=async()=>{},production=false,permission=tr
  const a=adWindow({prepare:async()=>{throw new Error('no fill')}});
  a.w.N99Ads.tryOpenPendingAd();a.w.N99Ads.forceOpenOrSkipAd();await flush();
  check('No-fill releases native retry lock',()=>{assert.equal(a.w.N99Ads.boundaryLocked,false);assert.equal(a.shows,0);assert.equal(a.removed,3)});await a.w.happyDOM.close();
+}
+
+{
+ const a=adWindow({production:true,elapsed:0});
+ check('First 90 seconds of the session remain ad free',()=>assert.equal(a.w.N99Ads.tryOpenPendingAd(),false));
+ a.advance(90001);a.w.N99Ads.tryOpenPendingAd();await flush();
+ check('Eligible boundary opens after the minimum interval',()=>assert.equal(a.shows,1));
+ a.events.interstitialAdDismissed();a.w.localStorage.setItem('n99_total','30');
+ check('Fast rounds cannot bypass the ad time gap',()=>assert.equal(a.w.N99Ads.tryOpenPendingAd(),false));
+ a.advance(90001);a.w.N99Ads.tryOpenPendingAd();await flush();
+ check('A later eligible break can show another ad',()=>assert.equal(a.shows,2));
+ a.events.interstitialAdDismissed();await a.w.happyDOM.close();
 }
 const items=['daisy','mick','cyberpunk','goldonly','synthwave','ragepass'];
 {

@@ -48,6 +48,10 @@ on:
         description: 'Expected marketing version of the selected beta build'
         type: string
         default: '1.0.1'
+      daily_progress:
+        description: 'The selected build includes daily skill goals and performance/revenue improvements'
+        type: boolean
+        default: false
       live_game_center:
         description: 'The selected build contains the live Game Center leaderboard'
         type: boolean
@@ -121,6 +125,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
           TESTFLIGHT_NOTIFY_OWNER_EMAIL: ${{ inputs.testflight_notify_owner_email }}
           TESTFLIGHT_MARKETING_VERSION: ${{ inputs.testflight_marketing_version }}
+          TESTFLIGHT_DAILY_PROGRESS: ${{ inputs.daily_progress }}
           TESTFLIGHT_LIVE_GAME_CENTER: ${{ inputs.live_game_center }}
           TESTFLIGHT_BUILD_NUMBER: ${{ inputs.testflight_build_number }}
           TESTFLIGHT_SUBMIT_REVIEW: ${{ inputs.submit_testflight_review }}
