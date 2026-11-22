@@ -84,6 +84,17 @@ for l in api('/v1/appStoreVersions/'+v['id']+'/appStoreVersionLocalizations')['d
 print(json.dumps({'preparedVersion':v['id'],'version':VERSION,'build':number,'releaseType':'AFTER_APPROVAL'}))
 if mode=='submit':
  # Apple performs final metadata/screenshot/review validation; never claim live on submission.
- submission=create('appStoreVersionSubmissions',{}, {'appStoreVersion':rel('appStoreVersions',v['id'])})
+ drafts=api('/v1/apps/'+APP+'/reviewSubmissions')['data']
+ submission=None
+ for draft in drafts:
+  if draft['attributes'].get('platform')!='IOS' or draft['attributes'].get('state')!='READY_FOR_REVIEW':continue
+  items=api('/v1/reviewSubmissions/'+draft['id']+'/items?include=appStoreVersion')['data']
+  if not items or all(x.get('relationships',{}).get('appStoreVersion',{}).get('data',{}).get('id')==v['id'] for x in items):
+   submission=draft;break
+ if submission is None:submission=create('reviewSubmissions',{'platform':'IOS'},{'app':rel('apps',APP)})
+ items=api('/v1/reviewSubmissions/'+submission['id']+'/items?include=appStoreVersion')['data']
+ if not any(x.get('relationships',{}).get('appStoreVersion',{}).get('data',{}).get('id')==v['id'] for x in items):
+  create('reviewSubmissionItems',{}, {'reviewSubmission':rel('reviewSubmissions',submission['id']),'appStoreVersion':rel('appStoreVersions',v['id'])})
+ patch('reviewSubmissions',submission['id'],{'submitted':True})
  print(json.dumps({'submitted':submission['id'],'version':VERSION,'build':number}))
 print(json.dumps({'versionState':api('/v1/appStoreVersions/'+v['id'])['data']['attributes']['appStoreState']}))
