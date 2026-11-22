@@ -44,3 +44,11 @@ Full existing gameplay, native monetization/consent, catalog/restore, audio, lay
 3. Test first-session tutorial clarity and daily-goal difficulty. Consider optional cosmetic-only rewarded ads only after an actual configured rewarded unit and defined reward exist; never invent an ad unit or award competitive advantages.
 
 Public release remains gated. Preserve user data and the existing Apple products. No public App Store submission or main merge is authorized by this experiment log alone.
+
+## Signed beta export and privacy publication
+
+Code source 0b7943b86c9c5755f566fa8d3d788092b37448f8 built as 1.0.2 (450553010361) in successful upload workflow 45055301036. Archive/export/signing checks passed. Downloaded artifact 14766898791 was independently inspected: daily JS/CSS, local metrics, real-voice cache, ad spacing, welcome transport, live leaderboard and privacy policy match reviewed source; the Game Center bridge remains registered and sample-rank mode is false. Apple activation is tracked in workflow 45055427271; availability must be confirmed from its actual returned state.
+
+Privacy-only production commit f3ce39dd18fe04d18220c2c6f7998ef74689eaa2 (based on the previously live 2d2478a) deployed READY as dpl_Fb9LpUvHqLC62dqBNv8ULA4PbQUb. Public privacy text matches that source. Public homepage and app-ads.txt bytes still match the prior gameplay deployment. No native gameplay branch was deployed to the website.
+
+Measurement limits: the current local `sessions` counter counts page/app-view loads, not every foreground return. Local rounds/daily-goal events can indicate activity on a device, but are not population retention or verified purchase/ad proceeds. `adInterruptedExit` records app backgrounding while an ad boundary is open; it does not establish why the player left. Net-profit evaluation needs actual ad proceeds + net Apple purchase proceeds − actual voice/hosting/acquisition costs. Do not substitute predicted eCPM, nominal pack prices or mock test counts for those inputs.
