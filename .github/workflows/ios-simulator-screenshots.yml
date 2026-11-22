@@ -9,12 +9,18 @@ on:
         type: choice
         options:
           - capture
+          - app-store-inspect
+          - app-store-prepare
+          - app-store-submit
           - inspect-apple
           - configure-game-center
           - configure-apple-products
           - upload-iap-screenshots
           - prepare-testflight
         default: capture
+      store_build_number:
+        type: string
+        default: ''
       test_scope:
         description: 'Run the full native suite or only the three commerce regressions'
         type: choice
@@ -89,6 +95,20 @@ permissions:
   contents: read
 
 jobs:
+  app-store:
+    if: github.event_name == 'workflow_dispatch' && startsWith(inputs.operation, 'app-store-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Explicit existing-app release operation
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+          STORE_OPERATION: ${{ inputs.operation == 'app-store-submit' && 'submit' || inputs.operation == 'app-store-prepare' && 'prepare' || 'inspect' }}
+          STORE_BUILD_NUMBER: ${{ inputs.store_build_number }}
+        run: python3 scripts/prepare-app-store.py
   configure-game-center:
     if: github.event_name == 'workflow_dispatch' && inputs.operation == 'configure-game-center'
     runs-on: ubuntu-latest
