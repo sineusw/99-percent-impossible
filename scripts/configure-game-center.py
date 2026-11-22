@@ -36,7 +36,6 @@ print('Game Center signing capability enabled for existing bundle ' + bundle)
 center = request('/v1/apps/6809299092/gameCenterDetail')['data']
 if not center:
     center = request('/v1/gameCenterDetails', {'type': 'gameCenterDetails',
-        'attributes': {'challengeEnabled': False},
         'relationships': {'app': relation('apps', '6809299092')}})['data']
 center_id = center['id']
 boards = request('/v1/gameCenterDetails/' + center_id + '/gameCenterLeaderboards?limit=200')['data']
