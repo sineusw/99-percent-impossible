@@ -78,6 +78,16 @@ def inspect():
         print(json.dumps({'app': {'id': app['data']['id'], **attributes}}))
     else:
         raise SystemExit('Existing Apple app could not be read; no account changes made.')
+    game_center = read('/v1/apps/6809299092/gameCenterDetail')
+    print(json.dumps({'gameCenterDetail': game_center.get('data') if game_center else None}))
+    if game_center and game_center.get('data'):
+        center_id = game_center['data']['id']
+        boards = read('/v1/gameCenterDetails/' + center_id + '/gameCenterLeaderboards?limit=200')
+        print(json.dumps({'gameCenterLeaderboards': boards}))
+    bundles = read('/v1/bundleIds?filter[identifier]=com.pettygamesstudios.ninetynineimpossible&include=bundleIdCapabilities')
+    if bundles:
+        print(json.dumps({'bundleCapabilities': [{'id': x['id'], **x.get('attributes', {})}
+            for x in bundles.get('included', []) if x['type'] == 'bundleIdCapabilities']}))
     products = read('/v1/apps/6809299092/inAppPurchasesV2?limit=200')
     if products is not None:
         print(json.dumps({'existingInAppPurchases': [
