@@ -101,3 +101,6 @@ body:has(.home-visual #home.on) .cast-picker{top:calc(max(20px,env(safe-area-ins
 @media(max-width:350px){body:has(#home.on) .home-visual .brand b{font-size:68px!important}body:has(#home.on) .home-visual .brand b span{font-size:46px}body:has(#home.on) .home-visual .brand-word{font-size:10px;letter-spacing:3px}}
 /* The rank copy is now a span inside one button; avoid legacy direct-span tracking. */
 #home .rank-copy{letter-spacing:normal;font-weight:500;font-size:inherit;color:inherit}
+/* UIKit no longer supplies side insets: keep game controls clear of landscape cutouts. */
+body:has(#game.on) .home-visual #game .back{left:max(18px,env(safe-area-inset-left))!important}
+body:has(.home-visual #game.on) .cast-picker{right:max(18px,env(safe-area-inset-right))!important}
