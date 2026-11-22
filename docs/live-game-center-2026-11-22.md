@@ -52,3 +52,9 @@ Privacy-only commit 2d2478a4980d4e04a1dd321e04199b1345444ffe is based on the cur
 Beta candidate 1.0.2 (450508891281), source 1108cda77cab8d436e80c2ffc0b027026df5cbaf, upload workflow 45050889128. Archive and signed-export checks passed. Artifact 14765436762 was downloaded and independently inspected: N99GameCenterPlugin is compiled into N99Storekit.framework and included in Capacitor's packageClassList; live UI, shared voice lines, Petty handler and privacy page match source; sample-rank runtime is false. TestFlight processing/activation is tracked separately in workflow 45051155588.
 
 An additional asynchronous caption/speech regression also passed: no premature speech while rank is pending, exactly matching line/caption on rank-ready, first drop silent and second drop spoken. The hosted privacy-only production deployment dpl_GR5YN11hEwJznaX3TgBcisCpmGFV is READY and the public policy contains the new Game Center section.
+
+## Delivered TestFlight beta
+
+Apple activation workflow 45051407463 succeeded. At 2026-11-22 17:48:37 UTC Apple returned `IN_BETA_TESTING` for build 450508891281, and Start Testing notified exactly the single verified owner tester. Link: https://testflight.apple.com/join/4PTBzRTD. Per-build test notes describe live Game Center boards, not sample ranks. CI-only signer Y2L88263CB belongs to upload run 45050889128; its temporary private key was discarded with that completed runner. Do not retire unrelated signing assets.
+
+Owner device checks: update to 1.0.2 (450508891281), open LIVE LEADERBOARD on Home, connect Game Center, record a valid Reaction time or a Timer/Stop perfect, refresh/relaunch to confirm the score persists, then use a second Game Center account/device to confirm actual shared rank movement and cast reactions. These real-device checks have not yet been reported as passed.
