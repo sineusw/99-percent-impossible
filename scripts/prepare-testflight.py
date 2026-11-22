@@ -81,8 +81,11 @@ def main():
                  'Cyberpunk/Gold Only/Synthwave colors, and Rage Pass. Rage Pass unlocks all three '
                  'palettes and suppresses interstitials. Restore Apple Purchases is in Colors. '
                  'No Stripe checkout is available inside the native app.'}}}, 'PATCH')
+    live_game_center = os.environ.get('TESTFLIGHT_LIVE_GAME_CENTER') == 'true'
     description = ('Three timing challenges: Perfect Timer, Perfect Stop and Reaction Test. '
                    'This beta tests native interstitial ads, Apple purchases, voice packs, palettes and restore.')
+    if live_game_center:
+        description += ' Optional Game Center sign-in enables live worldwide weekly leaderboards.'
     localizations = api('/v1/apps/' + APP + '/betaAppLocalizations')['data']
     english = next((p for p in localizations if p['attributes']['locale'] == 'en-US'), None)
     attrs = {'description': description, 'feedbackEmail': '99percentimpossiblegame@gmail.com',
@@ -95,6 +98,13 @@ def main():
         api('/v1/betaAppLocalizations', {'data': {'type': 'betaAppLocalizations',
             'attributes': {'locale': 'en-US', **attrs}, 'relationships': {'app': rel('apps', APP)}}})
     notes = 'Leaderboard beta: sample rank climbs, milestones, rotating Petty/Daisy/Mick reactions and local day/holiday commentary. Demo ranks are not live worldwide standings. Test all three games, repeated retry, sound/mute, interstitial loading/dismissal after several retries, six Apple sandbox purchases, voice/palette application, Rage Pass, and Restore Apple Purchases. Physical iPhone QA is pending.'
+    if live_game_center:
+        notes = ('Live weekly Game Center leaderboards: open LIVE LEADERBOARD on Home and connect Game Center. '
+                 'Timer/Stop rank by perfect streak with close-miss ties; get one perfect to join. '
+                 'Reaction ranks fastest valid times of 100ms or above. Check Home rank, three game tabs, '
+                 'top 100, refresh and rank changes with Petty/Daisy/Mick matching audio/captions. '
+                 'TestFlight sandbox standings are separate from the public app. Try offline/reconnect, '
+                 'sound/mute, Apple sandbox purchases and restore. Real-device validation is pending.')
     build_localizations = api('/v1/builds/' + identifier + '/betaBuildLocalizations')['data']
     english_build = next((p for p in build_localizations if p['attributes']['locale'] == 'en-US'), None)
     if english_build:
