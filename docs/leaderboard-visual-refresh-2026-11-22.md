@@ -23,3 +23,9 @@ Native iPhone/iPad focused layout checks and signed TestFlight delivery will be 
 ## Export verification
 
 Code source c6de881a93fc81baef63503413fe1e13a283d6ba produced 1.0.2 (450652279811) in successful upload workflow 45065227981. Downloaded IPA artifact 14770839166 was independently inspected: larger-logo/Home-card CSS, full leaderboard-page stylesheet and real-data renderer match reviewed source; edge-to-edge configuration and light status icons remain in place; sample ranks remain disabled. Native layout workflow 45065230735 and Apple activation workflow 45065426054 are tracked separately. Do not declare either passed/available until its actual result is confirmed.
+
+## Final delivery and native checks
+
+Build 1.0.2 (450652279811) is IN_BETA_TESTING, confirmed by activation workflow 45065426054: testingStarted, one verified owner notification recipient, and externalBetaState IN_BETA_TESTING. TestFlight: https://testflight.apple.com/join/4PTBzRTD. Export signer MA6WT8S589 used an ephemeral CI private key discarded after the runner.
+
+Native workflow 45065230735 succeeded on iPhone 16 Pro (job 137339778625) and iPad Pro 13-inch M4 (job 137339778319). All three tests passed on both: edge-to-edge Home, edge-to-edge game, and whole-card taps at left/middle/right opening and closing the board. Downloaded iPhone artifact 14771417271 and visually inspected actual native Home and signed-out leaderboard screenshots, saved as /workspace/output/leaderboard-native-home.png and /workspace/output/leaderboard-native-page.png. Signed-out simulator evidence does not establish physical-device authenticated Game Center behavior.
