@@ -18,7 +18,7 @@ on:
       test_scope:
         description: 'Run the full native suite or only the three commerce regressions'
         type: choice
-        options: [full, commerce, layout]
+        options: [full, commerce, layout, layout-ipad]
         default: full
       screenshots_run_id:
         description: 'Exact iPhone capture run containing the reviewed images'
@@ -172,11 +172,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - label: iphone
-            device_type: com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus
-          - label: ipad
-            device_type: com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB
+        include: ${{ fromJSON(inputs.test_scope == 'layout-ipad' && '[{"label":"ipad","device_type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB"}]' || '[{"label":"iphone","device_type":"com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus"},{"label":"ipad","device_type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB"}]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -207,7 +203,7 @@ jobs:
           NATIVE_TEST_SCOPE: ${{ inputs.test_scope || 'full' }}
         run: |
           native_test_args=()
-          if [ "$NATIVE_TEST_SCOPE" = layout ]; then
+          if [ "$NATIVE_TEST_SCOPE" = layout ] || [ "$NATIVE_TEST_SCOPE" = layout-ipad ]; then
             native_test_args+=(
               '-only-testing:ScreenshotCapture/ScreenshotCapture/testEdgeToEdgeHomeLayout'
               '-only-testing:ScreenshotCapture/ScreenshotCapture/testWholeLeaderboardCard'

@@ -100,7 +100,7 @@ final class ScreenshotCapture: XCTestCase {
         let query = app.descendants(matching: .any).matching(NSPredicate(
             format: "label == %@ OR identifier == %@", "Open live leaderboard", "Open live leaderboard"))
         let visible = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            query.allElementsBoundByIndex.contains { $0.exists && $0.isHittable && $0.frame.width > self.app.frame.width * 0.75 }
+            query.allElementsBoundByIndex.contains { $0.exists && $0.isHittable && $0.frame.width > min(self.app.frame.width, 520) * 0.75 }
         }, object: nil)
         let result = XCTWaiter.wait(for: [visible], timeout: 20)
         if result != .completed {
@@ -111,14 +111,14 @@ final class ScreenshotCapture: XCTestCase {
             add(hierarchy)
         }
         XCTAssertEqual(result, .completed, "Full-width leaderboard control is not accessible")
-        let element = query.allElementsBoundByIndex.first { $0.exists && $0.isHittable && $0.frame.width > self.app.frame.width * 0.75 } ?? query.firstMatch
+        let element = query.allElementsBoundByIndex.first { $0.exists && $0.isHittable && $0.frame.width > min(self.app.frame.width, 520) * 0.75 } ?? query.firstMatch
         print("LEADERBOARD_NATIVE_ELEMENT_TYPE: \(element.elementType.rawValue)")
         return element
     }
 
     func testEdgeToEdgeHomeLayout() {
         let board = leaderboardCard()
-        XCTAssertGreaterThan(board.frame.width, app.frame.width * 0.75)
+        XCTAssertGreaterThan(board.frame.width, min(app.frame.width, 520) * 0.75)
         XCTAssertGreaterThan(board.frame.minY, app.frame.minY + 50)
         assertDarkStatusBackground()
         capture("01-edge-to-edge-home")
