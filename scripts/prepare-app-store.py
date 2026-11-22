@@ -65,7 +65,9 @@ else:create('appStoreReviewDetails',attrs,{'appStoreVersion':rel('appStoreVersio
 # Enable the version's Game Center integration and release only this app's boards.
 gc=api('/v1/appStoreVersions/'+v['id']+'/gameCenterAppVersion').get('data')
 if gc:patch('gameCenterAppVersions',gc['id'],{'enabled':True})
-else:create('gameCenterAppVersions',{'enabled':True},{'appStoreVersion':rel('appStoreVersions',v['id'])})
+else:
+ gc=create('gameCenterAppVersions',{}, {'appStoreVersion':rel('appStoreVersions',v['id'])})
+ patch('gameCenterAppVersions',gc['id'],{'enabled':True})
 center=api('/v1/apps/'+APP+'/gameCenterDetail')['data']
 released=api('/v1/gameCenterDetails/'+center['id']+'/leaderboardReleases?include=gameCenterLeaderboard')['data']
 boards=api('/v1/gameCenterDetails/'+center['id']+'/gameCenterLeaderboards')['data']
