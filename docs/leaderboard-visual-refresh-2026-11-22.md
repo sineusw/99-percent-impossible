@@ -19,3 +19,7 @@ Full existing JS regression suite passed. New assertions cover real-data podium 
 Chromium checks at widths 320/393/430 verified no header overlap, no horizontal leaderboard overflow, selected-tab behavior, and Play navigation. Local screenshots are /workspace/output/leaderboard-new-home.png, /workspace/output/leaderboard-new-signed-out.png and /workspace/output/leaderboard-new-qa-populated.png. The populated screenshot uses explicitly named QA fixtures; it is not evidence of actual Game Center players or network standings.
 
 Native iPhone/iPad focused layout checks and signed TestFlight delivery will be recorded below. Public web gameplay and main are unchanged.
+
+## Export verification
+
+Code source c6de881a93fc81baef63503413fe1e13a283d6ba produced 1.0.2 (450652279811) in successful upload workflow 45065227981. Downloaded IPA artifact 14770839166 was independently inspected: larger-logo/Home-card CSS, full leaderboard-page stylesheet and real-data renderer match reviewed source; edge-to-edge configuration and light status icons remain in place; sample ranks remain disabled. Native layout workflow 45065230735 and Apple activation workflow 45065426054 are tracked separately. Do not declare either passed/available until its actual result is confirmed.
