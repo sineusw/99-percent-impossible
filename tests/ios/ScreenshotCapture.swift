@@ -94,8 +94,30 @@ final class ScreenshotCapture: XCTestCase {
                           "Top status background must be the dark game surface, not a white inset")
     }
 
+    private func leaderboardCard() -> XCUIElement {
+        // WebKit can expose aria-haspopup=dialog triggers as a pop-up button,
+        // rather than an ordinary XCUIElementTypeButton.
+        let query = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label == %@ OR identifier == %@", "Open live leaderboard", "Open live leaderboard"))
+        let visible = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            query.allElementsBoundByIndex.contains { $0.exists && $0.isHittable && $0.frame.width > self.app.frame.width * 0.75 }
+        }, object: nil)
+        let result = XCTWaiter.wait(for: [visible], timeout: 20)
+        if result != .completed {
+            capture("00-home-card-lookup")
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Home accessibility hierarchy"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
+        }
+        XCTAssertEqual(result, .completed, "Full-width leaderboard control is not accessible")
+        let element = query.allElementsBoundByIndex.first { $0.exists && $0.isHittable && $0.frame.width > self.app.frame.width * 0.75 } ?? query.firstMatch
+        print("LEADERBOARD_NATIVE_ELEMENT_TYPE: \(element.elementType.rawValue)")
+        return element
+    }
+
     func testEdgeToEdgeHomeLayout() {
-        let board = visibleButton("Open live leaderboard")
+        let board = leaderboardCard()
         XCTAssertGreaterThan(board.frame.width, app.frame.width * 0.75)
         XCTAssertGreaterThan(board.frame.minY, app.frame.minY + 50)
         assertDarkStatusBackground()
@@ -103,7 +125,7 @@ final class ScreenshotCapture: XCTestCase {
     }
 
     func testWholeLeaderboardCard() {
-        let board = visibleButton("Open live leaderboard")
+        let board = leaderboardCard()
         for x in [0.08, 0.5, 0.92] {
             board.coordinate(withNormalizedOffset: CGVector(dx: CGFloat(x), dy: 0.5)).tap()
             let close = visibleButton("Close leaderboard")
