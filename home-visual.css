@@ -99,3 +99,5 @@ body:has(#home.on) .home-visual .brand b span{font-size:51px}
 body:has(#home.on) .home-visual .brand-word{font-size:11px;line-height:1.15;max-width:none;letter-spacing:3.5px;padding-left:2px}
 body:has(.home-visual #home.on) .cast-picker{top:calc(max(20px,env(safe-area-inset-top)) + 20px)!important}
 @media(max-width:350px){body:has(#home.on) .home-visual .brand b{font-size:68px!important}body:has(#home.on) .home-visual .brand b span{font-size:46px}body:has(#home.on) .home-visual .brand-word{font-size:10px;letter-spacing:3px}}
+/* The rank copy is now a span inside one button; avoid legacy direct-span tracking. */
+#home .rank-copy{letter-spacing:normal;font-weight:500;font-size:inherit;color:inherit}
