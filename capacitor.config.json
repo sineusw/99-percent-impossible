@@ -1,1 +1,11 @@
-{"appId":"com.pettygamesstudios.ninetynineimpossible","appName":"99 Percent Impossible","webDir":"dist","bundledWebRuntime":false,"ios":{"contentInset":"automatic"}}
+{
+  "appId": "com.pettygamesstudios.ninetynineimpossible",
+  "appName": "99 Percent Impossible",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0a0b16"
+  },
+  "backgroundColor": "#0a0b16"
+}

@@ -1,5 +1,6 @@
 import XCTest
 import StoreKitTest
+import UIKit
 
 final class ScreenshotCapture: XCTestCase {
     let app = XCUIApplication(bundleIdentifier: "com.pettygamesstudios.ninetynineimpossible")
@@ -70,6 +71,75 @@ final class ScreenshotCapture: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func assertDarkStatusBackground() {
+        let screenshot = XCUIScreen.main.screenshot().image
+        guard let image = screenshot.cgImage else { XCTFail("Screenshot unavailable"); return }
+        let scale = CGFloat(image.width) / app.frame.width
+        let pointY: CGFloat = app.frame.width > 600 ? 10 : 32
+        guard let pixel = image.cropping(to: CGRect(x: 12 * scale, y: pointY * scale, width: 1, height: 1)) else {
+            XCTFail("Status background pixel unavailable"); return
+        }
+        var rgba = [UInt8](repeating: 0, count: 4)
+        let rendered = rgba.withUnsafeMutableBytes { bytes -> Bool in
+            guard let context = CGContext(data: bytes.baseAddress, width: 1, height: 1,
+                bitsPerComponent: 8, bytesPerRow: 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue) else { return false }
+            context.draw(pixel, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+            return true
+        }
+        XCTAssertTrue(rendered)
+        XCTAssertLessThan(max(rgba[0], max(rgba[1], rgba[2])), 90,
+                          "Top status background must be the dark game surface, not a white inset")
+    }
+
+    private func leaderboardCard() -> XCUIElement {
+        // WebKit can expose aria-haspopup=dialog triggers as a pop-up button,
+        // rather than an ordinary XCUIElementTypeButton.
+        let query = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label == %@ OR identifier == %@", "Open live leaderboard", "Open live leaderboard"))
+        let visible = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            query.allElementsBoundByIndex.contains { $0.exists && $0.isHittable && $0.frame.width > min(self.app.frame.width, 520) * 0.75 }
+        }, object: nil)
+        let result = XCTWaiter.wait(for: [visible], timeout: 20)
+        if result != .completed {
+            capture("00-home-card-lookup")
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Home accessibility hierarchy"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
+        }
+        XCTAssertEqual(result, .completed, "Full-width leaderboard control is not accessible")
+        let element = query.allElementsBoundByIndex.first { $0.exists && $0.isHittable && $0.frame.width > min(self.app.frame.width, 520) * 0.75 } ?? query.firstMatch
+        print("LEADERBOARD_NATIVE_ELEMENT_TYPE: \(element.elementType.rawValue)")
+        return element
+    }
+
+    func testEdgeToEdgeHomeLayout() {
+        let board = leaderboardCard()
+        XCTAssertGreaterThan(board.frame.width, min(app.frame.width, 520) * 0.75)
+        XCTAssertGreaterThan(board.frame.minY, app.frame.minY + 50)
+        assertDarkStatusBackground()
+        capture("01-edge-to-edge-home")
+    }
+
+    func testWholeLeaderboardCard() {
+        let board = leaderboardCard()
+        for x in [0.08, 0.5, 0.92] {
+            board.coordinate(withNormalizedOffset: CGVector(dx: CGFloat(x), dy: 0.5)).tap()
+            let close = visibleButton("Close leaderboard")
+            XCTAssertTrue(close.isHittable)
+            capture("02-leaderboard-card-tap-\(x)")
+            close.tap()
+        }
+    }
+
+    func testEdgeToEdgeGameLayout() {
+        press("Perfect Timer")
+        XCTAssertTrue(visibleButton("START").isHittable)
+        assertDarkStatusBackground()
+        capture("03-edge-to-edge-game")
     }
 
     func testMenu() {

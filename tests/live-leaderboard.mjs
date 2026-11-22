@@ -12,6 +12,12 @@ w.Capacitor={isNativePlatform:()=>true,Plugins:{N99GameCenter:{
 }}};
 w.N99Character={get:()=> 'petty'};
 for(const file of ['leaderboard-commentary.js','leaderboard-lines.js','live-leaderboard.js','leaderboard-preview.js']) vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),vm.createContext(w));
+const card=w.document.querySelector('.live-home-rank');
+assert.equal(card.tagName,'BUTTON');assert.equal(card.getAttribute('aria-label'),'Open live leaderboard');
+assert.equal(card.querySelector('button'),null,'Leaderboard must be a single whole-card button');
+let opened=0;w.document.querySelector('.live-board').showModal=()=>{opened++;};
+for(const selector of ['.rank-emblem','.rank-copy','.live-open'])card.querySelector(selector).dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+assert.equal(opened,3,'Icon, copy and arrow must all activate the leaderboard');
 const said=[];
 w.speechSynthesis={speak:u=>{said.push(u.text);u.onend?.()},cancel(){},getVoices:()=>[]};
 w.SpeechSynthesisUtterance=function(text){this.text=text};

@@ -35,6 +35,11 @@ networks = info.setdefault('SKAdNetworkItems', [])
 if not any(row.get('SKAdNetworkIdentifier') == 'cstr6suwn9.skadnetwork' for row in networks):
     networks.append({'SKAdNetworkIdentifier': 'cstr6suwn9.skadnetwork'})
 info['N99StoreKitProducts'] = products
+# CAPBridgeViewController reads these defaults before creating the WebView.
+# CSS owns the safe-area padding; never add an automatic UIKit inset as well.
+info['UIStatusBarStyle'] = 'UIStatusBarStyleLightContent'
+info['UIViewControllerBasedStatusBarAppearance'] = True
+info['UIStatusBarHidden'] = False
 with path.open('wb') as target:
     plistlib.dump(info, target)
 print('Configured iOS App ID ' + app_id + '; ads mode ' + info['N99AdMode'] + '; Apple purchase catalog ' +

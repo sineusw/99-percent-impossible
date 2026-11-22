@@ -87,3 +87,20 @@ body:has(.home-visual #home.on) .cast-menu-backdrop{padding-top:calc(max(20px,en
 #home .rank-headline{flex-wrap:wrap;row-gap:0}
 #home .live-rank-status,#home .daily-title{font-size:11px}
 #home .card small{font-size:11px}
+
+/* Full-width semantic leaderboard button, and a stronger stacked wordmark. */
+#home button.live-home-rank{width:100%;font:inherit;color:inherit;text-align:left;cursor:pointer;touch-action:manipulation;appearance:none;-webkit-appearance:none}
+#home button.live-home-rank:focus-visible{outline:2px solid #f0e5ff;outline-offset:4px}
+#home button.live-home-rank:active{border-color:var(--neon-cyan,#00d8f6)}
+#home .rank-copy{display:block}
+body:has(#home.on) .home-visual .brand{height:80px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;margin-bottom:25px!important}
+body:has(#home.on) .home-visual .brand b{font-size:76px!important;line-height:.78;letter-spacing:-2.5px}
+body:has(#home.on) .home-visual .brand b span{font-size:51px}
+body:has(#home.on) .home-visual .brand-word{font-size:11px;line-height:1.15;max-width:none;letter-spacing:3.5px;padding-left:2px}
+body:has(.home-visual #home.on) .cast-picker{top:calc(max(20px,env(safe-area-inset-top)) + 20px)!important}
+@media(max-width:350px){body:has(#home.on) .home-visual .brand b{font-size:68px!important}body:has(#home.on) .home-visual .brand b span{font-size:46px}body:has(#home.on) .home-visual .brand-word{font-size:10px;letter-spacing:3px}}
+/* The rank copy is now a span inside one button; avoid legacy direct-span tracking. */
+#home .rank-copy{letter-spacing:normal;font-weight:500;font-size:inherit;color:inherit}
+/* UIKit no longer supplies side insets: keep game controls clear of landscape cutouts. */
+body:has(#game.on) .home-visual #game .back{left:max(18px,env(safe-area-inset-left))!important}
+body:has(.home-visual #game.on) .cast-picker{right:max(18px,env(safe-area-inset-right))!important}

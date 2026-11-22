@@ -18,7 +18,7 @@ on:
       test_scope:
         description: 'Run the full native suite or only the three commerce regressions'
         type: choice
-        options: [full, commerce]
+        options: [full, commerce, layout, layout-ipad]
         default: full
       screenshots_run_id:
         description: 'Exact iPhone capture run containing the reviewed images'
@@ -48,6 +48,10 @@ on:
         description: 'Expected marketing version of the selected beta build'
         type: string
         default: '1.0.1'
+      edge_to_edge:
+        description: 'The selected build includes fullscreen status area and whole-card leaderboard taps'
+        type: boolean
+        default: false
       visual_refresh:
         description: 'The selected build includes the illustrated home redesign'
         type: boolean
@@ -129,6 +133,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
           TESTFLIGHT_NOTIFY_OWNER_EMAIL: ${{ inputs.testflight_notify_owner_email }}
           TESTFLIGHT_MARKETING_VERSION: ${{ inputs.testflight_marketing_version }}
+          TESTFLIGHT_EDGE_TO_EDGE: ${{ inputs.edge_to_edge }}
           TESTFLIGHT_VISUAL_REFRESH: ${{ inputs.visual_refresh }}
           TESTFLIGHT_DAILY_PROGRESS: ${{ inputs.daily_progress }}
           TESTFLIGHT_LIVE_GAME_CENTER: ${{ inputs.live_game_center }}
@@ -167,11 +172,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - label: iphone
-            device_type: com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus
-          - label: ipad
-            device_type: com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB
+        include: ${{ fromJSON(inputs.test_scope == 'layout-ipad' && '[{"label":"ipad","device_type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB"}]' || '[{"label":"iphone","device_type":"com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus"},{"label":"ipad","device_type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB"}]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -187,7 +188,7 @@ jobs:
           ruby scripts/prepare-screenshot-tests.rb
       - name: Create simulator
         env:
-          DEVICE_TYPE: ${{ matrix.device_type }}
+          DEVICE_TYPE: ${{ inputs.test_scope == 'layout' && matrix.label == 'iphone' && 'com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro' || matrix.device_type }}
         run: |
           xcrun simctl list devices available
           xcrun simctl list devicetypes
@@ -202,6 +203,13 @@ jobs:
           NATIVE_TEST_SCOPE: ${{ inputs.test_scope || 'full' }}
         run: |
           native_test_args=()
+          if [ "$NATIVE_TEST_SCOPE" = layout ] || [ "$NATIVE_TEST_SCOPE" = layout-ipad ]; then
+            native_test_args+=(
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testEdgeToEdgeHomeLayout'
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testWholeLeaderboardCard'
+              '-only-testing:ScreenshotCapture/ScreenshotCapture/testEdgeToEdgeGameLayout'
+            )
+          fi
           if [ "$NATIVE_TEST_SCOPE" = commerce ]; then
             native_test_args+=(
               '-only-testing:ScreenshotCapture/ScreenshotCapture/testAppleIndividualPalettePurchases'

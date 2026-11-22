@@ -10,9 +10,13 @@
   let selected = 'timer', authenticated = false, activeResult, pending = false, line = null;
   let requestID = 0, lastRefresh = 0, playerID = '';
   const home = document.getElementById('home');
-  const card = document.createElement('section');
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.setAttribute('aria-label', 'Open live leaderboard');
+  card.setAttribute('aria-haspopup', 'dialog');
+  card.setAttribute('aria-describedby', 'home-rank-value home-rank-status');
   card.className = 'home-rank live-home-rank';
-  card.innerHTML = '<span class="rank-emblem" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M10 5h12v8a6 6 0 0 1-12 0V5Z" stroke="currentColor" stroke-width="1.8"/><path d="M10 7H6v4a5 5 0 0 0 5 5M22 7h4v4a5 5 0 0 1-5 5M16 19v6m-5 2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div class="rank-copy"><span class="rank-eyebrow">THE WEEKLY CLIMB</span><div class="rank-headline"><span>Your rank</span><strong id="home-rank-value">—</strong></div><small class="live-rank-status">Connecting to Game Center…</small></div><button type="button" class="live-open" aria-label="Open live leaderboard"><span class="rank-open-label">LEADERBOARD</span><span class="rank-open-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>';
+  card.innerHTML = '<span class="rank-emblem" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M10 5h12v8a6 6 0 0 1-12 0V5Z" stroke="currentColor" stroke-width="1.8"/><path d="M10 7H6v4a5 5 0 0 0 5 5M22 7h4v4a5 5 0 0 1-5 5M16 19v6m-5 2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="rank-copy"><span class="rank-eyebrow">THE WEEKLY CLIMB</span><span class="rank-headline"><span>Your rank</span><strong id="home-rank-value">—</strong></span><small id="home-rank-status" class="live-rank-status">Connecting to Game Center…</small></span><span class="live-open" aria-hidden="true"><span class="rank-open-label">LEADERBOARD</span><span class="rank-open-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>';
   home.querySelector('.sub')?.after(card);
   const dialog = document.createElement('dialog');
   dialog.className = 'live-board';
@@ -81,7 +85,7 @@
     button.addEventListener('click', () => { selected = game; render(); refresh(true); });
     dialog.querySelector('.live-tabs').append(button);
   }
-  card.querySelector('button').addEventListener('click', () => { dialog.showModal(); render(); refresh(true); });
+  card.addEventListener('click', () => { if (!dialog.open) dialog.showModal(); render(); refresh(true); });
   dialog.querySelector('.live-close').addEventListener('click', () => dialog.close());
   dialog.querySelector('.live-connect').addEventListener('click', () => authenticate(true));
   dialog.querySelector('.live-refresh').addEventListener('click', () => authenticated ? refresh(true) : authenticate(true));
