@@ -56,6 +56,23 @@ assert old and all(old['attributes'].get(k) for k in ['contactFirstName','contac
 attrs={k:old['attributes'][k] for k in ['contactFirstName','contactLastName','contactPhone','contactEmail']};attrs.update({'demoAccountRequired':False,'notes':'Three skill games. Game Center sign-in is optional and uses Apple Game Center; play remains available signed out. Weekly Timer/Stop boards rank perfect streaks with closest first miss as a tiebreaker; Reaction ranks fastest valid times >=100ms. Empty boards truthfully show no players. Optional voice/color non-consumables and Rage Pass use approved Apple products. Restore Apple Purchases is in Colors. Rage Pass removes interstitials. Native app contains no web checkout. Daily progress and titles are local. Production AdMob consent/privacy controls are available; ad availability depends on consent and inventory.'})
 if new:patch('appStoreReviewDetails',new['id'],attrs)
 else:create('appStoreReviewDetails',attrs,{'appStoreVersion':rel('appStoreVersions',v['id'])})
+# Enable the version's Game Center integration and release only this app's boards.
+gc=api('/v1/appStoreVersions/'+v['id']+'/gameCenterAppVersion').get('data')
+if gc:patch('gameCenterAppVersions',gc['id'],{'enabled':True})
+else:create('gameCenterAppVersions',{'enabled':True},{'appStoreVersion':rel('appStoreVersions',v['id'])})
+center=api('/v1/apps/'+APP+'/gameCenterDetail')['data']
+released=api('/v1/gameCenterDetails/'+center['id']+'/leaderboardReleases')['data']
+boards=api('/v1/gameCenterDetails/'+center['id']+'/gameCenterLeaderboards')['data']
+for board in boards:
+ assert board['attributes']['vendorIdentifier'].startswith('com.pettygamesstudios.ninetynineimpossible.')
+ if not any(r.get('relationships',{}).get('gameCenterLeaderboard',{}).get('data',{}).get('id')==board['id'] for r in released):
+  result=create('gameCenterLeaderboardReleases',{}, {'gameCenterDetail':rel('gameCenterDetails',center['id']),'gameCenterLeaderboard':rel('gameCenterLeaderboards',board['id'])})
+  print(json.dumps({'leaderboardRelease':result['id'],'board':board['attributes']['vendorIdentifier']}))
+for l in api('/v1/appStoreVersions/'+v['id']+'/appStoreVersionLocalizations')['data']:
+ sets=api('/v1/appStoreVersionLocalizations/'+l['id']+'/appScreenshotSets')['data']
+ for ss in sets:
+  pics=api('/v1/appScreenshotSets/'+ss['id']+'/appScreenshots')['data']
+  print(json.dumps({'candidateScreenshots':ss['attributes']['screenshotDisplayType'],'count':len(pics)}))
 print(json.dumps({'preparedVersion':v['id'],'version':VERSION,'build':number,'releaseType':'AFTER_APPROVAL'}))
 if mode=='submit':
  # Apple performs final metadata/screenshot/review validation; never claim live on submission.
