@@ -17,7 +17,7 @@ const w=setup();let clicks=0;w.document.querySelector('[data-g=timer]').onclick=
 function send(game,rawScore,other={}){w.dispatchEvent(new w.CustomEvent('n99:result',{detail:{game,rawScore,...other}}));}
 send('reaction',70,{isSuspicious:true});assert.equal(w.document.querySelector('progress').value,0);
 send('timer',1);send('timer',1);assert.equal(w.document.querySelector('progress').value,1);
-send('stop',100);send('reaction',200);assert.equal(w.document.querySelector('progress').value,3);
+send('stop',100);send('reaction',200);assert.equal(w.document.querySelector('progress').value,3);assert.equal(w.document.querySelector('.daily-ring-fill').getAttribute('stroke-dashoffset'),'0');assert.equal(w.document.querySelectorAll('[data-checkpoint].complete').length,3);assert.equal(w.document.querySelector('.daily-progress').dataset.complete,'true');
 let stored=JSON.parse(w.localStorage.getItem('n99-daily-progress-v1'));assert.equal(stored.completedTotal,1);
 send('reaction',200);assert.equal(JSON.parse(w.localStorage.getItem('n99-daily-progress-v1')).completedTotal,1);
 const restored=setup(w.localStorage.getItem('n99-daily-progress-v1'));assert.equal(restored.document.querySelector('progress').value,3);

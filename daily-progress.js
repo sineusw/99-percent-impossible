@@ -29,7 +29,7 @@
     completedTotal: Number.isSafeInteger(stored?.completedTotal) && stored.completedTotal >= 0 ? stored.completedTotal : 0};
   state.completedTotal = Math.max(state.completedTotal, state.completedDays.length);
   const section = document.createElement('section'); section.className = 'daily-progress';
-  section.innerHTML = '<div class="daily-heading"><span>DAILY SKILL CHALLENGE</span><b class="daily-count"></b></div><p class="daily-title"></p><progress max="3" value="0" aria-label="Daily goals complete"></progress><details><summary>See today’s goals</summary><div class="daily-goals"></div><p class="daily-note">New goals each day on this device. Progress titles are yours to keep. Missing a day never removes progress.</p></details><p class="daily-completion" aria-live="polite"></p>';
+  section.innerHTML = '<div class="daily-heading"><span><span class="daily-eyebrow">A FRESH SHOT EVERY DAY</span><span class="daily-heading-title">Daily challenges</span></span><span class="daily-ring"><svg viewBox="0 0 56 56" aria-hidden="true"><circle class="daily-ring-track" cx="28" cy="28" r="23"/><circle class="daily-ring-fill" cx="28" cy="28" r="23" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg><b class="daily-count"></b></span></div><p class="daily-title"></p><progress max="3" value="0" aria-label="Daily goals complete"></progress><div class="daily-checkpoints" aria-hidden="true"><span data-checkpoint="timer"><i>01</i> TIMER</span><span data-checkpoint="stop"><i>02</i> STOP</span><span data-checkpoint="reaction"><i>03</i> REACTION</span></div><details><summary>See today’s goals<span class="daily-summary-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></summary><div class="daily-goals"></div><p class="daily-note">New goals each day on this device. Progress titles are yours to keep. Missing a day never removes progress.</p></details><p class="daily-completion" aria-live="polite"></p>';
   const home = document.getElementById('home'); const sub = home?.querySelector('.sub');
   if (sub) sub.after(section); else home?.append(section);
   function save() { try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }
@@ -40,10 +40,17 @@
   }
   function render() {
     refreshDay();
+    section.dataset.complete = String(state.done.length === 3);
     const count = state.done.length, level = titles.find(([days])=>state.completedTotal >= days)[1];
     section.querySelector('.daily-count').textContent = `${count}/3`;
     section.querySelector('progress').value = count;
-    section.querySelector('.daily-title').textContent = `${level} · ${state.completedTotal} challenge day${state.completedTotal===1?'':'s'} complete`;
+    section.querySelector('.daily-ring-fill').setAttribute('stroke-dashoffset', String(100-count/3*100));
+    for(const chip of section.querySelectorAll('[data-checkpoint]')) {
+      const complete=state.done.includes(chip.dataset.checkpoint);
+      chip.classList.toggle('complete',complete);
+      chip.querySelector('i').textContent=complete?'✓':String(Object.keys(names).indexOf(chip.dataset.checkpoint)+1).padStart(2,'0');
+    }
+    section.querySelector('.daily-title').textContent = `${level} · ${state.completedTotal} day${state.completedTotal===1?'':'s'} cleared`;
     const rows = goals(state.day).map(goal=>{
       const row = document.createElement('div'); row.className='daily-goal';
       const text = document.createElement('span'); text.textContent=`${names[goal.game]} · ${goal.label}`;
