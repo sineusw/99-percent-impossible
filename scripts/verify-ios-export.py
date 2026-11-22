@@ -68,3 +68,7 @@ assert plugin_config.get('ios', {}).get('backgroundColor') == '#0a0b16', 'Native
 assert info.get('UIStatusBarStyle') == 'UIStatusBarStyleLightContent', 'Status icons must be light over the dark game'
 assert info.get('UIViewControllerBasedStatusBarAppearance') is True, 'Capacitor must own status-bar appearance'
 print('Verified edge-to-edge WebView configuration and readable light status-bar defaults.')
+
+assert (app / 'public/live-leaderboard.css').is_file(), 'Leaderboard page design missing'
+assert 'board-podium' in (app / 'public/live-leaderboard.js').read_text(), 'Real-data podium UI missing'
+print('Verified redesigned leaderboard page and real-data podium renderer are bundled.')

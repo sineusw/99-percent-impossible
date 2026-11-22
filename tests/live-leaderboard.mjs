@@ -36,5 +36,31 @@ const beforeDrops=said.length;
 const drop1=result(4);waiting(data(105));await tick();assert.equal(w.N99LeaderboardLine(drop1),'');assert.equal(said.length,beforeDrops);assert.equal(w.document.querySelector('#mr').textContent,'');
 const drop2=result(5);waiting(data(110));await tick();assert.ok(w.N99LeaderboardLine(drop2));assert.equal(said.length,beforeDrops+1);assert.equal(w.document.querySelector('#mr').textContent,said.at(-1));
 const invalid={game:'reaction',rawScore:90,isSuspicious:true};w.N99Result=invalid;w.dispatchEvent(new w.CustomEvent('n99:result',{detail:invalid}));assert.equal(submissions.length,5);assert.match(w.document.querySelector('.rank-reveal').textContent,/UNRANKED/);
+assert.equal(w.document.querySelector('.board-your-rank').textContent,'#110');
+assert.equal(w.document.querySelectorAll('.podium-player').length,1);
+assert.equal(w.document.querySelector('.podium-place').textContent,'#1');
+assert.equal(w.document.querySelector('.board-podium img'),null);
+assert.equal(w.document.querySelector('.board-empty').hidden,true);
 await w.happyDOM.abort();w.close();
+
+function boardWindow(authenticated,standings){
+ const x=new Window({url:'http://localhost/'});x.document.write('<section id="home" class="on"><p class="sub"></p><button class="card" data-g="timer"></button></section><button id="back"></button><button id="retry"></button>');
+ x.Capacitor={isNativePlatform:()=>true,Plugins:{N99GameCenter:{authenticate:async()=>({authenticated,playerID:'qa'}),standings,addListener(){},resetRun:async()=>{}}}};
+ for(const file of ['leaderboard-commentary.js','leaderboard-lines.js','live-leaderboard.js'])vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),vm.createContext(x));
+ return x;
+}
+let guestReads=0;const guest=boardWindow(false,async()=>{guestReads++;throw Error('No authenticated player')});await tick();
+assert.equal(guestReads,0);assert.equal(guest.document.querySelector('.board-podium').hidden,true);
+assert.equal(guest.document.querySelector('.board-empty').hidden,false);assert.equal(guest.document.querySelector('.live-connect').hidden,false);
+assert.equal(guest.document.querySelectorAll('.live-entries li').length,0);assert.equal(guest.document.querySelector('.board-your-rank').textContent,'UNRANKED');
+let played=0;guest.document.querySelector('.card').addEventListener('click',()=>played++);guest.document.querySelector('.live-board').showModal();guest.document.querySelector('.board-play').click();assert.equal(played,1);assert.equal(guest.document.querySelector('.live-board').open,false);
+await guest.happyDOM.abort();guest.close();
+
+const pendingBoards={};const tabs=boardWindow(true,({game})=>new Promise(resolve=>{pendingBoards[game]=resolve}));await tick();
+tabs.document.querySelector('.live-tabs [data-game=reaction]').click();await tick();
+pendingBoards.reaction({authenticated:true,playerID:'qa',totalPlayers:2,entries:[{rank:1,alias:'Reaction leader',score:200}]});await tick();
+pendingBoards.timer({authenticated:true,playerID:'qa',totalPlayers:99,entries:[{rank:1,alias:'Timer leader',score:60000001}]});await tick();
+assert.equal(tabs.document.querySelector('.live-tabs [data-game=reaction]').getAttribute('aria-pressed'),'true');
+assert.equal(tabs.document.querySelector('.board-row-name').textContent,'Reaction leader');assert.equal(tabs.document.querySelector('.board-count').textContent,'2 players');assert.equal(tabs.document.querySelector('.live-message').textContent.includes('99'),false);
+await tabs.happyDOM.abort();tabs.close();
 console.log('Live ranks use Game Center data, escape player aliases, ignore stale replies, and exclude suspicious results');
