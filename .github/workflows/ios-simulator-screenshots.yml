@@ -10,6 +10,7 @@ on:
         options:
           - capture
           - inspect-apple
+          - configure-game-center
           - configure-apple-products
           - upload-iap-screenshots
           - prepare-testflight
@@ -47,6 +48,10 @@ on:
         description: 'Expected marketing version of the selected beta build'
         type: string
         default: '1.0.1'
+      live_game_center:
+        description: 'The selected build contains the live Game Center leaderboard'
+        type: boolean
+        default: false
       testflight_build_number:
         description: 'Exact uploaded build number'
         type: string
@@ -68,6 +73,18 @@ permissions:
   contents: read
 
 jobs:
+  configure-game-center:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'configure-game-center'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Game Center for the existing app
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+        run: python3 scripts/configure-game-center.py
   upload-iap-screenshots:
     if: github.event_name == 'workflow_dispatch' && inputs.operation == 'upload-iap-screenshots'
     runs-on: ubuntu-latest
@@ -104,6 +121,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
           TESTFLIGHT_NOTIFY_OWNER_EMAIL: ${{ inputs.testflight_notify_owner_email }}
           TESTFLIGHT_MARKETING_VERSION: ${{ inputs.testflight_marketing_version }}
+          TESTFLIGHT_LIVE_GAME_CENTER: ${{ inputs.live_game_center }}
           TESTFLIGHT_BUILD_NUMBER: ${{ inputs.testflight_build_number }}
           TESTFLIGHT_SUBMIT_REVIEW: ${{ inputs.submit_testflight_review }}
           TESTFLIGHT_ENABLE_DISTRIBUTION: ${{ inputs.enable_testflight_distribution }}

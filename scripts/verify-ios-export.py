@@ -2,6 +2,7 @@
 import os
 import json
 import plistlib
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -43,3 +44,12 @@ else:
 assert not list(app.rglob('*.storekit')), 'StoreKit QA fixture leaked into release'
 print('Verified exported bundle, version, build number, store profile, team, expiry, and signing certificate match.')
 print('Verified native/bundled ad mode, consent delay, configured identifiers, and absence of StoreKit fixtures.')
+
+assert profile['Entitlements'].get('com.apple.developer.game-center') is True, 'Game Center missing from profile'
+signed_entitlements = subprocess.run(['codesign', '-d', '--entitlements', ':-', str(app)],
+                                    capture_output=True, check=True).stdout
+assert plistlib.loads(signed_entitlements).get('com.apple.developer.game-center') is True, 'Game Center missing from signed app'
+plugin_config = json.loads((app / 'capacitor.config.json').read_text())
+assert 'N99GameCenterPlugin' in plugin_config.get('packageClassList', []), 'Game Center bridge not registered'
+assert (app / 'public/live-leaderboard.js').is_file(), 'Live leaderboard UI missing from export'
+print('Verified signed Game Center entitlement, provisioning capability, native registration and bundled live UI.')

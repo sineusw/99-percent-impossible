@@ -48,3 +48,14 @@ if project.exists():
                               'IPHONEOS_DEPLOYMENT_TARGET = 15.0;', project.read_text()))
 if podfile.exists():
     podfile.write_text(re.sub(r"platform :ios, '[0-9.]+'", "platform :ios, '15.0'", podfile.read_text()))
+
+# Game Center is enabled on this exact App ID by configure-game-center.py.
+if project.exists():
+    entitlements = path.parent / 'App.entitlements'
+    existing = plistlib.loads(entitlements.read_bytes()) if entitlements.exists() else {}
+    existing['com.apple.developer.game-center'] = True
+    entitlements.write_bytes(plistlib.dumps(existing))
+    text = project.read_text()
+    if 'CODE_SIGN_ENTITLEMENTS = App/App.entitlements;' not in text:
+        text = text.replace('buildSettings = {', 'buildSettings = {\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/App.entitlements;')
+    project.write_text(text)
