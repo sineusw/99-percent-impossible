@@ -105,6 +105,12 @@ def main():
                  'top 100, refresh and rank changes with Petty/Daisy/Mick matching audio/captions. '
                  'TestFlight sandbox standings are separate from the public app. Try offline/reconnect, '
                  'sound/mute, Apple sandbox purchases and restore. Real-device validation is pending.')
+    if os.environ.get('TESTFLIGHT_DAILY_PROGRESS') == 'true':
+        notes += (' New: three daily skill goals and permanent progress titles. Open See today’s goals on Home. '
+                  'Check progress persists after restart and resets goals the next local day without losing titles. '
+                  'Petty waits for your first interaction before generating a welcome and reuses short cached audio. '
+                  'Normal ad breaks require at least 90 seconds from session start and between attempts; '
+                  'round-count, consent and Rage Pass rules still apply. Test ads only; no real purchases required.')
     build_localizations = api('/v1/builds/' + identifier + '/betaBuildLocalizations')['data']
     english_build = next((p for p in build_localizations if p['attributes']['locale'] == 'en-US'), None)
     if english_build:

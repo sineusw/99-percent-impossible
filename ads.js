@@ -10,7 +10,12 @@ const PRODUCTION=CONFIG.mode==='production'&&PLATFORM==='ios'&&!AD_TEST;
 const consentAllowsAds=()=>window.N99AdPrivacy?.canRequestAds===true;
 let adOpen=false,adBoundaryClaimed=false,adOpened=false,pending=false,boundaryLocked=false,deferredRetry=null,boundaryFinished=false;
 let adFailsafeTimer=0,banterPending=false,lastAdAttempt=+(localStorage.getItem(AK('lastAttempt'))||0);
-const HARD_CAP=7,AD_FAILSAFE_MS=12000;
+const HARD_CAP=7,AD_FAILSAFE_MS=12000,MIN_AD_INTERVAL_MS=90000;
+const sessionStarted=Date.now();
+const savedAdTime=Number(localStorage.getItem(AK('lastTime')));
+let lastAdTime=Number.isFinite(savedAdTime)&&savedAdTime>0&&savedAdTime<=Date.now()?savedAdTime:0;
+const timeAllowsAd=()=>AD_TEST||Date.now()-Math.max(sessionStarted,lastAdTime)>=MIN_AD_INTERVAL_MS;
+const metric=name=>window.N99Metrics?.record?.(name);
 const BEFORE_LINES=['Hold that thought. Capitalism.','And now, a word from my landlord.','Sponsor break. Try not to improve.','Commerce has entered the chat.','Your suffering has attracted advertisers.','A brief message from your financial enablers.','Pause. Someone paid for your attention.','Advert time. Even failure has overhead.','Right. Let us monetize the trauma.','A sponsor would like a turn.','Tiny break. Big corporate energy.','Your thumb has created shareholder value.','Commercial incoming. Stay emotionally available.','Good news: a break. Bad news: monetized.','The advertisers have seen enough.','Please hold. Capitalism needs five seconds.','Someone bought these next few seconds.','A sponsor believes in you. Weird.','Time out. Sponsored, obviously.','Before the next loss: commerce.','I would apologize, but rent exists.','Brief commercial. Dignity resumes shortly.','Pause the comeback. We have invoices.','This humiliation is now sponsored.','Advert break. Very glamorous.','Fam, hold up. Capitalism called.','Bro, even roasting you costs money.','My guy, the sponsors want screen time.','A word from people with a marketing budget.','Do not move. Someone paid for this interruption.','Financially responsible interruption incoming.','And now, the part that pays for me.','Corporate would like a moment.','Please enjoy this tasteful monetization.','We interrupt the chaos for revenue.','One sec. The shareholders are hungry.'];
 const AFTER_LINES=['Welcome back to your suffering.','Right. Back to the damage.','Commercial over. Problems remain.','Revenue secured. Dignity pending.','Welcome back. Nothing improved.','And we return to the experiment.','Sponsor satisfied. Your move.','Break over. Confidence still intact?','Right then. Back to milliseconds.','Welcome back, victim.','Commercial complete. Resume delusion.','We are back. I have notes.','And now, accountability.','Break is over. Unfortunately.','Welcome back. The target missed you.','Capitalism is done. I am not.','Back again. Lovely.','The ad ended. Your score did not improve.','Right. Where were we? Ah yes. Failure.','Commercial over. Cook yourself responsibly.','We return to our scheduled disappointment.','Welcome back. The game remembers.','The sponsor left. I stayed.','Break complete. Continue the evidence.','And we are back. Fam, lock in.','Bro, commercial is over. Focus.','My guy, the break did not fix your timing.','Back to work. And by work, I mean this.','Welcome back. Shareholders thank you.','Revenue acquired. Reflexes unchanged.','Excellent. Bills paid. Now perform.','The capitalism portion is complete.','Sponsor gone. Pressure back.','Back from commercial. Still confident?','And now, the sequel nobody needed.','Right. Humiliation may resume.'];
 function shuffled(lines,key){let a;try{a=JSON.parse(localStorage.getItem(AK(key+'_deck'))||'[]')}catch{}if(!Array.isArray(a)||!a.length){a=[...lines];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}const last=localStorage.getItem(AK(key+'_last'));if(a.length>1&&a[0]===last)[a[0],a[1]]=[a[1],a[0]]}const text=a.shift();localStorage.setItem(AK(key+'_deck'),JSON.stringify(a));localStorage.setItem(AK(key+'_last'),text);return text}
@@ -26,7 +31,7 @@ function currentAttempt(){return +(localStorage.getItem('n99_total')||document.q
 function streak(){return +(localStorage.getItem('n99_currentStreak')||0)}
 function modalSettled(){const m=document.querySelector('#modal');return !m||m.classList.contains('hide')}
 function safeBoundary(){if(NO_ADS||!consentAllowsAds()||adOpen||adBoundaryClaimed||boundaryLocked)return false;if(document.visibilityState==='hidden')return false;if(typeof st!=='undefined'&&(st.run||st.locked))return false;return modalSettled()}
-function updateDue(){if(NO_ADS){pending=false;return}if(hasPass()){pending=false;return}const now=currentAttempt(),gap=now-lastAdAttempt,hot=streak()>=2;if(AD_TEST){pending=gap>=1;return}if(gap>=5&&!hot)pending=true;if(gap>=HARD_CAP)pending=true}
+function updateDue(){if(!timeAllowsAd()){pending=false;return}if(NO_ADS){pending=false;return}if(hasPass()){pending=false;return}const now=currentAttempt(),gap=now-lastAdAttempt,hot=streak()>=2;if(AD_TEST){pending=gap>=1;return}if(gap>=5&&!hot)pending=true;if(gap>=HARD_CAP)pending=true}
 function clearAdTimers(){banterPending=false;if(adFailsafeTimer){clearTimeout(adFailsafeTimer);adFailsafeTimer=0}}
 function lockControls(locked){for(const id of ['retry','close']){const el=document.getElementById(id);if(!el)continue;el.setAttribute('aria-disabled',locked?'true':'false');if(locked)el.dataset.adBoundaryLocked='1';else delete el.dataset.adBoundaryLocked}}
 function buildOverlay(){let overlay=document.querySelector('#n99-ad-overlay');if(overlay)return overlay;overlay=document.createElement('div');overlay.id='n99-ad-overlay';overlay.style.cssText='position:fixed;inset:0;background:#000;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:Chakra Petch,system-ui,sans-serif;text-align:center;padding:24px;touch-action:none;user-select:none;-webkit-user-select:none';overlay.innerHTML='<div style="font-size:12px;letter-spacing:2px;color:#9c9ca8;margin-bottom:10px">AD BREAK</div><div id="adTitle" style="font-family:Teko,Arial Black,sans-serif;font-size:28px;margin-bottom:18px">'+castName()+' HAS A WORD…</div><div id="adSub" style="font-size:11px;color:#7a7a86;max-width:280px">Next round is paused safely.</div>';document.body.appendChild(overlay);return overlay}
@@ -53,7 +58,7 @@ async function showNativeAd(overlay){
   loadTimer=setTimeout(done,15000);
   try{
     for(const event of ['interstitialAdDismissed','interstitialAdFailedToShow','interstitialAdFailedToLoad']){
-      const handle=await sdk.addListener(event,done);
+      const handle=await sdk.addListener(event,()=>{if(active())metric(event==='interstitialAdDismissed'?'adDismissed':'adFailures');done();});
       if(!active()){await handle.remove();return}
       listeners.push(handle);
     }
@@ -75,10 +80,11 @@ async function showNativeAd(overlay){
     try{window.speechSynthesis?.cancel?.();window.N99CastStaticAudio?.stop?.();window.N99SFX?.stop?.()}catch{}
     overlay.remove();
     await sdk.showInterstitial();
-  }catch(err){console.warn('[N99 ADS] Native ad unavailable',err?.message||err);done()}
+    if(active())metric('adShown');
+  }catch(err){if(active())metric('adFailures');console.warn('[N99 ADS] Native ad unavailable',err?.message||err);done()}
 }
 function forceOpenOrFinish(){if(!adBoundaryClaimed||adOpened||banterPending)return;const overlay=buildOverlay();if(document.visibilityState==='hidden'){pending=true;finishAdBoundary(overlay);return}showNativeAd(overlay)}
-function claimAdBoundary(retryAction=null){if(!consentAllowsAds()||adBoundaryClaimed||adOpen||boundaryLocked)return false;pending=false;boundaryLocked=true;boundaryFinished=false;deferredRetry=retryAction;adBoundaryClaimed=true;adOpen=true;adOpened=false;lastAdAttempt=currentAttempt();localStorage.setItem(AK('lastAttempt'),String(lastAdAttempt));lockControls(true);window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}const overlay=buildOverlay();banterPending=true;
+function claimAdBoundary(retryAction=null){if(!timeAllowsAd()||!consentAllowsAds()||adBoundaryClaimed||adOpen||boundaryLocked)return false;pending=false;boundaryLocked=true;boundaryFinished=false;deferredRetry=retryAction;adBoundaryClaimed=true;adOpen=true;adOpened=false;lastAdTime=Date.now();localStorage.setItem(AK('lastTime'),String(lastAdTime));metric('adAttempts');lastAdAttempt=currentAttempt();localStorage.setItem(AK('lastAttempt'),String(lastAdAttempt));lockControls(true);window.__PETTY_AD_BANTER_LOCK=true;try{window.speechSynthesis?.cancel?.()}catch{}const overlay=buildOverlay();banterPending=true;
 adFailsafeTimer=setTimeout(()=>{
   if(!banterPending||!overlay.isConnected)return;
   banterPending=false;
@@ -95,6 +101,6 @@ const tot=document.querySelector('#tot');if(tot)new MutationObserver(updateDue).
 const resultModal=document.querySelector('#modal');if(resultModal)new MutationObserver(()=>{if(resultModal.classList.contains('hide'))queueMicrotask(tryOpenPendingAd)}).observe(resultModal,{attributes:true,attributeFilter:['class']});
 document.addEventListener('click',e=>{if(!e.target?.matches?.('#retry'))return;if(boundaryLocked||adOpen||adBoundaryClaimed){e.preventDefault();e.stopImmediatePropagation();return}if(!retryEligibleNow())return;e.preventDefault();e.stopImmediatePropagation();claimAdBoundary(()=>{if(typeof reset==='function')reset();else document.querySelector('#retry')?.click?.()})},true);
 // Every terminal real-ad callback uses the same cleanup path.
-window.N99Ads={tryOpenPendingAd,safeBoundary,forceOpenOrSkipAd:forceOpenOrFinish,finishAdBoundary,onAdClose:finishCurrentBoundary,onAdComplete:finishCurrentBoundary,onAdLoadFailure:finishCurrentBoundary,onAdRuntimeError:finishCurrentBoundary,onAdTimeout:finishCurrentBoundary,get pending(){return pending},get adOpen(){return adOpen},get adBoundaryClaimed(){return adBoundaryClaimed},get adOpened(){return adOpened},get boundaryLocked(){return boundaryLocked},hardCap:HARD_CAP};
+window.N99Ads={tryOpenPendingAd,safeBoundary,forceOpenOrSkipAd:forceOpenOrFinish,finishAdBoundary,onAdClose:finishCurrentBoundary,onAdComplete:finishCurrentBoundary,onAdLoadFailure:finishCurrentBoundary,onAdRuntimeError:finishCurrentBoundary,onAdTimeout:finishCurrentBoundary,get pending(){return pending},get adOpen(){return adOpen},get adBoundaryClaimed(){return adBoundaryClaimed},get adOpened(){return adOpened},get boundaryLocked(){return boundaryLocked},hardCap:HARD_CAP,minIntervalMs:MIN_AD_INTERVAL_MS};
 if(AD_TEST){window.N99Ads.__testFailLoad=finishCurrentBoundary;window.N99Ads.__testRuntimeError=finishCurrentBoundary;window.N99Ads.__testTimeout=finishCurrentBoundary}
 })();

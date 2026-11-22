@@ -53,3 +53,7 @@ plugin_config = json.loads((app / 'capacitor.config.json').read_text())
 assert 'N99GameCenterPlugin' in plugin_config.get('packageClassList', []), 'Game Center bridge not registered'
 assert (app / 'public/live-leaderboard.js').is_file(), 'Live leaderboard UI missing from export'
 print('Verified signed Game Center entitlement, provisioning capability, native registration and bundled live UI.')
+
+for asset in ['daily-progress.js', 'daily-progress.css', 'growth-metrics.js', 'voice-cache.js']:
+    assert (app / 'public' / asset).is_file(), 'Daily progress asset missing: ' + asset
+print('Verified daily skill goals, local metrics and bounded character-audio cache are bundled.')
