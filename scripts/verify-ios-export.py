@@ -57,3 +57,8 @@ print('Verified signed Game Center entitlement, provisioning capability, native 
 for asset in ['daily-progress.js', 'daily-progress.css', 'growth-metrics.js', 'voice-cache.js']:
     assert (app / 'public' / asset).is_file(), 'Daily progress asset missing: ' + asset
 print('Verified daily skill goals, local metrics and bounded character-audio cache are bundled.')
+
+for asset in ['home-visual.css', 'fonts.css', 'assets/fonts/teko-700.ttf', 'assets/fonts/chakra-petch-600.ttf']:
+    assert (app / 'public' / asset).is_file(), 'Visual refresh asset missing: ' + asset
+assert 'home-visual.css' in (app / 'public/index.html').read_text(), 'Home visual stylesheet not linked'
+print('Verified illustrated home screen and bundled offline typography are included.')

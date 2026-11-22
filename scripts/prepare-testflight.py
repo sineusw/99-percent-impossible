@@ -111,6 +111,11 @@ def main():
                   'Petty waits for your first interaction before generating a welcome and reuses short cached audio. '
                   'Normal ad breaks require at least 90 seconds from session start and between attempts; '
                   'round-count, consent and Rage Pass rules still apply. Test ads only; no real purchases required.')
+    if os.environ.get('TESTFLIGHT_VISUAL_REFRESH') == 'true':
+        notes += (' Home redesign: illustrated mode cards, compact weekly rank strip, daily progress ring '
+                  'and checkpoints, a cleaner voice selector and bundled offline fonts. Test every mode card, '
+                  'leaderboard, voice picker, daily goals, sound, Colors and footer Ad Privacy. '
+                  'Check narrow screens and larger text. Gameplay scoring is unchanged.')
     build_localizations = api('/v1/builds/' + identifier + '/betaBuildLocalizations')['data']
     english_build = next((p for p in build_localizations if p['attributes']['locale'] == 'en-US'), None)
     if english_build:
