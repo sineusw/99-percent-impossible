@@ -35,9 +35,15 @@ if mode=='inspect':
  center=api('/v1/apps/'+APP+'/gameCenterDetail')['data'];releases=api('/v1/gameCenterDetails/'+center['id']+'/leaderboardReleases')['data'];print(json.dumps({'leaderboardReleases':releases}))
  raise SystemExit(0)
 number=os.environ['STORE_BUILD_NUMBER'];assert number.isdigit()
-rows=api('/v1/builds?filter[app]='+APP+'&filter[version]='+number+'&include=preReleaseVersion')
-assert len(rows['data'])==1,'Exact build missing/ambiguous'
-build=rows['data'][0];assert build['attributes']['processingState']=='VALID' and not build['attributes']['expired']
+for attempt in range(45):
+ rows=api('/v1/builds?filter[app]='+APP+'&filter[version]='+number+'&include=preReleaseVersion')
+ assert len(rows['data'])<=1,'Ambiguous exact build'
+ if rows['data']:
+  build=rows['data'][0]
+  assert build['attributes']['processingState'] not in ['FAILED','INVALID'],'Build processing failed'
+  if build['attributes']['processingState']=='VALID' and not build['attributes']['expired']:break
+ print(json.dumps({'waitingForProcessedBuild':number,'attempt':attempt+1}),flush=True);time.sleep(10)
+else:raise SystemExit('Selected build not processed yet; version was not changed.')
 assert any(x['attributes']['version']==VERSION for x in rows['included'] if x['type']=='preReleaseVersions')
 if build['attributes'].get('usesNonExemptEncryption') is None:patch('builds',build['id'],{'usesNonExemptEncryption':False})
 v=next((x for x in versions if x['attributes']['platform']=='IOS' and x['attributes']['versionString']==VERSION),None)
@@ -61,7 +67,7 @@ gc=api('/v1/appStoreVersions/'+v['id']+'/gameCenterAppVersion').get('data')
 if gc:patch('gameCenterAppVersions',gc['id'],{'enabled':True})
 else:create('gameCenterAppVersions',{'enabled':True},{'appStoreVersion':rel('appStoreVersions',v['id'])})
 center=api('/v1/apps/'+APP+'/gameCenterDetail')['data']
-released=api('/v1/gameCenterDetails/'+center['id']+'/leaderboardReleases')['data']
+released=api('/v1/gameCenterDetails/'+center['id']+'/leaderboardReleases?include=gameCenterLeaderboard')['data']
 boards=api('/v1/gameCenterDetails/'+center['id']+'/gameCenterLeaderboards')['data']
 for board in boards:
  assert board['attributes']['vendorIdentifier'].startswith('com.pettygamesstudios.ninetynineimpossible.')
