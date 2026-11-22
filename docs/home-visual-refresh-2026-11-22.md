@@ -35,3 +35,9 @@ Code source fd6a16a94d2cc4ef2a179f449d3171adcd791fe5 built as 1.0.2 (45058032767
 A second browser check completed the three goals using labeled local result fixtures: the ring reached zero remaining dash offset, all three checkpoints changed to complete, and the earned-title state appeared. Changing palette CSS variables changed illustration accents. The browser loaded the bundled Chakra Petch/Teko faces with zero Google Fonts network requests. These are UI/test-fixture observations, not real account purchases or global score submissions.
 
 Privacy-only commit 31ccd432dfb7fa3d3e684b1d9690a33c4e07a427 deployed READY as dpl_8H9DNa3twWj2wUsoEXKNra2a57MA, preserving the existing public gameplay source while clarifying bundled fonts versus older/web font requests. Exact TestFlight activation is tracked in workflow 45058115535 and must be read before declaring availability.
+
+## Active TestFlight build
+
+Apple activated 1.0.2 (450580327671) at 2026-11-22 19:05:35 UTC, returning IN_BETA_TESTING in workflow 45058115535. Start Testing notified exactly one verified owner tester. Link: https://testflight.apple.com/join/4PTBzRTD. The ephemeral CI signer is 822RCTSZ7W, from successful upload run 45058032767; its temporary private key was discarded with that runner. Do not retire unrelated signing assets.
+
+Owner check: update to this exact build, inspect Home, open each mode, view leaderboard and goals, change voice/palette, and verify footer privacy access. Automated/browser/export checks passed; physical iPhone appearance and touch behavior remain for owner testing.
